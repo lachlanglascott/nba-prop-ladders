@@ -6,7 +6,7 @@ Realised minutes are an outcome, never a scenario; conditioning on them is look-
 
 import polars as pl
 
-from nba_ladders.screens import BIG_POSITIONS, parse_player_index
+from nba_ladders.screens import BIG_POSITIONS, CENTRE_POSITIONS, parse_player_index
 from nba_ladders.sources.nba_stats import get_player_index
 from nba_ladders.with_without import teammate_status
 
@@ -35,9 +35,11 @@ CENTRE_REB36 = 10.0
 def team_season_roles(pg: pl.DataFrame, pos: pl.DataFrame, min_gp: int = 20) -> pl.DataFrame:
     """Per (season, team, player): avg minutes, whether a big, and the team's starting centre.
 
-    Position labels can't separate centres from stretch forwards (Plumlee and Markkanen are
-    both "F-C"), so a centre is a big who also rebounds like one (reb/36 >= CENTRE_REB36).
+    Listed C / C-F are centres. "F-C" mixes real centres with stretch forwards (Plumlee and
+    Markkanen are both F-C), so an F-C counts only if he rebounds like one (reb/36 >= CENTRE_REB36).
+    min_gp scales down early in a season (40% of team games so far, capped at min_gp).
     """
+    team_gp = pg.group_by("season_id", "team_id").agg(pl.col("game_id").n_unique().alias("team_gp"))
     roles = (
         pg.group_by("season_id", "team_id", "player_id")
         .agg(
@@ -49,10 +51,19 @@ def team_season_roles(pg: pl.DataFrame, pos: pl.DataFrame, min_gp: int = 20) -> 
         .with_columns(
             pl.col("position").is_in(BIG_POSITIONS).fill_null(False).alias("is_big"),
         )
-        .with_columns((pl.col("is_big") & (pl.col("reb36") >= CENTRE_REB36)).alias("is_centre"))
+        .with_columns(
+            (
+                pl.col("is_big")
+                & (pl.col("position").is_in(CENTRE_POSITIONS) | (pl.col("reb36") >= CENTRE_REB36))
+            ).alias("is_centre")
+        )
+        .join(team_gp, on=["season_id", "team_id"])
+        .with_columns(
+            pl.min_horizontal(pl.lit(min_gp), (pl.col("team_gp") * 0.4).ceil()).alias("min_gp")
+        )
     )
     starters = (
-        roles.filter(pl.col("is_centre"), pl.col("gp") >= min_gp)
+        roles.filter(pl.col("is_centre"), pl.col("gp") >= pl.col("min_gp"))
         .sort("season_min", descending=True)
         .group_by("season_id", "team_id", maintain_order=True)
         .first()
@@ -74,7 +85,7 @@ def backup_big_games(pg: pl.DataFrame, pos: pl.DataFrame, min_gp: int = 20) -> p
     roles = team_season_roles(pg, pos, min_gp)
     backups = roles.filter(
         pl.col("is_big"),
-        pl.col("gp") >= min_gp,
+        pl.col("gp") >= pl.col("min_gp"),
         pl.col("player_id") != pl.col("starter_id"),
         pl.col("season_min") < pl.col("starter_min"),
     ).select("season_id", "team_id", "player_id", "starter_id", "season_min")
@@ -114,3 +125,18 @@ def rung_rates(df: pl.DataFrame, by: list[str]) -> pl.DataFrame:
             (pl.col("p15_12") / pl.col("p10_10")).alias("tail_15"),
         )
     )
+
+
+def main() -> None:
+    """Rebuild data/processed/backup_big_games.parquet (all seasons, incl. the current one)."""
+    from nba_ladders import config
+
+    pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
+    bg = backup_big_games(pg, positions())
+    out = config.DATA_PROCESSED / "backup_big_games.parquet"
+    bg.write_parquet(out)
+    print(f"{bg.height:,} backup-big games ({int(bg['starter_out'].sum()):,} starter out) -> {out}")
+
+
+if __name__ == "__main__":
+    main()

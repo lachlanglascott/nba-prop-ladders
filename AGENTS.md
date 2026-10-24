@@ -30,6 +30,8 @@ not a normal distribution.
 - Pull data: `uv run python -m nba_ladders.pull --seasons 2019-20 2020-21 2021-22 2022-23 2023-24 2024-25 2025-26 2026-27 --refresh 2026-27`
 - Backup-bigs screen: `uv run python -m nba_ladders.reports` (writes `docs/screens/`)
 - Angles (hypotheses being tested): `docs/angles.md`
+- Rebuild scenarios: `uv run python -m nba_ladders.scenarios`; backtest: `uv run python -m nba_ladders.backtest`
+- Price a ladder: `uv run python -m nba_ladders.price "Player Name" --starter-out` (see `docs/simulator.md`)
 - Install: `uv sync`
 - Test: `uv run pytest -q`
 - Lint: `uv run ruff check .`

@@ -31,6 +31,11 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/pull.py` | Command that pulls the seasons and writes `data/processed/player_games.parquet`. |
 | `src/nba_ladders/screens.py` | Candidate screens. `backup_bigs` = current bigs in a bench role last season, with minutes spread, production at 25+ min, blocker last season and centre ahead now. |
 | `src/nba_ladders/reports.py` | Writes screen outputs to `docs/screens/<name>_<date>.csv`. |
+| `src/nba_ladders/scenarios.py` | Pre-game scenarios: starting centre per team-season, backup-big games flagged `starter_out`. `python -m nba_ladders.scenarios` rebuilds the table. |
+| `src/nba_ladders/angles_abc.py` | Season-to-season predictability tests for angles A–C. |
+| `src/nba_ladders/sim.py` | Monte Carlo simulator for joint pts/reb; fair price per ladder rung. |
+| `src/nba_ladders/backtest.py` | As-at backtest of the simulator with calibration and scores. |
+| `src/nba_ladders/price.py` | CLI: fair prices for a player's ladder in a scenario. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
@@ -38,6 +43,7 @@ What every file in this repo is for, grouped by job.
 | File | Purpose |
 |---|---|
 | `tests/test_phase1.py` | Offline tests for the parser, the never-overwrite cache rule, and with/without logic (on a hand-built 5-game team with a starter, backup and traded player). |
+| `tests/test_sim.py` | Simulator tests: bounds, starter-out lifts minutes, correlated rates make joint > independent. |
 | `tests/test_smoke.py` | Quick checks: data folders exist, bet log has the right columns, every scenario label is a known one. The hook runs these after each edit. Data-pipeline tests will use saved sample data so tests never need the network. |
 
 ## Data and bets
@@ -54,6 +60,8 @@ What every file in this repo is for, grouped by job.
 |---|---|
 | `docs/angles.md` | The betting angles as separate hypotheses (conversion, tail, injury trigger, foul trouble): metric, market, status, findings. |
 | `docs/screens/` | Dated screen outputs (CSV) for review. |
+| `docs/angles_abc_findings.md` | Results for angles A–C. |
+| `docs/simulator.md` | How the simulator works, backtest and calibration results, limitations. |
 | `docs/phase1_findings.md` | First results from the data. |
 | `docs/REPO_GUIDE.md` | This file. Update it when files are added or their role changes. |
 
