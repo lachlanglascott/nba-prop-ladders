@@ -8,3 +8,4 @@ data/processed/*
 !data/**/.gitkeep
 .env
 .claude/settings.local.json
+.DS_Store
