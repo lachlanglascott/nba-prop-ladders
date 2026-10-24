@@ -8,6 +8,7 @@ dependencies = [
     "duckdb>=1.0",
     "numpy>=1.26",
     "scipy>=1.11",
+    "truststore>=0.10.5",
 ]
 
 [dependency-groups]

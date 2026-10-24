@@ -27,6 +27,7 @@ not a normal distribution.
 - `docs/` — notes, decisions, examples
 
 ## Commands
+- Pull data: `uv run python -m nba_ladders.pull --seasons 2023-24 2024-25 2025-26 2026-27 --refresh 2026-27`
 - Install: `uv sync`
 - Test: `uv run pytest -q`
 - Lint: `uv run ruff check .`
@@ -34,3 +35,4 @@ not a normal distribution.
 ## Conventions
 - Python 3.11, type hints, small pure functions; network I/O isolated in `src/nba_ladders/sources/`.
 - Prefer polars/duckdb for tabular work, parquet for storage.
+- Python pinned to 3.11 (`.python-version`). HTTPS uses `truststore` (OS cert store) so requests work behind TLS-inspecting proxies — don't disable cert verification.

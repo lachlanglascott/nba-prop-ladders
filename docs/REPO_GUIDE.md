@@ -22,14 +22,20 @@ What every file in this repo is for, grouped by job.
 | File | Purpose |
 |---|---|
 | `pyproject.toml` | The project definition: name, Python version, packages it needs (`nba_api` for NBA stats, `polars`/`duckdb` for tables, `numpy`/`scipy` for simulation), dev tools (`pytest`, `ruff`) and lint settings. `uv add <pkg>` updates it. |
+| `.python-version` | Pins Python 3.11 for uv. |
 | `uv.lock` | Exact version of every package, including ones pulled in indirectly. `uv sync` reproduces the same environment on any machine. Never edit by hand. |
 | `src/nba_ladders/__init__.py` | Empty. Marks the folder as a Python package so `from nba_ladders import config` works. |
+| `src/nba_ladders/sources/nba_stats.py` | Cached, throttled stats.nba.com fetcher. Each raw response saved once as `data/raw/nba_stats/leaguegamelog/<season>_<type>_<date>.json`; completed seasons fetched once, the current season gets a new dated snapshot when refreshed. Never overwrites. |
+| `src/nba_ladders/player_games.py` | Turns the raw response into a tidy player-game table (minutes, pts, reb, ast, fouls, home/away, opponent). |
+| `src/nba_ladders/with_without.py` | For every pair of teammates: a player's minutes/stats when the teammate played vs was absent (only counting games the teammate was on the roster, so trades don't count as absences). Finds "backup gets minutes when X sits" pairs. |
+| `src/nba_ladders/pull.py` | Command that pulls the seasons and writes `data/processed/player_games.parquet`. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
 
 | File | Purpose |
 |---|---|
+| `tests/test_phase1.py` | Offline tests for the parser, the never-overwrite cache rule, and with/without logic (on a hand-built 5-game team with a starter, backup and traded player). |
 | `tests/test_smoke.py` | Quick checks: data folders exist, bet log has the right columns, every scenario label is a known one. The hook runs these after each edit. Data-pipeline tests will use saved sample data so tests never need the network. |
 
 ## Data and bets
@@ -44,6 +50,7 @@ What every file in this repo is for, grouped by job.
 
 | File | Purpose |
 |---|---|
+| `docs/phase1_findings.md` | First results from the data. |
 | `docs/REPO_GUIDE.md` | This file. Update it when files are added or their role changes. |
 
 ## Local only (not in git)
