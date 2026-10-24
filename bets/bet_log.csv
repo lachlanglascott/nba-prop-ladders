@@ -1,0 +1,3 @@
+date,player,team,opponent,bet_type,legs,odds,stake,scenario,thesis,result,actual_line,notes
+2026-10,Mitchell Robinson,BOS,,SGM ladder,"PTS/REB ladder up to 15+/10+",,,new_starter,"New starter role -> minutes jump; P/R correlated upside",L,,"All rungs lost. Fill in game date/opp/odds/actuals. Q: did minutes materialise or rate fail?"
+2026-10,Andre Drummond,,,SGM,PTS/REB,,,,"",W,,"Filled up. Fill in context: why was he in line for minutes?"

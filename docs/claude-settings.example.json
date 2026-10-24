@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": ["Bash(uv run pytest:*)", "Bash(uv run ruff:*)", "Bash(uv sync:*)", "Bash(git status:*)", "Bash(git diff:*)"],
+    "deny": ["Edit(data/raw/**)", "Write(data/raw/**)"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && uv run pytest -q -x >/tmp/nba-edge-pytest.log 2>&1 || { tail -20 /tmp/nba-edge-pytest.log >&2; exit 2; }"
+          }
+        ]
+      }
+    ]
+  }
+}
