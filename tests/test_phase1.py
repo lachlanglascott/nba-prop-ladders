@@ -102,3 +102,15 @@ def test_player_profiles_split_by_big_minutes(team):
     assert backup["p_min25"] == pytest.approx(0.2)
     assert backup["p_10_10"] == pytest.approx(0.2)
     assert backup["p_10_10_big"] == 1.0
+
+
+def test_backup_big_games_flags_starter_out(team):
+    from nba_ladders.scenarios import backup_big_games, rung_rates
+
+    # Starter (id 1) and Backup (id 2) both rebound like centres; Leaver is a guard.
+    pos = pl.DataFrame({"player_id": [1, 2, 3], "position": ["C", "C", "G"]})
+    bg = backup_big_games(team, pos, min_gp=1)
+    assert set(bg["player_id"]) == {2}
+    assert bg.filter(pl.col("starter_out"))["game_id"].to_list() == ["g3"]
+    out = rung_rates(bg, ["starter_out"]).filter(pl.col("starter_out")).row(0, named=True)
+    assert out["n"] == 1 and out["p10_10"] == 1.0 and out["p12_12"] == 1.0

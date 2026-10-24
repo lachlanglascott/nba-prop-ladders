@@ -5,10 +5,11 @@ them: a player can be a good fit for one and a terrible fit for another.
 
 | # | Angle | Thesis | Key metric | Market | Status |
 |---|---|---|---|---|---|
-| A | **Conversion** | When minutes come, production reliably follows | P(10/10 \| 25+ min) | P+R SGM at moderate lines | screened (`docs/screens/`) |
-| B | **Tail / "goes huge"** | Low hit rate, but when it hits the upper rungs hit together; priced as if independent/normal | P(higher rung \| 10/10), fair $ per rung vs offered $ | P+R ladder, long odds | first look below |
-| C | **Injury trigger** | Deep-bench big whose minutes jump only when the starter sits | minutes with blocker in vs out | anything, *if* in before the book reprices | screened (blocker columns) |
-| D | **Foul-trouble opponent** | Opponent bigs foul a lot, so the starter sits and the backup plays | opponent big PF/36, starter early-foul rate | backup's P+R | not started; needs play-by-play |
+| A | **Conversion** | When minutes come, production reliably follows | P(10/10 \| starter out) | P+R SGM at moderate lines | **predictable** from prior season ([findings](angles_abc_findings.md)) |
+| B | **Tail / "goes huge"** | Low hit rate, but when it hits the upper rungs hit together; priced as if independent/normal | P(higher rung \| 10/10), fair $ per rung vs offered $ | P+R ladder, long odds | **scenario effect confirmed**; player trait unproven (16 pairs) |
+| C | **Injury trigger** | Deep-bench big whose minutes jump only when the starter sits | minutes with blocker in vs out | anything, *if* in before the book reprices | real (~6–8 min) but **situational**, not a player trait |
+| D | **Foul-trouble opponent** | Opponent bigs foul a lot, so the starter sits and the backup plays | opponent big PF/36, starter early-foul rate | backup's P+R | in progress (play-by-play agent) |
+| E | **Role change** | Trade or depth-chart promotion makes a backup the starter (Richards after the Plumlee trade, Robinson at BOS) | production in new role vs prior; how fast lines reprice | P+R in first games of new role | not started |
 
 ## A vs B are different players
 
