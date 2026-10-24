@@ -29,6 +29,8 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/player_games.py` | Turns the raw response into a tidy player-game table (minutes, pts, reb, ast, fouls, home/away, opponent). |
 | `src/nba_ladders/with_without.py` | For every pair of teammates: a player's minutes/stats when the teammate played vs was absent (only counting games the teammate was on the roster, so trades don't count as absences). Finds "backup gets minutes when X sits" pairs. |
 | `src/nba_ladders/pull.py` | Command that pulls the seasons and writes `data/processed/player_games.parquet`. |
+| `src/nba_ladders/screens.py` | Candidate screens. `backup_bigs` = current bigs in a bench role last season, with minutes spread, production at 25+ min, blocker last season and centre ahead now. |
+| `src/nba_ladders/reports.py` | Writes screen outputs to `docs/screens/<name>_<date>.csv`. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
@@ -50,6 +52,8 @@ What every file in this repo is for, grouped by job.
 
 | File | Purpose |
 |---|---|
+| `docs/angles.md` | The betting angles as separate hypotheses (conversion, tail, injury trigger, foul trouble): metric, market, status, findings. |
+| `docs/screens/` | Dated screen outputs (CSV) for review. |
 | `docs/phase1_findings.md` | First results from the data. |
 | `docs/REPO_GUIDE.md` | This file. Update it when files are added or their role changes. |
 

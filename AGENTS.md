@@ -27,7 +27,9 @@ not a normal distribution.
 - `docs/` — notes, decisions, examples
 
 ## Commands
-- Pull data: `uv run python -m nba_ladders.pull --seasons 2023-24 2024-25 2025-26 2026-27 --refresh 2026-27`
+- Pull data: `uv run python -m nba_ladders.pull --seasons 2019-20 2020-21 2021-22 2022-23 2023-24 2024-25 2025-26 2026-27 --refresh 2026-27`
+- Backup-bigs screen: `uv run python -m nba_ladders.reports` (writes `docs/screens/`)
+- Angles (hypotheses being tested): `docs/angles.md`
 - Install: `uv sync`
 - Test: `uv run pytest -q`
 - Lint: `uv run ruff check .`
