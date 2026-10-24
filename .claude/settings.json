@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && uv run pytest -q -x >/tmp/nba-edge-pytest.log 2>&1 || { tail -20 /tmp/nba-edge-pytest.log >&2; exit 2; }"
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && uv run pytest -q -x >/tmp/nba-ladders-pytest.log 2>&1 || { tail -20 /tmp/nba-ladders-pytest.log >&2; exit 2; }"
           }
         ]
       }

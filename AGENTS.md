@@ -1,4 +1,4 @@
-# nba-prop-edge
+# nba-prop-ladders
 
 Personal project. Find +EV NBA player-prop and same-game-multi (SGM) bets by modelling
 the **joint** distribution of correlated stats (PTS/REB/AST) for role/backup players,
@@ -21,7 +21,7 @@ not a normal distribution.
 3. Evaluate with calibration + closing-line value, not just hit rate.
 
 ## Layout
-- `src/nba_edge/` — package code (`config.py` holds paths)
+- `src/nba_ladders/` — package code (`config.py` holds paths)
 - `tests/` — pytest; keep tests offline (no network) by using fixtures
 - `bets/bet_log.csv` — every real or paper bet, incl. losers. Use the `log-bet` skill.
 - `docs/` — notes, decisions, examples
@@ -32,5 +32,5 @@ not a normal distribution.
 - Lint: `uv run ruff check .`
 
 ## Conventions
-- Python 3.11, type hints, small pure functions; network I/O isolated in `src/nba_edge/sources/`.
+- Python 3.11, type hints, small pure functions; network I/O isolated in `src/nba_ladders/sources/`.
 - Prefer polars/duckdb for tabular work, parquet for storage.

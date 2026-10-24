@@ -1,6 +1,6 @@
 import csv
 
-from nba_edge import config
+from nba_ladders import config
 
 
 def test_paths_exist():
