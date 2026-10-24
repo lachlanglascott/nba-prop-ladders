@@ -1,7 +1,7 @@
 """Cached, throttled access to stats.nba.com via nba_api.
 
-Raw responses are written once to data/raw/nba_stats/ and never overwritten. A completed
-season is fetched once; the current season gets a new dated snapshot per fetch day.
+Raw responses are written once to data/raw/nba_stats/<endpoint>/ and never overwritten. A
+completed season is fetched once; the current season gets a new dated snapshot per fetch day.
 """
 
 import json
@@ -16,7 +16,8 @@ from nba_ladders import config
 # Use the OS certificate store (needed behind TLS-inspecting proxies; harmless elsewhere).
 truststore.inject_into_ssl()
 
-RAW_DIR = config.DATA_RAW / "nba_stats" / "leaguegamelog"
+RAW_ROOT = config.DATA_RAW / "nba_stats"
+RAW_DIR = RAW_ROOT / "leaguegamelog"
 _last_call = 0.0
 
 
@@ -41,6 +42,13 @@ def _fetch_league_gamelog(season: str, season_type: str) -> dict:
     return resp.get_dict()
 
 
+def _fetch_player_index(season: str) -> dict:
+    from nba_api.stats.endpoints import playerindex
+
+    _throttle()
+    return playerindex.PlayerIndex(season=season, timeout=60).get_dict()
+
+
 def snapshot_path(season: str, season_type: str, as_of: date, raw_dir: Path = RAW_DIR) -> Path:
     slug = season_type.lower().replace(" ", "_")
     return raw_dir / f"{season}_{slug}_{as_of.isoformat()}.json"
@@ -50,6 +58,22 @@ def latest_snapshot(season: str, season_type: str, raw_dir: Path = RAW_DIR) -> P
     slug = season_type.lower().replace(" ", "_")
     files = sorted(raw_dir.glob(f"{season}_{slug}_*.json"))
     return files[-1] if files else None
+
+
+def _cached(season, season_type, fetch, *, refresh, raw_dir, today) -> dict:
+    today = today or date.today()
+    existing = latest_snapshot(season, season_type, raw_dir)
+    if existing and not refresh:
+        return json.loads(existing.read_text())
+
+    path = snapshot_path(season, season_type, today, raw_dir)
+    if path.exists():
+        return json.loads(path.read_text())
+
+    payload = fetch()
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload))
+    return payload
 
 
 def get_league_gamelog(
@@ -66,16 +90,21 @@ def get_league_gamelog(
     refresh=True fetches a new dated snapshot (use for the in-progress season); an existing
     snapshot for the same day is reused rather than overwritten.
     """
-    today = today or date.today()
-    existing = latest_snapshot(season, season_type, raw_dir)
-    if existing and not refresh:
-        return json.loads(existing.read_text())
+    return _cached(
+        season, season_type, lambda: fetch(season, season_type),
+        refresh=refresh, raw_dir=raw_dir, today=today,
+    )
 
-    path = snapshot_path(season, season_type, today, raw_dir)
-    if path.exists():
-        return json.loads(path.read_text())
 
-    payload = fetch(season, season_type)
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload))
-    return payload
+def get_player_index(
+    season: str,
+    *,
+    refresh: bool = False,
+    raw_dir: Path = RAW_ROOT / "playerindex",
+    fetch=_fetch_player_index,
+    today: date | None = None,
+) -> dict:
+    """Return the raw player index (position, height, current team) for a season."""
+    return _cached(
+        season, "all", lambda: fetch(season), refresh=refresh, raw_dir=raw_dir, today=today
+    )

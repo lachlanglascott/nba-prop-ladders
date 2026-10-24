@@ -91,3 +91,14 @@ def test_with_without_detects_backup_uplift(team):
 def test_traded_player_not_counted_as_absent(team):
     ww = with_without(team, min_games_out=1)
     assert ww.filter(pl.col("mate_id") == 3).is_empty()
+
+
+def test_player_profiles_split_by_big_minutes(team):
+    from nba_ladders.screens import player_profiles
+
+    backup = player_profiles(team).filter(pl.col("player_id") == 2).row(0, named=True)
+    # Backup: 1 game at 30 min with 16p/12r (a 10/10), 4 games at 10 min with 4p/3r.
+    assert backup["gp"] == 5 and backup["n_big"] == 1
+    assert backup["p_min25"] == pytest.approx(0.2)
+    assert backup["p_10_10"] == pytest.approx(0.2)
+    assert backup["p_10_10_big"] == 1.0
