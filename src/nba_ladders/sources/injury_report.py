@@ -122,7 +122,7 @@ def parse_words(words: list[dict]) -> list[dict]:
             rows.append({**{k: v for k, v in carry.items() if not k.startswith("_")},
                          "player": None if not_filed else c["text"], "top": c["top"],
                          "status": "Not submitted" if not_filed else None, "reason": []})
-    same_line = lambda r, c: abs(r["top"] - c["top"]) < 2  # noqa: E731
+    same_line = lambda r, c: abs(r["top"] - c["top"]) < 2
     reasons = [c for c in cells if c["col"] == "reason" and c["text"] != NOT_SUBMITTED]
     for r in rows:
         r["has_own_reason"] = any(same_line(r, c) for c in reasons)
