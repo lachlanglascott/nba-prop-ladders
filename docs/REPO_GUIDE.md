@@ -38,6 +38,8 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/price.py` | CLI: fair prices for a player's ladder in a scenario. |
 | `src/nba_ladders/sources/pbp.py` | Cached play-by-play fetcher (one JSON per game, never re-fetched), foul and starter parsing. `python -m nba_ladders.sources.pbp --season-id 22025`. |
 | `src/nba_ladders/fouls.py` | Angle D analysis: starting centres' early foul trouble, backup uplift, opponent effect, persistence. |
+| `src/nba_ladders/sources/injury_report.py` | Official NBA injury report (15-min PDFs): fetch, cache, parse to player/status/reason; name-matching keys. |
+| `src/nba_ladders/sheet.py` | Game-day sheet: starting centres Out/Doubtful (alerts, new absences first) and Questionable (watch) → backups' fair P/R and P/R/A prices. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
@@ -47,6 +49,7 @@ What every file in this repo is for, grouped by job.
 | `tests/test_phase1.py` | Offline tests for the parser, the never-overwrite cache rule, and with/without logic (on a hand-built 5-game team with a starter, backup and traded player). |
 | `tests/test_sim.py` | Simulator tests: bounds, starter-out lifts minutes, correlated rates make joint > independent. |
 | `tests/test_fouls.py` | Offline tests for foul parsing, starter inference and the foul-trouble analysis. |
+| `tests/test_injury_report.py`, `tests/test_sheet.py` | Offline tests for report parsing, name keys, depth chart and new-absence logic. |
 | `tests/test_smoke.py` | Quick checks: data folders exist, bet log has the right columns, every scenario label is a known one. The hook runs these after each edit. Data-pipeline tests will use saved sample data so tests never need the network. |
 
 ## Data and bets

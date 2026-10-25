@@ -13,6 +13,11 @@ not a normal distribution.
 - Respect source rate limits (stats.nba.com: >=0.6s between calls, cache every response).
 - Don't scrape bookmaker sites without the user's explicit go-ahead (ToS / account risk).
 
+## Priorities
+- **Headline alert: starting centre Out/Doubtful → his backup big's P/R (and P/R/A) ladder.**
+  This is the user's core skill; it always goes first in sheets and notifications.
+- Then everyone else: any player, any teammate-out combination, 2- and 3-leg combos.
+
 ## Modelling principles
 1. Model **minutes first** as a mixture over named scenarios; then per-minute rates; then
    simulate the joint outcome. Report P(A and B) next to P(A)·P(B) — the gap is the edge.
@@ -31,6 +36,7 @@ not a normal distribution.
 - Backup-bigs screen: `uv run python -m nba_ladders.reports` (writes `docs/screens/`)
 - Angles (hypotheses being tested): `docs/angles.md`
 - Rebuild scenarios: `uv run python -m nba_ladders.scenarios`; backtest: `uv run python -m nba_ladders.backtest`
+- Game-day sheet: `uv run python -m nba_ladders.sheet [--date YYYY-MM-DD]` (official injury report → alerts)
 - Price a ladder: `uv run python -m nba_ladders.price "Player Name" --starter-out` (see `docs/simulator.md`)
 - Install: `uv sync`
 - Test: `uv run pytest -q`
