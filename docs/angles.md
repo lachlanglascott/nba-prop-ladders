@@ -41,3 +41,16 @@ Early reads, small samples (5–28 10/10 games per row):
   minutes). We need *offered* prices to confirm EV; no historical odds yet, so log quotes going forward.
 - **C:** de-confound with/without from rotation changes (compare to nearby games).
 - **D:** pull play-by-play for foul timing.
+
+## Player examples from the user's betting (for testing the any-teammate-out model)
+
+| Player | Type | Why | Data |
+|---|---|---|---|
+| Nick Richards (CHA) | backup C → starter | minutes with/after Plumlee | conversion (A), role change (E) |
+| Andre Drummond | backup C | Embiid/Vučević out → 24–29 min, 10/10 34–80% | conversion (A) |
+| Onyeka Okongwu (ATL) | backup C | Capela out | tail (B) |
+| Goga Bitadze (ORL) | backup C | Carter out | conversion (A) |
+| Larry Nance Jr. | all-round F-C | P/R/A | all-round (F) |
+| Yaxel Lendeborg (GSW) | rookie F | 10-24 @PHX: Horford (new), Draymond, Porziņģis all out → 36 min, 26/9/5 | role change (E), all-round (F) |
+| **Tari Eason (HOU)** | F, very uneven minutes | production gated by minutes: 15p/8r is 5% at 16–22 min, **24–27% at 23+**; pts~min corr 0.54–0.63 | needs "which absences unlock his 23+ min" |
+
