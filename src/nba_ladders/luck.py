@@ -19,6 +19,10 @@ from nba_ladders import config
 WINDOW = 10
 K_CONV = {"ast": 60.0, "reb": 80.0}  # pseudo-chances of league conversion in the shrink
 CHANCES = {"ast": "potential_ast", "reb": "reb_chances"}
+# Weight on the chance-based rate when blending with the actual recent rate.
+# AST 0.5: best on 2024-25 and again on 2025-26. REB: 2024-25 preferred 0.7 but 2025-26 0.2,
+# so a cautious 0.3 (chosen after seeing both seasons; treat as provisional). docs/luck.md
+BLEND = {"ast": 0.5, "reb": 0.3}
 
 
 def load() -> pl.DataFrame:
@@ -114,8 +118,10 @@ def player_report(feat: pl.DataFrame, name: str, last: int = 10) -> None:
         ))
         for s, c, conv in (("ast", "potential_ast", conv_a), ("reb", "reb_chances", conv_r)):
             act, exp = p[s].sum(), p[c].sum() * conv
+            adj = (BLEND[s] * exp + (1 - BLEND[s]) * act) / act if act else float("nan")
             print(f"  {s.upper()}: {act} actual vs {exp:.1f} expected over these games "
-                  f"({act - exp:+.1f}, {'unlucky' if act < exp else 'lucky'})")
+                  f"({act - exp:+.1f}, {'unlucky' if act < exp else 'lucky'}); "
+                  f"luck-adjusted rate x{adj:.2f} vs recent actual")
 
 
 def main() -> None:

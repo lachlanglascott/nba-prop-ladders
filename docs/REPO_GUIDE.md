@@ -78,6 +78,7 @@ What every file in this repo is for, grouped by job.
 | `docs/simulator.md` | How the simulator works, backtest and calibration results, limitations. |
 | `docs/angle_d_fouls.md` | Results for angle D (foul trouble). |
 | `docs/context_model.md` | Any-teammate-out model: method, tuning, holdout results, next steps. |
+| `docs/luck.md` | Potential assists / rebound chances: does luck revert? Blend weights. |
 | `docs/status_calibration.md` | Injury-report status → P(sits), 2025-26. |
 | `docs/phase1_findings.md` | First results from the data. |
 | `docs/REPO_GUIDE.md` | This file. Update it when files are added or their role changes. |

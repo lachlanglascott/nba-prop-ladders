@@ -12,6 +12,8 @@ them: a player can be a good fit for one and a terrible fit for another.
 | E | **Role change** | Trade or depth-chart promotion makes a backup the starter (Richards after the Plumlee trade, Robinson at BOS) | production in new role vs prior; how fast lines reprice | P+R in first games of new role | not started; Lendeborg (GSW rookie, 29–37 min from game 1) logged |
 | F | **All-round P/R/A** | Big-minutes forward who fills every column (old Larry Nance bets, Lendeborg); three legs that all move with minutes | 3-leg joint vs independent | P/R/A SGM | **confirmed in backtest**: independent legs predict ~half the hits ([simulator](simulator.md#three-leg-pra-combos)) |
 
+| G | **Luck reversion** | Recent assists (rebounds) lag potential assists (rebound chances); lines set off the low actuals | luck over last 10 vs next game | AST (REB) props, P/R/A | **confirmed for assists** (~halfway reversion, stable across seasons); rebounds weaker ([findings](luck.md)) |
+
 ## A vs B are different players
 
 - **Conversion (A)** fits players with a high 10/10 rate *at* big minutes: Ware, Bitadze, Richards, Drummond.
