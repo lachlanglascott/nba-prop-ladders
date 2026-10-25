@@ -42,7 +42,7 @@ def checkpoints(pg: pl.DataFrame, seasons: list[str]) -> list[date]:
 
 
 def run(pg: pl.DataFrame, seasons=("22024", "22025"), n_sims: int = 3000,
-        scale: float | None = None) -> pl.DataFrame:
+        scale: float | None = None, half_life: float | None = None) -> pl.DataFrame:
     pos = positions()
     combos = [parse_combo(c) for c in COMBOS]
     rows = []
@@ -63,7 +63,8 @@ def run(pg: pl.DataFrame, seasons=("22024", "22025"), n_sims: int = 3000,
                 hist = g.slice(max(0, i - HISTORY_GAMES), min(i, HISTORY_GAMES))
                 if hist.height < 10 or hist["minutes"].mean() < MIN_AVG_MINUTES:
                     continue
-                cf, bf = fit_context(hist), fit_player(hist.drop("starter_out", strict=False))
+                cf = fit_context(hist, half_life)
+                bf = fit_player(hist.drop("starter_out", strict=False), half_life)
                 if cf is None or bf is None:
                     continue
                 t = g.row(i, named=True)
@@ -102,10 +103,11 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seasons", nargs="+", default=["22024", "22025"])
     ap.add_argument("--scale", type=float, default=None)
+    ap.add_argument("--half-life", type=float, default=None)
     ap.add_argument("--out", default="backtest_context.parquet")
     args = ap.parse_args()
     pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
-    res = run(pg, tuple(args.seasons), scale=args.scale)
+    res = run(pg, tuple(args.seasons), scale=args.scale, half_life=args.half_life)
     out = config.DATA_PROCESSED / args.out
     res.write_parquet(out)
     print(f"wrote {out}")

@@ -54,7 +54,34 @@ minutes are freed. It does **not** replace the starter-out backup-big model (sti
 calibrated, see `simulator.md`); it extends coverage to every player and any combination of
 absences.
 
-## Biggest open issue found: stale history
+## Recency weighting (added after the first holdout)
+
+Templates are weighted by age: halves every `HALF_LIFE = 5` games, with `RECENCY_FLOOR = 0.2`
+of weight spread evenly over all 120 games so rare big games still get sampled
+(`sim.recency_weights`). Tuned on 2024-25 (half-life 60/30/15/8/5/3; floor 0–0.6).
+
+| 2025-26 holdout | Log loss | Minutes MAE |
+|---|---|---|
+| Context model, no recency | 0.2995 | 5.86 |
+| **Context model, recency + points fix** | **0.2835** | **4.82** |
+| No-context model, recency + points fix | 0.2848 | 4.95 |
+
+Recency is the biggest single gain in the project. Role (minutes) changes fast.
+
+## Points bug fixed: odd totals
+
+Points were drawn in 2-point units, so every simulated total was even and P(15+) = P(16+):
+odd thresholds (and so every x.5 line from 14.5, 16.5…) were under-priced. Points are now drawn
+as free throws + twos + threes (18/50/32% of points; variance ≈ 2.1× mean). 2025-26, 15+ pts:
+6,493 → 6,918 predicted vs 7,426 actual.
+
+## Remaining calibration gaps
+- Point thresholds still ~4–8% low overall (2025-26: 10p 11,680 vs 12,150; 20p 3,759 vs 4,110),
+  and recency trims backup bigs' normal-game tail (~14% fewer hits than actual vs 3% without).
+  Next: a global calibration correction (e.g. isotonic on log-odds, fit on 2024-25).
+- Backup bigs' starter-out tail swings by season (2024-25 under-predicted ~20%, 2025-26 over ~13%).
+
+## Earlier open issue: stale history (now addressed by recency weighting)
 
 Both models under-predict 15+ points (2025-26, 30+ freed: 5,528 actual vs ~4,700–4,760
 predicted). A 120-game equal-weighted history underprices improving players. **Next: weight

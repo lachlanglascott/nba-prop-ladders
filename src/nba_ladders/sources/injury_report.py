@@ -42,8 +42,13 @@ SCHEMA = {
 
 
 def stamp(ts: datetime) -> str:
-    """2026-10-24 18:00 ET -> '2026-10-24_06_00PM'."""
+    """2026-10-24 18:00 ET -> '2026-10-24_06_00PM' (current naming, 15-minute reports)."""
     return ts.strftime("%Y-%m-%d_%I_%M%p")
+
+
+def legacy_stamp(ts: datetime) -> str | None:
+    """Older naming used until partway through 2025-26: hourly, '2025-10-22_05PM'."""
+    return ts.strftime("%Y-%m-%d_%I%p") if ts.minute == 0 else None
 
 
 def report_path(ts: datetime, raw_dir: Path = RAW_DIR) -> Path:
@@ -55,8 +60,11 @@ def fetch_report(ts: datetime, raw_dir: Path = RAW_DIR) -> Path | None:
     path = report_path(ts, raw_dir)
     if path.exists():
         return path
-    resp = requests.get(URL.format(stamp=stamp(ts)), timeout=30)
-    if resp.status_code != 200 or not resp.content.startswith(b"%PDF"):
+    for s in filter(None, (stamp(ts), legacy_stamp(ts))):
+        resp = requests.get(URL.format(stamp=s), timeout=30)
+        if resp.status_code == 200 and resp.content.startswith(b"%PDF"):
+            break
+    else:
         return None  # S3 answers 403 AccessDenied for reports that don't exist
     raw_dir.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".pdf.part")

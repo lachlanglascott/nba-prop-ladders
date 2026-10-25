@@ -44,6 +44,9 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/context_sim.py` | Context-aware simulator: un-adjust past games for who sat, re-adjust for the target game. |
 | `src/nba_ladders/backtest_context.py` | As-at backtest of the context model vs the no-context model, all players. |
 | `src/nba_ladders/ppm.py` | Per-minute report: full-strength minutes, PPM/RPM/APM, and which teammates unlock a player. |
+| `src/nba_ladders/sources/tracking.py` | Per-game tracking stats (potential/secondary assists, passes, rebound chances, contested boards) via one-day LeagueDashPtStats queries, cached. |
+| `src/nba_ladders/luck.py` | Opportunity vs outcome: do potential assists / rebound chances predict future production better than actuals? Per-player luck report. |
+| `src/nba_ladders/status_calibration.py` | P(sits) by injury-report status, from past reports vs box scores. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
@@ -54,6 +57,7 @@ What every file in this repo is for, grouped by job.
 | `tests/test_sim.py` | Simulator tests: bounds, starter-out lifts minutes, correlated rates make joint > independent. |
 | `tests/test_fouls.py` | Offline tests for foul parsing, starter inference and the foul-trouble analysis. |
 | `tests/test_injury_report.py`, `tests/test_sheet.py` | Offline tests for report parsing, name keys, depth chart and new-absence logic. |
+| `tests/test_absences.py`, `tests/test_luck.py`, `tests/test_status_calibration.py` | Offline tests for absence effects, as-at luck features, status matching. |
 | `tests/test_smoke.py` | Quick checks: data folders exist, bet log has the right columns, every scenario label is a known one. The hook runs these after each edit. Data-pipeline tests will use saved sample data so tests never need the network. |
 
 ## Data and bets
@@ -74,6 +78,7 @@ What every file in this repo is for, grouped by job.
 | `docs/simulator.md` | How the simulator works, backtest and calibration results, limitations. |
 | `docs/angle_d_fouls.md` | Results for angle D (foul trouble). |
 | `docs/context_model.md` | Any-teammate-out model: method, tuning, holdout results, next steps. |
+| `docs/status_calibration.md` | Injury-report status → P(sits), 2025-26. |
 | `docs/phase1_findings.md` | First results from the data. |
 | `docs/REPO_GUIDE.md` | This file. Update it when files are added or their role changes. |
 

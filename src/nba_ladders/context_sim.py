@@ -8,7 +8,7 @@ target game's absences:
     rate    = template_rate / mult(that night) * mult(target)
 
 Effects come from absences.py (pair with/without, shrunk to a league prior). Counts are drawn
-as in sim.py, keeping minutes, PPM, RPM and APM from the same template game.
+as in sim.py (points as free throws + twos + threes), keeping minutes, PPM, RPM and APM from the same template game.
 """
 
 from dataclasses import dataclass
@@ -16,7 +16,16 @@ from dataclasses import dataclass
 import numpy as np
 import polars as pl
 
-from nba_ladders.sim import MIN_RATE_MINUTES, MINUTES_JITTER, PTS_UNIT, _shrink
+from nba_ladders import sim
+from nba_ladders.sim import (
+    MIN_RATE_MINUTES,
+    MINUTES_JITTER,
+    PTS_UNIT,
+    _shrink,
+    draw_points,
+    pick,
+    recency_weights,
+)
 
 RATES = ["pts", "reb", "ast"]
 UNITS = {"pts": PTS_UNIT, "reb": 1.0, "ast": 1.0}
@@ -26,9 +35,10 @@ UNITS = {"pts": PTS_UNIT, "reb": 1.0, "ast": 1.0}
 class ContextFit:
     base_minutes: np.ndarray  # per template game, un-adjusted to full strength
     base_rates: dict[str, np.ndarray]  # per template game, NaN where < MIN_RATE_MINUTES
+    weights: np.ndarray | None = None  # recency weight per template game
 
 
-def fit_context(history: pl.DataFrame) -> ContextFit | None:
+def fit_context(history: pl.DataFrame, half_life: float | None = None) -> ContextFit | None:
     """history: player's past games with minutes, pts, reb, ast, shift_min, mult_<stat>."""
     if history.height == 0:
         return None
@@ -44,7 +54,8 @@ def fit_context(history: pl.DataFrame) -> ContextFit | None:
         raw = history[s].to_numpy()[rated] / m
         r[rated] = _shrink(raw, m, UNITS[s]) / history[f"mult_{s}"].to_numpy()[rated]
         rates[s] = r
-    return ContextFit(base_min, rates)
+    hl = sim.HALF_LIFE if half_life is None else half_life
+    return ContextFit(base_min, rates, recency_weights(len(mins), hl))
 
 
 def simulate_context(fit: ContextFit, shift_min: float = 0.0, mult: dict | None = None,
@@ -52,12 +63,12 @@ def simulate_context(fit: ContextFit, shift_min: float = 0.0, mult: dict | None 
     """Simulate a game with the given absence context (shift, rate multipliers)."""
     mult = mult or {}
     rng = np.random.default_rng(seed)
-    idx = rng.integers(0, len(fit.base_minutes), n)
+    idx = pick(rng, np.arange(len(fit.base_minutes)), fit.weights, n)
     minutes = np.clip(fit.base_minutes[idx] + shift_min + rng.normal(0, MINUTES_JITTER, n), 0, 48)
     rated = np.flatnonzero(~np.isnan(fit.base_rates["pts"]))
-    rate_idx = np.where(np.isnan(fit.base_rates["pts"][idx]), rng.choice(rated, n), idx)
+    rate_idx = np.where(np.isnan(fit.base_rates["pts"][idx]), pick(rng, rated, fit.weights, n), idx)
     out = {"minutes": minutes}
     for s in RATES:
         rate = np.clip(fit.base_rates[s][rate_idx] * mult.get(s, 1.0), 0, None)
-        out[s] = UNITS[s] * rng.poisson(rate * minutes / UNITS[s])
+        out[s] = draw_points(rng, rate * minutes) if s == "pts" else rng.poisson(rate * minutes)
     return out

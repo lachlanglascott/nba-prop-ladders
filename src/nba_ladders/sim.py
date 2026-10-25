@@ -20,10 +20,20 @@ import polars as pl
 
 RUNGS = [(8, 8), (10, 10), (12, 10), (12, 12), (15, 10), (15, 12), (15, 15), (20, 15)]
 MIN_RATE_MINUTES = 10  # games shorter than this give too-noisy per-minute rates
-PTS_UNIT = 2.0
+PTS_UNIT = 2.0  # variance-to-mean of points (used when shrinking per-game rates)
+# Share of points from free throws, twos and threes (league-typical). Drawing points as
+# 1*Poisson + 2*Poisson + 3*Poisson keeps variance ~2.1x the mean AND allows odd totals;
+# a single 2-point unit made every simulated total even, so P(15+) == P(16+).
+PTS_MIX = ((1, 0.18), (2, 0.50), (3, 0.32))
+
+
+def draw_points(rng, expected: np.ndarray) -> np.ndarray:
+    """Points with the given expected values, as free throws + twos + threes."""
+    return sum(v * rng.poisson(expected * share / v) for v, share in PTS_MIX)
 # Backup-big minutes when the starter sits vs plays: 20.5 / 15.5 (docs/angles_abc_findings.md)
 LEAGUE_UPLIFT_RATIO = 1.32
 LEAGUE_UPLIFT_ADD = 5.0
+HALF_LIFE: float | None = 5.0  # games; chosen on 2024-25, validated on 2025-26 (docs/context_model.md)
 SHRINK_GAMES = 8  # pseudo-games of league-shifted minutes mixed into the starter-out sample
 MINUTES_JITTER = 2.0
 
@@ -35,6 +45,7 @@ class PlayerFit:
     pts_rate: np.ndarray  # per minute, shrunk; NaN where minutes < MIN_RATE_MINUTES
     reb_rate: np.ndarray
     ast_rate: np.ndarray
+    weights: np.ndarray | None = None  # recency weight per template game (None = equal)
 
     @property
     def n_games(self) -> int:
@@ -53,7 +64,31 @@ def _shrink(rates: np.ndarray, minutes: np.ndarray, unit: float) -> np.ndarray:
     return mean + k * (rates - mean)
 
 
-def fit_player(history: pl.DataFrame) -> PlayerFit | None:
+RECENCY_FLOOR = 0.2  # share of weight kept spread evenly over all history (protects the tails)
+
+
+def recency_weights(n: int, half_life: float | None, floor: float | None = None) -> np.ndarray | None:
+    """Weight per game, oldest first: halves every half_life games of age (None = equal).
+
+    floor mixes in a uniform share so rare big games from further back still get sampled:
+    w = (1 - floor) * decay / sum(decay) + floor / n.
+    """
+    if not half_life:
+        return None
+    phi = RECENCY_FLOOR if floor is None else floor
+    decay = 0.5 ** (np.arange(n)[::-1] / half_life)
+    return (1 - phi) * decay / decay.sum() + phi / n
+
+
+def pick(rng, pool: np.ndarray, weights: np.ndarray | None, n: int) -> np.ndarray:
+    """Draw n template indices from pool, weighted by recency if weights are given."""
+    if weights is None:
+        return rng.choice(pool, n)
+    w = weights[pool]
+    return rng.choice(pool, n, p=w / w.sum())
+
+
+def fit_player(history: pl.DataFrame, half_life: float | None = None) -> PlayerFit | None:
     """history: this player's past games with minutes, pts, reb, ast, and optionally
     starter_out (treated as all False when absent, e.g. non-bigs)."""
     if history.height == 0:
@@ -76,8 +111,10 @@ def fit_player(history: pl.DataFrame) -> PlayerFit | None:
         history["starter_out"].to_numpy() if "starter_out" in history.columns
         else np.zeros(len(mins), bool)
     )
+    hl = HALF_LIFE if half_life is None else half_life
     return PlayerFit(
-        mins, starter_out, rate("pts", PTS_UNIT), rate("reb", 1.0), rate("ast", 1.0)
+        mins, starter_out, rate("pts", PTS_UNIT), rate("reb", 1.0), rate("ast", 1.0),
+        recency_weights(len(mins), hl),
     )
 
 
@@ -88,12 +125,12 @@ def _templates(fit: PlayerFit, starter_out: bool, n: int, rng, uplift: str):
     if len(in_idx) == 0:
         in_idx = out_idx
     if not starter_out:
-        idx = rng.choice(in_idx, n)
+        idx = pick(rng, in_idx, fit.weights, n)
         return idx, fit.minutes[idx]
     w = len(out_idx) / (len(out_idx) + SHRINK_GAMES)
     use_own = (rng.random(n) < w) if len(out_idx) else np.zeros(n, bool)
-    idx = np.where(use_own, rng.choice(out_idx if len(out_idx) else in_idx, n),
-                   rng.choice(in_idx, n))
+    idx = np.where(use_own, pick(rng, out_idx if len(out_idx) else in_idx, fit.weights, n),
+                   pick(rng, in_idx, fit.weights, n))
     base = fit.minutes[idx]
     scaled = base * LEAGUE_UPLIFT_RATIO if uplift == "ratio" else base + LEAGUE_UPLIFT_ADD
     return idx, np.where(use_own, base, scaled)
@@ -118,15 +155,15 @@ def simulate_stats(fit: PlayerFit, starter_out: bool, n: int = 20_000, seed: int
     minutes = np.clip(minutes + rng.normal(0, MINUTES_JITTER, n), 0, 48)
     rated = np.flatnonzero(~np.isnan(fit.pts_rate))
     # Short-minute templates have no reliable rate: borrow one from a random rated game.
-    rate_idx = idx if paired else rng.choice(rated, n)
+    rate_idx = idx if paired else pick(rng, rated, fit.weights, n)
     missing = np.isnan(fit.pts_rate[rate_idx])
-    rate_idx = np.where(missing, rng.choice(rated, n), rate_idx)
+    rate_idx = np.where(missing, pick(rng, rated, fit.weights, n), rate_idx)
     pts_rate = np.clip(fit.pts_rate[rate_idx], 0, None)
     reb_rate = np.clip(fit.reb_rate[rate_idx], 0, None)
     ast_rate = np.clip(fit.ast_rate[rate_idx], 0, None)
     return {
         "minutes": minutes,
-        "pts": PTS_UNIT * rng.poisson(pts_rate * minutes / PTS_UNIT),
+        "pts": draw_points(rng, pts_rate * minutes),
         "reb": rng.poisson(reb_rate * minutes),
         "ast": rng.poisson(ast_rate * minutes),
     }

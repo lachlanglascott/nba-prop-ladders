@@ -53,3 +53,34 @@ def test_three_leg_joint_beats_independent():
     s = simulate_stats(fit_player(h), starter_out=True, n=40000)
     row = combo_probs(s, [{"pts": 10, "reb": 8, "ast": 3}]).row(0, named=True)
     assert row["p"] > row["p_indep"] * 1.3
+
+
+def test_recency_weights_halve_every_half_life():
+    from nba_ladders.sim import recency_weights
+
+    w = recency_weights(21, 10, floor=0.0)
+    assert abs(w.sum() - 1) < 1e-12
+    assert abs(w[-11] / w[-1] - 0.5) < 1e-12 and abs(w[0] / w[-1] - 0.25) < 1e-12
+    assert recency_weights(5, None) is None
+    # a floor keeps old games in play
+    assert recency_weights(100, 5, floor=0.3)[0] >= 0.3 / 100
+
+
+def test_recency_moves_simulation_toward_recent_form():
+    # 40 old games at 10 min, 10 recent games at 30 min
+    h = pl.DataFrame({"minutes": [10] * 40 + [30] * 10, "pts": [4] * 40 + [12] * 10,
+                      "reb": [3] * 40 + [9] * 10, "starter_out": [False] * 50})
+    flat, _, _ = simulate(fit_player(h, half_life=0), starter_out=False, n=20000)
+    recent, _, _ = simulate(fit_player(h, half_life=5), starter_out=False, n=20000)
+    assert recent.mean() > flat.mean() + 8
+
+
+def test_points_can_be_odd_and_keep_scoring_variance():
+    import numpy as np
+
+    from nba_ladders.sim import draw_points
+
+    pts = draw_points(np.random.default_rng(0), np.full(200_000, 15.0))
+    assert abs(pts.mean() - 15) < 0.05
+    assert (pts % 2 == 1).mean() > 0.4  # odd totals happen
+    assert 1.9 < pts.var() / pts.mean() < 2.3

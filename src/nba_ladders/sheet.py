@@ -14,6 +14,16 @@ import polars as pl
 from nba_api.stats.static import teams
 
 from nba_ladders import config
+from nba_ladders.absences import (
+    MIN_MATE_MINUTES,
+    RATES,
+    context_effects,
+    game_absences,
+    pair_effects,
+    priors,
+    shrunk_effects,
+)
+from nba_ladders.context_sim import fit_context, simulate_context
 from nba_ladders.price import player_history
 from nba_ladders.scenarios import CENTRE_REB36, positions
 from nba_ladders.screens import BIG_POSITIONS, CENTRE_POSITIONS, parse_player_index
@@ -21,14 +31,19 @@ from nba_ladders.sim import combo_probs, fit_player, parse_combo, simulate_stats
 from nba_ladders.sources.injury_report import ET, player_key, report_for_date
 from nba_ladders.sources.nba_stats import get_player_index
 
-# Assumed P(doesn't play) by listed status. Placeholders until calibrated against history.
-P_OUT = {"Out": 1.0, "Doubtful": 0.8, "Questionable": 0.4, "Probable": 0.05, "Available": 0.0}
+# P(doesn't play) by status on the ~5 PM ET report, calibrated on 2025-26: 13,392 listings over
+# 164 game days vs box scores (python -m nba_ladders.status_calibration; docs/status_calibration.md).
+# "Available" sits 24% mostly via two-way/G-League designations, so it's treated as playing here.
+P_OUT = {"Out": 0.999, "Doubtful": 0.991, "Questionable": 0.53, "Probable": 0.12, "Available": 0.0}
 ALERT_STATUSES = {"Out", "Doubtful"}
 WATCH_STATUSES = {"Questionable"}
 RECENT_GAMES = 15
 BACKUPS_PER_TEAM = 2
 COMBOS = ["8p/8r", "10p/10r", "12p/12r", "15p/12r", "10p/8r/2a", "12p/10r/3a"]
 TEAM_ABBR = {t["full_name"].replace(" ", ""): t["abbreviation"] for t in teams.get_teams()}
+UNLOCK_MIN_SHIFT = 3.0  # list players projected to gain at least this many minutes
+UNLOCK_COMBOS = ["15p", "20p", "15p/5r", "15p/8r", "10p/8r/2a", "20p/5r/5a"]
+HISTORY_GAMES = 120
 
 
 def depth_chart(pg: pl.DataFrame, roster: pl.DataFrame, pos: pl.DataFrame) -> pl.DataFrame:
@@ -102,6 +117,70 @@ def mixed_prices(name: str, p_out: float, combos: list[str]) -> pl.DataFrame | N
     })
 
 
+def minutes_unlocked(report: pl.DataFrame, pg: pl.DataFrame, roster: pl.DataFrame,
+                     pos: pl.DataFrame, skip_ids: set[int]) -> list[str]:
+    """Players projected to gain UNLOCK_MIN_SHIFT+ minutes from today's Out/Doubtful teammates."""
+    eff_raw = pair_effects(pg, pos)
+    pri = priors(eff_raw)
+    eff = shrunk_effects(eff_raw, pri)
+    recent = (pg.sort("game_date").group_by("player_id").tail(RECENT_GAMES)
+              .group_by("player_id").agg(pl.col("minutes").mean().alias("recent_min")))
+    people = roster.join(recent, on="player_id").with_columns(
+        pl.col("player_name").map_elements(player_key, return_dtype=pl.String).alias("player_key")
+    )
+    listed = report.select("team", "player_key", "status")
+    # Out/Doubtful today, matched to player ids on the current roster.
+    out_today = (
+        listed.filter(pl.col("status").is_in(ALERT_STATUSES))
+        .join(people, left_on=["team", "player_key"], right_on=["team_now", "player_key"])
+        .filter(pl.col("recent_min") >= MIN_MATE_MINUTES)
+        .select(pl.col("team").alias("team_id"), pl.col("player_id").alias("mate_id"),
+                pl.col("recent_min").alias("mate_min"), pl.lit("today").alias("game_id"))
+    )
+    teams_today = report["team"].drop_nulls().unique().implode()
+    candidates = (
+        people.filter(pl.col("team_now").is_in(teams_today), ~pl.col("player_id").is_in(list(skip_ids)))
+        .join(listed.filter(pl.col("status").is_in(ALERT_STATUSES)),
+              left_on=["team_now", "player_key"], right_on=["team", "player_key"], how="anti")
+        .select("player_id", "player_name", pl.col("team_now").alias("team_id"), "recent_min",
+                pl.lit("today").alias("game_id"))
+    )
+    today = context_effects(candidates, out_today, eff, pri, pos).join(
+        candidates.drop("game_id"), on="player_id"
+    ).filter(pl.col("shift_min") >= UNLOCK_MIN_SHIFT).sort("shift_min", descending=True)
+    if today.is_empty():
+        return ["None."]
+    absent_hist = game_absences(pg)
+    combos = [parse_combo(c) for c in UNLOCK_COMBOS]
+    out = []
+    for r in today.iter_rows(named=True):
+        hist = pg.filter(pl.col("player_id") == r["player_id"]).sort("game_date").tail(HISTORY_GAMES)
+        hist = hist.join(context_effects(hist, absent_hist, eff, pri, pos), on=["player_id", "game_id"])
+        fit = fit_context(hist)
+        if fit is None:
+            out.append(f"- {r['player_name']} ({r['team_id']}): +{r['shift_min']:.1f} min, too little history to price")
+            continue
+        mult = {s: r[f"mult_{s}"] for s in RATES}
+        sim_today = simulate_context(fit, r["shift_min"], mult, 30_000, seed=1)
+        sim_full = simulate_context(fit, 0.0, None, 30_000, seed=2)
+        p_today, p_full = combo_probs(sim_today, combos), combo_probs(sim_full, combos)
+        who = out_today.filter(pl.col("team_id") == r["team_id"]).join(
+            roster.select(pl.col("player_id").alias("mate_id"), "player_name"), on="mate_id")
+        rates = ", ".join(f"{s.upper()[0]}PM {(r[f'mult_{s}'] - 1) * 100:+.0f}%" for s in RATES)
+        out += [
+            (f"- **{r['player_name']}** ({r['team_id']}): full-strength "
+             f"{sim_full['minutes'].mean():.0f} → projected {sim_today['minutes'].mean():.0f} min "
+             f"(+{r['shift_min']:.1f}); {rates}. Out: {', '.join(who['player_name'].to_list())}"),
+            "",
+            "| Combo | Fair today | Fair at full strength | Independent legs today |",
+            "|---|---|---|---|",
+            *[f"| {a['combo']} | ${a['fair']:.2f} | ${b['fair']:.2f} | ${a['fair_indep']:.2f} |"
+              for a, b in zip(p_today.iter_rows(named=True), p_full.iter_rows(named=True), strict=True)],
+            "",
+        ]
+    return out
+
+
 def build_sheet(game_day: date) -> str:
     report = report_for_date(game_day)
     if report.is_empty():
@@ -118,7 +197,8 @@ def build_sheet(game_day: date) -> str:
     lines = [
         f"# Game-day sheet: {game_day}",
         (f"Injury report: {report['report_time'].max()} ET. "
-         f"Assumed P(sits): {', '.join(f'{k} {v:.0%}' for k, v in P_OUT.items())}."),
+         f"P(sits) by status (calibrated 2025-26): "
+         f"{', '.join(f'{k} {v:.0%}' for k, v in P_OUT.items())}."),
         "",
     ]
     not_filed = report.filter(pl.col("status") == "Not submitted")["team"].drop_nulls().to_list()
@@ -126,6 +206,7 @@ def build_sheet(game_day: date) -> str:
         lines += [f"**Not yet submitted:** {', '.join(sorted(not_filed))} (re-run later)", ""]
 
     sections = {"alert": [], "watch": []}
+    priced_ids: set[int] = set()
     for team in sorted(teams_today):
         chart = dc.filter(pl.col("team_now") == team)
         starter = chart.filter(pl.col("is_starter"))
@@ -153,6 +234,7 @@ def build_sheet(game_day: date) -> str:
                 block.append(f"- {b['player_name']}: {b_status} himself, skipped")
                 continue
             priced += 1
+            priced_ids.add(b["player_id"])
             prices = mixed_prices(b["player_name"], p_out, COMBOS)
             if prices is None:
                 block.append(f"- {b['player_name']}: not enough history to price")
@@ -175,7 +257,10 @@ def build_sheet(game_day: date) -> str:
     lines += [b for _, b in sorted(sections["alert"], key=lambda x: x[0])] or ["None."]
     lines += ["", "## Watch: starting centre Questionable", ""]
     lines += [b for _, b in sorted(sections["watch"], key=lambda x: x[0])] or ["None."]
-    lines += ["", "_Other injuries (non-centre) are not modelled yet._", ""]
+    lines += ["", f"## Minutes unlocked: everyone else (+{UNLOCK_MIN_SHIFT:.0f} min or more)", ""]
+    alert_backups = {b for b in priced_ids}
+    lines += minutes_unlocked(report, pg, roster, positions(), alert_backups)
+    lines += [""]
     return "\n".join(lines)
 
 

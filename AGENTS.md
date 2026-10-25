@@ -38,6 +38,8 @@ not a normal distribution.
 - Rebuild scenarios: `uv run python -m nba_ladders.scenarios`; backtest: `uv run python -m nba_ladders.backtest`
 - Game-day sheet: `uv run python -m nba_ladders.sheet [--date YYYY-MM-DD]` (official injury report → alerts)
 - Per-minute report: `uv run python -m nba_ladders.ppm "Player Name"` (teammate unlocks; see `docs/context_model.md`)
+- Status calibration: `uv run python -m nba_ladders.status_calibration --season-id 22025`
+- Tracking (potential assists, rebound chances): `uv run python -m nba_ladders.sources.tracking --seasons 2024-25 2025-26`; luck test `uv run python -m nba_ladders.luck ["Player"]`
 - Price a ladder: `uv run python -m nba_ladders.price "Player Name" --starter-out` (see `docs/simulator.md`)
 - Install: `uv sync`
 - Test: `uv run pytest -q`
