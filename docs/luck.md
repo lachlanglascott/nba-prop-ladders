@@ -12,7 +12,7 @@ uv run python -m nba_ladders.luck "Deni Avdija"    # a player's recent luck
 Per-game tracking from one-day `LeagueDashPtStats` queries (GP = 1 rows): potential, secondary
 and FT assists, passes, rebound chances (off/def), contested/uncontested rebounds. Validated on
 2026-03-15: assists match the box score 100%; contested + uncontested = box rebounds 100%.
-2023-24 → 2025-26: ~71k player-games (some days missing from timeouts; re-runs fill them).
+2023-24 → 2025-26: 79,071 player-games (2 day-measures missing in 2023-24).
 League conversion: **56% of potential assists** become assists; **61% of rebound chances**
 become rebounds.
 
@@ -42,6 +42,10 @@ from actuals, 4.70 from chances).
 |---|---|---|---|
 | Assists | 0.5 | 0.5 | **0.5** (stable) |
 | Rebounds | 0.7 | 0.2 | 0.3 (unstable; provisional) |
+
+Re-checked after the gap-fill (79k player-games; 2024-25 and 2025-26 complete): same result:
+assists best at 0.5 in both seasons (RMSE 1.842 / 1.820 vs 1.861 / 1.841 from actuals alone);
+rebounds 0.7 vs 0.2. Very unlucky passers: next game 2.23 vs 1.81 from actuals, 2.43 from chances.
 
 Rebound conversion is more skill/role (positioning, deferring) than assist conversion, so
 rebound chances alone predict *worse* than actual rebounds.
