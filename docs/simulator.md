@@ -58,6 +58,32 @@ Well calibrated in the 5–20% band where most ladder bets sit. Slightly **under
 long shots and **over**-confident above 20%. Fair for long shots is a bit too long, and for short
 prices a bit too short.
 
+## Three-leg P/R/A combos
+
+`simulate_stats` adds assists (rate drawn from the same template game). Price any combo:
+
+```bash
+uv run python -m nba_ladders.price "Larry Nance Jr." --combos 10p/6r/2a,12p/8r/3a
+```
+
+As-at backtest, backup bigs 2024-26 (hits):
+
+| Combo | Starter plays: actual / sim / independent | Starter out: actual / sim / independent |
+|---|---|---|
+| 8/6/2 | 434 / 417 / 292 | 193 / 165 / 122 |
+| 10/8/2 | 224 / 222 / 143 | 118 / 103 / 71 |
+| 10/6/3 | 202 / 195 / 130 | 103 / 85 / 59 |
+| 12/8/3 | 106 / 105 / 64 | 68 / 54 / 34 |
+| 12/10/2 | 108 / 103 / 61 | 65 / 58 / 37 |
+| 15/8/3 | 61 / 63 / 38 | 39 / 34 / 20 |
+
+- Normal games: calibrated. **Independent legs predict ~55–65% of actual hits** — the gap
+  compounds with each leg.
+- Starter-out games: simulator 10–20% low. Assists likely rise beyond the minutes effect when
+  the starter sits (role/usage). Fix in v2.
+- Players with < 5 games of 10+ min can't be fitted (e.g. rookies early in the season). v2: a
+  prior from comparable players.
+
 ## Ablations (how we got here)
 
 | Version | Starter-out hits predicted (actual 503 in that run) |

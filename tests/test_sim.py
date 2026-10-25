@@ -37,3 +37,19 @@ def test_correlated_rates_make_joint_beat_independent():
 
 def test_too_little_history_returns_none():
     assert fit_player(_history(n=3)) is None
+
+
+def test_parse_combo():
+    from nba_ladders.sim import parse_combo
+
+    assert parse_combo("20p/10r/3a") == {"pts": 20, "reb": 10, "ast": 3}
+    assert parse_combo("15P / 8R") == {"pts": 15, "reb": 8}
+
+
+def test_three_leg_joint_beats_independent():
+    from nba_ladders.sim import combo_probs, simulate_stats
+
+    h = _history().with_columns((pl.col("minutes") * 0.15).round().cast(pl.Int64).alias("ast"))
+    s = simulate_stats(fit_player(h), starter_out=True, n=40000)
+    row = combo_probs(s, [{"pts": 10, "reb": 8, "ast": 3}]).row(0, named=True)
+    assert row["p"] > row["p_indep"] * 1.3

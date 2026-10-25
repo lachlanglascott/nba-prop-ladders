@@ -34,6 +34,7 @@ class PlayerFit:
     starter_out: np.ndarray  # bool per past game
     pts_rate: np.ndarray  # per minute, shrunk; NaN where minutes < MIN_RATE_MINUTES
     reb_rate: np.ndarray
+    ast_rate: np.ndarray
 
     @property
     def n_games(self) -> int:
@@ -53,19 +54,31 @@ def _shrink(rates: np.ndarray, minutes: np.ndarray, unit: float) -> np.ndarray:
 
 
 def fit_player(history: pl.DataFrame) -> PlayerFit | None:
-    """history: this player's past games with minutes, pts, reb, starter_out."""
+    """history: this player's past games with minutes, pts, reb, ast, and optionally
+    starter_out (treated as all False when absent, e.g. non-bigs)."""
     if history.height == 0:
         return None
     mins = history["minutes"].to_numpy().astype(float)
     rated = mins >= MIN_RATE_MINUTES
     if rated.sum() < 5:
         return None
-    pts_rate = np.full(len(mins), np.nan)
-    reb_rate = np.full(len(mins), np.nan)
     m = mins[rated]
-    pts_rate[rated] = _shrink(history["pts"].to_numpy()[rated] / m, m, PTS_UNIT)
-    reb_rate[rated] = _shrink(history["reb"].to_numpy()[rated] / m, m, 1.0)
-    return PlayerFit(mins, history["starter_out"].to_numpy(), pts_rate, reb_rate)
+
+    def rate(col: str, unit: float) -> np.ndarray:
+        out = np.full(len(mins), np.nan)
+        if col in history.columns:
+            out[rated] = _shrink(history[col].to_numpy()[rated] / m, m, unit)
+        else:
+            out[rated] = 0.0
+        return out
+
+    starter_out = (
+        history["starter_out"].to_numpy() if "starter_out" in history.columns
+        else np.zeros(len(mins), bool)
+    )
+    return PlayerFit(
+        mins, starter_out, rate("pts", PTS_UNIT), rate("reb", 1.0), rate("ast", 1.0)
+    )
 
 
 def _templates(fit: PlayerFit, starter_out: bool, n: int, rng, uplift: str):
@@ -88,9 +101,16 @@ def _templates(fit: PlayerFit, starter_out: bool, n: int, rng, uplift: str):
 
 def simulate(fit: PlayerFit, starter_out: bool, n: int = 20_000, seed: int = 0,
              paired: bool = True, uplift: str = "ratio"):
-    """Return simulated (minutes, pts, reb) arrays.
+    """Return simulated (minutes, pts, reb) arrays. See simulate_stats for assists too."""
+    s = simulate_stats(fit, starter_out, n, seed, paired, uplift)
+    return s["minutes"], s["pts"], s["reb"]
 
-    paired=False draws the rate from an independent past game (ablation: ignores the
+
+def simulate_stats(fit: PlayerFit, starter_out: bool, n: int = 20_000, seed: int = 0,
+                   paired: bool = True, uplift: str = "ratio") -> dict[str, np.ndarray]:
+    """Return simulated {"minutes", "pts", "reb", "ast"} arrays.
+
+    paired=False draws the rates from an independent past game (ablation: ignores the
     minutes-production link). uplift: "ratio" or "add" for sparse starter-out history.
     """
     rng = np.random.default_rng(seed)
@@ -103,9 +123,13 @@ def simulate(fit: PlayerFit, starter_out: bool, n: int = 20_000, seed: int = 0,
     rate_idx = np.where(missing, rng.choice(rated, n), rate_idx)
     pts_rate = np.clip(fit.pts_rate[rate_idx], 0, None)
     reb_rate = np.clip(fit.reb_rate[rate_idx], 0, None)
-    pts = PTS_UNIT * rng.poisson(pts_rate * minutes / PTS_UNIT)
-    reb = rng.poisson(reb_rate * minutes)
-    return minutes, pts, reb
+    ast_rate = np.clip(fit.ast_rate[rate_idx], 0, None)
+    return {
+        "minutes": minutes,
+        "pts": PTS_UNIT * rng.poisson(pts_rate * minutes / PTS_UNIT),
+        "reb": rng.poisson(reb_rate * minutes),
+        "ast": rng.poisson(ast_rate * minutes),
+    }
 
 
 def rung_probs(pts: np.ndarray, reb: np.ndarray, rungs=RUNGS) -> dict:
@@ -124,4 +148,31 @@ def price_table(pts: np.ndarray, reb: np.ndarray, rungs=RUNGS) -> pl.DataFrame:
          "p_indep": v["indep"], "fair_indep": 1 / v["indep"] if v["indep"] else float("inf")}
         for k, v in rung_probs(pts, reb, rungs).items()
     ]
+    return pl.DataFrame(rows)
+
+
+STAT_CODES = {"p": "pts", "r": "reb", "a": "ast"}
+
+
+def parse_combo(text: str) -> dict[str, int]:
+    """'20p/10r/3a' -> {"pts": 20, "reb": 10, "ast": 3}."""
+    out = {}
+    for leg in text.lower().replace(" ", "").split("/"):
+        out[STAT_CODES[leg[-1]]] = int(leg[:-1])
+    return out
+
+
+def combo_probs(stats: dict[str, np.ndarray], combos: list[dict[str, int]]) -> pl.DataFrame:
+    """Joint P(every leg hits) vs the product of the legs' own probabilities."""
+    rows = []
+    for c in combos:
+        legs = [stats[k] >= v for k, v in c.items()]
+        joint = np.mean(np.logical_and.reduce(legs))
+        indep = float(np.prod([leg.mean() for leg in legs]))
+        rows.append({
+            "combo": "/".join(f"{v}{k[0]}" for k, v in c.items()),
+            "p": joint, "fair": 1 / joint if joint else float("inf"),
+            "p_indep": indep, "fair_indep": 1 / indep if indep else float("inf"),
+            "legs": ", ".join(f"{k}>={v}: {leg.mean():.2f}" for (k, v), leg in zip(c.items(), legs, strict=True)),
+        })
     return pl.DataFrame(rows)

@@ -1,3 +1,4 @@
 date,player,team,opponent,bet_type,legs,odds,stake,scenario,thesis,result,actual_line,notes
 2026-10,Mitchell Robinson,BOS,,SGM ladder,"PTS/REB ladder up to 15+/10+",,,new_starter,"New starter role -> minutes jump; P/R correlated upside",L,,"All rungs lost. Fill in game date/opp/odds/actuals. Q: did minutes materialise or rate fail?"
 2026-10,Andre Drummond,,,SGM,PTS/REB,,,,"",W,,"Filled up. Fill in context: why was he in line for minutes?"
+2026-10-25,Yaxel Lendeborg,GSW,,SGM ladder,"20p/10r/3a; 20p/7r/3a; 18p/10r/5a; etc.",,,role_change,"Rookie forward playing 29-37 min from game 1; all-round P/R/A like old Larry Nance bets",open,,"Confirm game (last: 10-24 @PHX 26p/9r/5a -> 20/7/3 W, 20/10/3 L, 18/10/5 L), odds, stake. Too few games to price yet."

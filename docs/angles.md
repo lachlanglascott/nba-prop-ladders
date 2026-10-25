@@ -9,7 +9,8 @@ them: a player can be a good fit for one and a terrible fit for another.
 | B | **Tail / "goes huge"** | Low hit rate, but when it hits the upper rungs hit together; priced as if independent/normal | P(higher rung \| 10/10), fair $ per rung vs offered $ | P+R ladder, long odds | **scenario effect confirmed**; player trait unproven (16 pairs) |
 | C | **Injury trigger** | Deep-bench big whose minutes jump only when the starter sits | minutes with blocker in vs out | anything, *if* in before the book reprices | real (~6–8 min) but **situational**, not a player trait |
 | D | **Foul-trouble opponent** | Opponent bigs foul a lot, so the starter sits and the backup plays | opponent big PF/36, starter early-foul rate | backup's P+R | **weak**: partly predictable, but moves only ~1 min to the backup ([findings](angle_d_fouls.md)) |
-| E | **Role change** | Trade or depth-chart promotion makes a backup the starter (Richards after the Plumlee trade, Robinson at BOS) | production in new role vs prior; how fast lines reprice | P+R in first games of new role | not started |
+| E | **Role change** | Trade or depth-chart promotion makes a backup the starter (Richards after the Plumlee trade, Robinson at BOS) | production in new role vs prior; how fast lines reprice | P+R in first games of new role | not started; Lendeborg (GSW rookie, 29–37 min from game 1) logged |
+| F | **All-round P/R/A** | Big-minutes forward who fills every column (old Larry Nance bets, Lendeborg); three legs that all move with minutes | 3-leg joint vs independent | P/R/A SGM | **confirmed in backtest**: independent legs predict ~half the hits ([simulator](simulator.md#three-leg-pra-combos)) |
 
 ## A vs B are different players
 
