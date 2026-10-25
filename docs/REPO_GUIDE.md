@@ -40,6 +40,10 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/fouls.py` | Angle D analysis: starting centres' early foul trouble, backup uplift, opponent effect, persistence. |
 | `src/nba_ladders/sources/injury_report.py` | Official NBA injury report (15-min PDFs): fetch, cache, parse to player/status/reason; name-matching keys. |
 | `src/nba_ladders/sheet.py` | Game-day sheet: starting centres Out/Doubtful (alerts, new absences first) and Questionable (watch) → backups' fair P/R and P/R/A prices. |
+| `src/nba_ladders/absences.py` | Teammate-absence effects on minutes and PPM/RPM/APM: pair with/without, league prior by position, shrinkage, combining several absences. |
+| `src/nba_ladders/context_sim.py` | Context-aware simulator: un-adjust past games for who sat, re-adjust for the target game. |
+| `src/nba_ladders/backtest_context.py` | As-at backtest of the context model vs the no-context model, all players. |
+| `src/nba_ladders/ppm.py` | Per-minute report: full-strength minutes, PPM/RPM/APM, and which teammates unlock a player. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
@@ -69,6 +73,7 @@ What every file in this repo is for, grouped by job.
 | `docs/angles_abc_findings.md` | Results for angles A–C. |
 | `docs/simulator.md` | How the simulator works, backtest and calibration results, limitations. |
 | `docs/angle_d_fouls.md` | Results for angle D (foul trouble). |
+| `docs/context_model.md` | Any-teammate-out model: method, tuning, holdout results, next steps. |
 | `docs/phase1_findings.md` | First results from the data. |
 | `docs/REPO_GUIDE.md` | This file. Update it when files are added or their role changes. |
 

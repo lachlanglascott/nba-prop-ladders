@@ -37,6 +37,7 @@ not a normal distribution.
 - Angles (hypotheses being tested): `docs/angles.md`
 - Rebuild scenarios: `uv run python -m nba_ladders.scenarios`; backtest: `uv run python -m nba_ladders.backtest`
 - Game-day sheet: `uv run python -m nba_ladders.sheet [--date YYYY-MM-DD]` (official injury report → alerts)
+- Per-minute report: `uv run python -m nba_ladders.ppm "Player Name"` (teammate unlocks; see `docs/context_model.md`)
 - Price a ladder: `uv run python -m nba_ladders.price "Player Name" --starter-out` (see `docs/simulator.md`)
 - Install: `uv sync`
 - Test: `uv run pytest -q`
