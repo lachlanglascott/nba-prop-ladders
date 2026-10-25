@@ -117,8 +117,8 @@ def build_sheet(game_day: date) -> str:
 
     lines = [
         f"# Game-day sheet: {game_day}",
-        f"Injury report: {report['report_time'].max()} ET. "
-        f"Assumed P(sits): {', '.join(f'{k} {v:.0%}' for k, v in P_OUT.items())}.",
+        (f"Injury report: {report['report_time'].max()} ET. "
+         f"Assumed P(sits): {', '.join(f'{k} {v:.0%}' for k, v in P_OUT.items())}."),
         "",
     ]
     not_filed = report.filter(pl.col("status") == "Not submitted")["team"].drop_nulls().to_list()
@@ -140,9 +140,9 @@ def build_sheet(game_day: date) -> str:
         p_out = P_OUT[s_status]
         matchup = report.filter(pl.col("team") == team)["matchup"][0]
         new = is_new_absence(pg, s["player_id"], team, game_day)
-        block = [f"### {team} ({matchup}): {s['player_name']} **{s_status}**"
-                 f"{' (' + st['reason'][0] + ')' if st.height and st['reason'][0] else ''}"
-                 f" — {'**NEW: played last game**' if new else 'ongoing absence (likely priced in)'}"]
+        reason = f" ({st['reason'][0]})" if st.height and st["reason"][0] else ""
+        freshness = "**NEW: played last game**" if new else "ongoing absence (likely priced in)"
+        block = [f"### {team} ({matchup}): {s['player_name']} **{s_status}**{reason} — {freshness}"]
         priced = 0
         for b in chart.filter(~pl.col("is_starter")).iter_rows(named=True):
             if priced >= BACKUPS_PER_TEAM:
@@ -158,8 +158,8 @@ def build_sheet(game_day: date) -> str:
                 block.append(f"- {b['player_name']}: not enough history to price")
                 continue
             block += [
-                f"- **{b['player_name']}** ({b['position']}, {b['recent_min']:.0f} min recently"
-                f"{', ' + b_status if b_status != 'Not listed' else ''})",
+                (f"- **{b['player_name']}** ({b['position']}, {b['recent_min']:.0f} min recently"
+                 f"{', ' + b_status if b_status != 'Not listed' else ''})"),
                 "",
                 "| Combo | Fair | If starter sits | If plays | Independent legs |",
                 "|---|---|---|---|---|",
