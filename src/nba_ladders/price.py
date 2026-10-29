@@ -15,11 +15,13 @@ from nba_ladders import config
 from nba_ladders.backtest import HISTORY_GAMES
 from nba_ladders.sim import combo_probs, fit_player, parse_combo, price_table, simulate_stats
 
+MIN_BACKUP_GAMES = 20  # fewer backup-role games than this: use all his games instead
+
 
 def player_history(name: str) -> tuple[pl.DataFrame, str]:
     bg = pl.read_parquet(config.DATA_PROCESSED / "backup_big_games.parquet")
     hist = bg.filter(pl.col("player_name") == name)
-    if hist.height:
+    if hist.height >= MIN_BACKUP_GAMES:
         return hist.sort("game_date").tail(HISTORY_GAMES), "backup-role games"
     pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
     hist = pg.filter(pl.col("player_name") == name)
