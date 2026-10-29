@@ -75,6 +75,26 @@ odd thresholds (and so every x.5 line from 14.5, 16.5…) were under-priced. Poi
 as free throws + twos + threes (18/50/32% of points; variance ≈ 2.1× mean). 2025-26, 15+ pts:
 6,493 → 6,918 predicted vs 7,426 actual.
 
+## Role shift (current minutes level)
+
+Recency weights keep a 20% floor over old games (protects tails) but lag role changes (a
+33-min player now playing 25). `ROLE_WEIGHT = 1.0`: every template's minutes are shifted by
+(minutes level over the last few games, half-life 3) − (weighted history mean), keeping each
+game's minutes/production pairing.
+
+| | 2024-25 (tuning) log loss / min MAE | 2025-26 (holdout) |
+|---|---|---|
+| Without | 0.28347 / 4.856 | 0.27959 / 4.818 |
+| λ = 0.5 | 0.28254 / 4.755 | n/a |
+| **λ = 1.0** | **0.28250 / 4.723** | **0.27822 / 4.676** |
+
+## Global recalibration: tried, not adopted
+
+`calibration.py` fits logit(p') = a + b·logit(p) (fit 2024-25: a = 0.018, b = 0.948). On 2025-26
+it left log loss unchanged (0.27822 → 0.27822) and over-corrected the level (raw 1.5% low → 1.6%
+high); long shots improved slightly (0.10202 → 0.10186), mid-range got worse. The role shift and
+recency already removed most of the bias, so no global correction is applied.
+
 ## Remaining calibration gaps
 - Point thresholds still ~4–8% low overall (2025-26: 10p 11,680 vs 12,150; 20p 3,759 vs 4,110),
   and recency trims backup bigs' normal-game tail (~14% fewer hits than actual vs 3% without).

@@ -35,3 +35,20 @@ def test_unlucky_passer_gets_higher_expected_than_actual():
     assert 0.25 < last["conv_ast"] < 0.5
     assert last["pred_ast_expected"] > last["pred_ast_actual"]
     assert last["luck_ast"] < 0
+
+
+def test_luck_multiplier_raises_unlucky_and_shrinks_small_samples():
+    from nba_ladders.luck import luck_multipliers
+
+    lg = {"ast": 0.5, "reb": 0.5}
+    hist = pl.DataFrame({"player_id": [1, 2], "ast": [500, 500], "potential_ast": [1000, 1000],
+                         "reb": [500, 500], "reb_chances": [1000, 1000]})
+    cur = pl.DataFrame({
+        "player_id": [1, 2],
+        "ast": [10, 1], "potential_ast": [40, 4],   # both converting 25% vs 50% long-run
+        "reb": [20, 20], "reb_chances": [40, 40],   # neutral
+    })
+    m = {r["player_id"]: r for r in luck_multipliers(cur, hist, lg).iter_rows(named=True)}
+    assert m[1]["luck_ast"] > 1.2                      # unlucky passer, decent sample
+    assert 1.0 < m[2]["luck_ast"] < m[1]["luck_ast"]   # same luck, tiny sample: shrunk
+    assert abs(m[1]["luck_reb"] - 1.0) < 0.02          # neutral rebounder

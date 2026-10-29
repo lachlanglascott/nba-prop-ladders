@@ -53,7 +53,15 @@ rebound chances alone predict *worse* than actual rebounds.
 **Angle:** a player whose recent assists lag his potential assists is likely priced off the
 low actuals. The fair rate is ~halfway back. Worth adding to the angles list as "luck reversion".
 
-## Not wired in yet
+## Live (wired in)
+
+`luck.live_luck()`: season-to-date tracking totals (`tracking.season_totals`, snapshotted daily
+under `data/raw/nba_stats/ptstats_season/`) → per-player AST/REB rate multipliers = blended /
+actual, shrunk toward 1 by sample size (25 pseudo-chances AST, 40 REB), clipped 0.7–1.6.
+Applied in `price` (default; `--no-luck` to skip) and the sheet. Early 2026-27: Camara REB ×1.16
+(league's most unlucky rebounder), Eason AST ×1.05 / REB ×1.04.
+
+## Previously not wired in
 - 2026-27 single-day tracking queries return empty (the current season isn't split by date yet);
   season-to-date totals work. Plan: snapshot season totals daily and difference them to get
   per-game numbers going forward.

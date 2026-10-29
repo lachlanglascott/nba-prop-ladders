@@ -125,8 +125,13 @@ def main() -> None:
     ap.add_argument("--scale", type=float, default=None)
     ap.add_argument("--half-life", type=float, default=None)
     ap.add_argument("--opp-reb", action="store_true", help="also score opponent rebound multipliers")
+    ap.add_argument("--role-weight", type=float, default=None, help="override sim.ROLE_WEIGHT")
     ap.add_argument("--out", default="backtest_context.parquet")
     args = ap.parse_args()
+    if args.role_weight is not None:
+        from nba_ladders import sim
+
+        sim.ROLE_WEIGHT = args.role_weight
     pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
     res = run(pg, tuple(args.seasons), scale=args.scale, half_life=args.half_life,
               opp_reb=args.opp_reb)

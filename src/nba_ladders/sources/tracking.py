@@ -118,3 +118,37 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+SEASON_DIR = RAW_ROOT / "ptstats_season"
+
+
+def season_totals(season: str, as_of: date | None = None, raw_dir: Path = SEASON_DIR) -> pl.DataFrame:
+    """Season-to-date tracking totals (both measures), snapshotted once per day.
+
+    For the current season, one-day queries come back empty, but season totals work. Daily
+    snapshots also allow differencing later (today - yesterday = per-game numbers).
+    """
+    as_of = as_of or date.today()
+    frames = []
+    for m in MEASURES:
+        path = raw_dir / season / m.lower() / f"{as_of.isoformat()}.json"
+        if path.exists():
+            payload = json.loads(path.read_text())
+        else:
+            from nba_api.stats.endpoints import leaguedashptstats
+
+            _throttle()
+            payload = leaguedashptstats.LeagueDashPtStats(
+                season=season, pt_measure_type=m, player_or_team="Player",
+                per_mode_simple="Totals", timeout=60,
+            ).get_dict()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(payload))
+        rs = payload["resultSets"][0]
+        df = pl.DataFrame(rs["rowSet"], schema=rs["headers"], orient="row", infer_schema_length=None)
+        frames.append(df.select(pl.col("PLAYER_ID").alias("player_id"), pl.col("GP").alias("gp"),
+                                pl.col("MIN").alias("min"),
+                                *[pl.col(c).alias(c.lower()) for c in KEEP[m]],
+                                *([pl.col("REB").alias("reb")] if m == "Rebounding" else [])))
+    return frames[0].join(frames[1].drop("gp", "min"), on="player_id", how="full", coalesce=True)

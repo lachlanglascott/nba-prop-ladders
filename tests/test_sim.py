@@ -66,7 +66,10 @@ def test_recency_weights_halve_every_half_life():
     assert recency_weights(100, 5, floor=0.3)[0] >= 0.3 / 100
 
 
-def test_recency_moves_simulation_toward_recent_form():
+def test_recency_moves_simulation_toward_recent_form(monkeypatch):
+    from nba_ladders import sim
+
+    monkeypatch.setattr(sim, "ROLE_WEIGHT", 0.0)  # isolate recency from the role shift
     # 40 old games at 10 min, 10 recent games at 30 min
     h = pl.DataFrame({"minutes": [10] * 40 + [30] * 10, "pts": [4] * 40 + [12] * 10,
                       "reb": [3] * 40 + [9] * 10, "starter_out": [False] * 50})
@@ -84,3 +87,23 @@ def test_points_can_be_odd_and_keep_scoring_variance():
     assert abs(pts.mean() - 15) < 0.05
     assert (pts % 2 == 1).mean() > 0.4  # odd totals happen
     assert 1.9 < pts.var() / pts.mean() < 2.3
+
+
+def test_role_shift_moves_level_to_recent_minutes():
+    import numpy as np
+
+    from nba_ladders.sim import recency_weights, role_shift
+
+    mins = np.array([33.0] * 60 + [25.0] * 4)  # long-time 33-min player now playing 25
+    w = recency_weights(len(mins), 5, floor=0.2)
+    full = role_shift(mins, w, weight=1.0, half_life=3)
+    assert full < -1.5  # recency weights already lean recent; the shift closes the rest
+    assert role_shift(mins, w, weight=0.0) == 0.0
+    assert abs(role_shift(mins, w, weight=0.5, half_life=3) - full / 2) < 1e-9
+
+
+def test_role_shift_on_by_default_moves_flat_history_to_recent_level():
+    h = pl.DataFrame({"minutes": [10] * 40 + [30] * 10, "pts": [4] * 40 + [12] * 10,
+                      "reb": [3] * 40 + [9] * 10, "starter_out": [False] * 50})
+    m, _, _ = simulate(fit_player(h, half_life=0), starter_out=False, n=20000)
+    assert m.mean() > 25

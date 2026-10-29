@@ -144,3 +144,40 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+K_LUCK = {"ast": 25.0, "reb": 40.0}  # pseudo-chances: small samples barely move the price
+
+
+def luck_multipliers(current: pl.DataFrame, history: pl.DataFrame,
+                     league: dict[str, float]) -> pl.DataFrame:
+    """Per player: rate multipliers for AST / REB from this season's luck so far.
+
+    current: season_totals() rows (ast, potential_ast, reb, reb_chances per player).
+    history: past per-game tracking (load()) for each player's long-run conversion.
+    mult = blended / actual, where blended = BLEND * chances x conv + (1 - BLEND) * actual,
+    then shrunk toward 1 by sample size (chances / (chances + K_LUCK)).
+    """
+    conv = history.group_by("player_id").agg(
+        *[pl.col(s).sum().alias(f"h_{s}") for s in CHANCES],
+        *[pl.col(c).sum().alias(f"h_{c}") for c in CHANCES.values()],
+    )
+    d = current.join(conv, on="player_id", how="left").fill_null(0)
+    out = []
+    for s, c in CHANCES.items():
+        k = K_CONV[s]
+        player_conv = (pl.col(f"h_{s}") + pl.col(s) + k * league[s]) / (pl.col(f"h_{c}") + pl.col(c) + k)
+        expected = pl.col(c) * player_conv
+        blended = BLEND[s] * expected + (1 - BLEND[s]) * pl.col(s)
+        raw = (blended / pl.col(s).clip(lower_bound=1)).clip(0.7, 1.6)
+        weight = pl.col(c) / (pl.col(c) + K_LUCK[s])
+        out.append((1 + weight * (raw - 1)).alias(f"luck_{s}"))
+    return d.select("player_id", *out)
+
+
+def live_luck(season: str = "2026-27") -> pl.DataFrame:
+    """Current-season luck multipliers for every player (snapshots tracking totals today)."""
+    from nba_ladders.sources.tracking import season_totals
+
+    hist = load()
+    return luck_multipliers(season_totals(season), hist, league_conversion(hist))

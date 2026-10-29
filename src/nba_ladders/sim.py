@@ -46,6 +46,7 @@ class PlayerFit:
     reb_rate: np.ndarray
     ast_rate: np.ndarray
     weights: np.ndarray | None = None  # recency weight per template game (None = equal)
+    role_shift: float = 0.0  # minutes added to every template: current role level vs history
 
     @property
     def n_games(self) -> int:
@@ -65,6 +66,26 @@ def _shrink(rates: np.ndarray, minutes: np.ndarray, unit: float) -> np.ndarray:
 
 
 RECENCY_FLOOR = 0.2  # share of weight kept spread evenly over all history (protects the tails)
+ROLE_HALF_LIFE = 3.0  # games, for the current minutes level
+ROLE_WEIGHT = 1.0  # tuned 2024-25 (0, 0.5, 1), validated 2025-26: log loss 0.2796 -> 0.2782
+
+
+def role_shift(minutes: np.ndarray, weights: np.ndarray | None, weight: float | None = None,
+               half_life: float | None = None) -> float:
+    """How far the player's current minutes level sits from his (weighted) template history.
+
+    Recency weights with a floor keep old games in play (good for tails) but lag role changes,
+    e.g. a 33-min starter now playing 25. Shifting every template by this gap keeps each game's
+    minutes/production pairing while moving the level.
+    """
+    w = ROLE_WEIGHT if weight is None else weight
+    if not w or len(minutes) == 0:
+        return 0.0
+    hl = ROLE_HALF_LIFE if half_life is None else half_life
+    recent = 0.5 ** (np.arange(len(minutes))[::-1] / hl)
+    level = np.sum(recent * minutes) / recent.sum()
+    hist = np.average(minutes, weights=weights) if weights is not None else minutes.mean()
+    return float(w * (level - hist))
 
 
 def recency_weights(n: int, half_life: float | None, floor: float | None = None) -> np.ndarray | None:
@@ -112,9 +133,10 @@ def fit_player(history: pl.DataFrame, half_life: float | None = None) -> PlayerF
         else np.zeros(len(mins), bool)
     )
     hl = HALF_LIFE if half_life is None else half_life
+    weights = recency_weights(len(mins), hl)
     return PlayerFit(
         mins, starter_out, rate("pts", PTS_UNIT), rate("reb", 1.0), rate("ast", 1.0),
-        recency_weights(len(mins), hl),
+        weights, role_shift(mins, weights),
     )
 
 
@@ -152,7 +174,7 @@ def simulate_stats(fit: PlayerFit, starter_out: bool, n: int = 20_000, seed: int
     """
     rng = np.random.default_rng(seed)
     idx, minutes = _templates(fit, starter_out, n, rng, uplift)
-    minutes = np.clip(minutes + rng.normal(0, MINUTES_JITTER, n), 0, 48)
+    minutes = np.clip(minutes + fit.role_shift + rng.normal(0, MINUTES_JITTER, n), 0, 48)
     rated = np.flatnonzero(~np.isnan(fit.pts_rate))
     # Short-minute templates have no reliable rate: borrow one from a random rated game.
     rate_idx = idx if paired else pick(rng, rated, fit.weights, n)

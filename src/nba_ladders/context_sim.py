@@ -36,6 +36,7 @@ class ContextFit:
     base_minutes: np.ndarray  # per template game, un-adjusted to full strength
     base_rates: dict[str, np.ndarray]  # per template game, NaN where < MIN_RATE_MINUTES
     weights: np.ndarray | None = None  # recency weight per template game
+    role_shift: float = 0.0  # current minutes level vs history (sim.role_shift)
 
 
 def fit_context(history: pl.DataFrame, half_life: float | None = None) -> ContextFit | None:
@@ -55,7 +56,8 @@ def fit_context(history: pl.DataFrame, half_life: float | None = None) -> Contex
         r[rated] = _shrink(raw, m, UNITS[s]) / history[f"mult_{s}"].to_numpy()[rated]
         rates[s] = r
     hl = sim.HALF_LIFE if half_life is None else half_life
-    return ContextFit(base_min, rates, recency_weights(len(mins), hl))
+    weights = recency_weights(len(mins), hl)
+    return ContextFit(base_min, rates, weights, sim.role_shift(base_min, weights))
 
 
 def simulate_context(fit: ContextFit, shift_min: float = 0.0, mult: dict | None = None,
@@ -64,7 +66,8 @@ def simulate_context(fit: ContextFit, shift_min: float = 0.0, mult: dict | None 
     mult = mult or {}
     rng = np.random.default_rng(seed)
     idx = pick(rng, np.arange(len(fit.base_minutes)), fit.weights, n)
-    minutes = np.clip(fit.base_minutes[idx] + shift_min + rng.normal(0, MINUTES_JITTER, n), 0, 48)
+    minutes = np.clip(fit.base_minutes[idx] + fit.role_shift + shift_min
+                      + rng.normal(0, MINUTES_JITTER, n), 0, 48)
     rated = np.flatnonzero(~np.isnan(fit.base_rates["pts"]))
     rate_idx = np.where(np.isnan(fit.base_rates["pts"][idx]), pick(rng, rated, fit.weights, n), idx)
     out = {"minutes": minutes}

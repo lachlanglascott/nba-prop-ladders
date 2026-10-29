@@ -48,6 +48,7 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/luck.py` | Opportunity vs outcome: do potential assists / rebound chances predict future production better than actuals? Per-player luck report. |
 | `src/nba_ladders/status_calibration.py` | P(sits) by injury-report status, from past reports vs box scores. |
 | `src/nba_ladders/rebounding.py` | Rebounding vs opponent and by position: expected rebounds (as-at), opponent factors, persistence tests. |
+| `src/nba_ladders/calibration.py` | Logistic recalibration of simulated probabilities (fit one season, check the next). Tried; not applied. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
