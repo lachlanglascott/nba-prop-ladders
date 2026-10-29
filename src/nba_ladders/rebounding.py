@@ -108,3 +108,68 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+K_POS = 400.0  # position residuals are weak (persistence 0.25): shrink hard toward the team factor
+PREV_SEASON_WEIGHT = 0.5
+SEASONS = ["22019", "22020", "22021", "22022", "22023", "22024", "22025", "22026"]
+
+
+def opponent_multipliers(df_before: pl.DataFrame, season_id: str) -> pl.DataFrame:
+    """As-at opponent rebound multipliers per (opponent, grp): team factor x shrunk position residual.
+
+    df_before: expected_rebounds() rows strictly before the target date. Uses this season's
+    games plus last season's at PREV_SEASON_WEIGHT (a prior while this season is short).
+    Returns opponent, grp, m_oreb, m_dreb.
+    """
+    i = SEASONS.index(season_id)
+    prev = SEASONS[i - 1] if i else None
+    d = df_before.filter(pl.col("season_id").is_in([season_id, prev])).with_columns(
+        pl.when(pl.col("season_id") == season_id).then(1.0).otherwise(PREV_SEASON_WEIGHT).alias("w")
+    )
+    sums = lambda keys: d.group_by(keys).agg(
+        *[(pl.col(s) * pl.col("w")).sum().alias(f"act_{s}") for s in SIDES],
+        *[(pl.col(f"exp_{s}") * pl.col("w")).sum().alias(f"exp_{s}") for s in SIDES],
+    )
+    team = sums(["opponent"]).select(
+        "opponent",
+        *[((pl.col(f"act_{s}") + K_OPP) / (pl.col(f"exp_{s}") + K_OPP)).alias(f"t_{s}") for s in SIDES],
+    )
+    pos = sums(["opponent", "grp"]).join(team, on="opponent").select(
+        "opponent", "grp",
+        # residual: actual vs (expected x team factor), shrunk toward 1 with K_POS
+        *[(pl.col(f"t_{s}") * (pl.col(f"act_{s}") + K_POS)
+           / (pl.col(f"exp_{s}") * pl.col(f"t_{s}") + K_POS)).alias(f"m_{s}") for s in SIDES],
+        *[pl.col(f"exp_{s}") for s in SIDES],
+    )
+    # Relative effects only: rescale so each position group's multipliers average 1
+    # (weighted by expected rebounds). Otherwise any bias in the expectation model leaks in.
+    return pos.with_columns(
+        *[(pl.col(f"m_{s}") / ((pl.col(f"m_{s}") * pl.col(f"exp_{s}")).sum().over("grp")
+                               / pl.col(f"exp_{s}").sum().over("grp"))) for s in SIDES]
+    ).select("opponent", "grp", *[f"m_{s}" for s in SIDES])
+
+
+def live_multiplier_table(pg: pl.DataFrame, pos: pl.DataFrame) -> pl.DataFrame:
+    """Current opponent multipliers from all games so far (compute once per sheet)."""
+    return opponent_multipliers(expected_rebounds(pg, pos), pg["season_id"].max())
+
+
+def live_rebound_multiplier(pg: pl.DataFrame, pos: pl.DataFrame, player_id: int,
+                            opponent: str, mults: pl.DataFrame | None = None) -> float:
+    """Rebound-rate multiplier for player_id vs opponent tonight, from all games so far.
+
+    Validated: 2024-25 tuning and 2025-26 holdout both improve rebound-line log loss
+    (docs/rebounding.md).
+    """
+    from nba_ladders.absences import position_groups
+
+    mults = live_multiplier_table(pg, pos) if mults is None else mults
+    grp = position_groups(pos).filter(pl.col("player_id") == player_id)["grp"]
+    g = grp[0] if grp.len() else "W"
+    row = mults.filter((pl.col("opponent") == opponent) & (pl.col("grp") == g))
+    if row.is_empty():
+        return 1.0
+    hist = pg.filter(pl.col("player_id") == player_id).sort("game_date").tail(120)
+    oshare = hist["oreb"].sum() / max(hist["reb"].sum(), 1)
+    return float(oshare * row["m_oreb"][0] + (1 - oshare) * row["m_dreb"][0])

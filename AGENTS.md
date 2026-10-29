@@ -40,7 +40,7 @@ not a normal distribution.
 - Per-minute report: `uv run python -m nba_ladders.ppm "Player Name"` (teammate unlocks; see `docs/context_model.md`)
 - Status calibration: `uv run python -m nba_ladders.status_calibration --season-id 22025`
 - Tracking (potential assists, rebound chances): `uv run python -m nba_ladders.sources.tracking --seasons 2024-25 2025-26`; luck test `uv run python -m nba_ladders.luck ["Player"]`
-- Price a ladder: `uv run python -m nba_ladders.price "Player Name" --starter-out` (see `docs/simulator.md`)
+- Price a ladder: `uv run python -m nba_ladders.price "Player Name" [--starter-out] [--opponent MEM] [--combos 10p/10r,12r]` (see `docs/simulator.md`)
 - Install: `uv sync`
 - Test: `uv run pytest -q`
 - Lint: `uv run ruff check .`

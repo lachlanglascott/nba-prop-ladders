@@ -43,3 +43,9 @@ def test_long_term_injured_centre_is_not_the_starter():
     pos = pl.DataFrame({"player_id": [1, 2], "position": ["C", "C"]})
     dc = depth_chart(pg, roster, pos)
     assert dc.filter(pl.col("is_starter"))["player_name"].to_list() == ["Current Starter"]
+
+
+def test_opponent_from_matchup():
+    from nba_ladders.sheet import _opponent
+
+    assert _opponent("MEM@POR", "POR") == "MEM" and _opponent("MEM@POR", "MEM") == "POR"

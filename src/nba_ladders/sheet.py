@@ -25,6 +25,7 @@ from nba_ladders.absences import (
 )
 from nba_ladders.context_sim import fit_context, simulate_context
 from nba_ladders.price import player_history
+from nba_ladders.rebounding import live_multiplier_table, live_rebound_multiplier
 from nba_ladders.scenarios import CENTRE_REB36, positions
 from nba_ladders.screens import BIG_POSITIONS, CENTRE_POSITIONS, parse_player_index
 from nba_ladders.sim import combo_probs, fit_player, parse_combo, simulate_stats
@@ -105,12 +106,16 @@ def is_new_absence(pg: pl.DataFrame, starter_id: int, team: str, game_day: date)
     return played.len() > 0 and played.max() == last_team_game
 
 
-def mixed_prices(name: str, p_out: float, combos: list[str]) -> pl.DataFrame | None:
-    """Fair prices for a backup, mixing starter-plays and starter-sits by p_out."""
+def mixed_prices(name: str, p_out: float, combos: list[str], reb_mult: float = 1.0) -> pl.DataFrame | None:
+    """Fair prices for a backup, mixing starter-plays and starter-sits by p_out.
+
+    reb_mult scales his rebound rate for tonight's opponent (rebounding.py).
+    """
     hist, _ = player_history(name)
     fit = fit_player(hist)
     if fit is None:
         return None
+    fit.reb_rate = fit.reb_rate * reb_mult
     parsed = [parse_combo(c) for c in combos]
     sits = combo_probs(simulate_stats(fit, True, 30_000, seed=1), parsed)
     plays = combo_probs(simulate_stats(fit, False, 30_000, seed=2), parsed)
@@ -122,8 +127,15 @@ def mixed_prices(name: str, p_out: float, combos: list[str]) -> pl.DataFrame | N
     })
 
 
+def _opponent(matchup: str, team: str) -> str:
+    """'MEM@POR', 'POR' -> 'MEM'."""
+    away, home = matchup.split("@")
+    return away if team == home else home
+
+
 def minutes_unlocked(report: pl.DataFrame, pg: pl.DataFrame, roster: pl.DataFrame,
-                     pos: pl.DataFrame, skip_ids: set[int]) -> list[str]:
+                     pos: pl.DataFrame, skip_ids: set[int],
+                     reb_table: pl.DataFrame | None = None) -> list[str]:
     """Players projected to gain UNLOCK_MIN_SHIFT+ minutes from today's Out/Doubtful teammates."""
     eff_raw = pair_effects(pg, pos)
     pri = priors(eff_raw)
@@ -166,12 +178,17 @@ def minutes_unlocked(report: pl.DataFrame, pg: pl.DataFrame, roster: pl.DataFram
             out.append(f"- {r['player_name']} ({r['team_id']}): +{r['shift_min']:.1f} min, too little history to price")
             continue
         mult = {s: r[f"mult_{s}"] for s in RATES}
+        matchup = report.filter(pl.col("team") == r["team_id"])["matchup"][0]
+        opp = _opponent(matchup, r["team_id"])
+        rm = live_rebound_multiplier(pg, pos, r["player_id"], opp, reb_table)
+        mult["reb"] *= rm
         sim_today = simulate_context(fit, r["shift_min"], mult, 30_000, seed=1)
         sim_full = simulate_context(fit, 0.0, None, 30_000, seed=2)
         p_today, p_full = combo_probs(sim_today, combos), combo_probs(sim_full, combos)
         who = out_today.filter(pl.col("team_id") == r["team_id"]).join(
             roster.select(pl.col("player_id").alias("mate_id"), "player_name"), on="mate_id")
         rates = ", ".join(f"{s.upper()[0]}PM {(r[f'mult_{s}'] - 1) * 100:+.0f}%" for s in RATES)
+        rates += f"; vs {opp} rebounds x{rm:.2f}"
         out += [
             (f"- **{r['player_name']}** ({r['team_id']}): full-strength "
              f"{sim_full['minutes'].mean():.0f} → projected {sim_today['minutes'].mean():.0f} min "
@@ -195,7 +212,9 @@ def build_sheet(game_day: date) -> str:
     )
     pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
     roster = parse_player_index(get_player_index("2026-27"))
-    dc = depth_chart(pg, roster, positions())
+    pos_all = positions()
+    dc = depth_chart(pg, roster, pos_all)
+    reb_table = live_multiplier_table(pg, pos_all)
     teams_today = report["team"].drop_nulls().unique().to_list()
     status = report.select("team", "player_key", "status", "reason")
 
@@ -240,13 +259,16 @@ def build_sheet(game_day: date) -> str:
                 continue
             priced += 1
             priced_ids.add(b["player_id"])
-            prices = mixed_prices(b["player_name"], p_out, COMBOS)
+            opp = _opponent(matchup, team)
+            rm = live_rebound_multiplier(pg, pos_all, b["player_id"], opp, reb_table)
+            prices = mixed_prices(b["player_name"], p_out, COMBOS, rm)
             if prices is None:
                 block.append(f"- {b['player_name']}: not enough history to price")
                 continue
             block += [
                 (f"- **{b['player_name']}** ({b['position']}, {b['recent_min']:.0f} min recently"
-                 f"{', ' + b_status if b_status != 'Not listed' else ''})"),
+                 f"{', ' + b_status if b_status != 'Not listed' else ''}; "
+                 f"vs {opp} rebounds x{rm:.2f})"),
                 "",
                 "| Combo | Fair | If starter sits | If plays | Independent legs |",
                 "|---|---|---|---|---|",
@@ -264,7 +286,7 @@ def build_sheet(game_day: date) -> str:
     lines += [b for _, b in sorted(sections["watch"], key=lambda x: x[0])] or ["None."]
     lines += ["", f"## Minutes unlocked: everyone else (+{UNLOCK_MIN_SHIFT:.0f} min or more)", ""]
     alert_backups = {b for b in priced_ids}
-    lines += minutes_unlocked(report, pg, roster, positions(), alert_backups)
+    lines += minutes_unlocked(report, pg, roster, pos_all, alert_backups, reb_table)
     lines += [""]
     return "\n".join(lines)
 

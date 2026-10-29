@@ -34,6 +34,7 @@ def main() -> None:
     ap.add_argument("--starter-out", action="store_true")
     ap.add_argument("--combos", help="comma-separated, e.g. 20p/10r/3a,18p/10r/5a")
     ap.add_argument("--sims", type=int, default=50_000)
+    ap.add_argument("--opponent", help="team abbreviation: applies the opponent rebound effect")
     args = ap.parse_args()
 
     hist, kind = player_history(args.player)
@@ -41,6 +42,15 @@ def main() -> None:
     if fit is None:
         raise SystemExit(f"not enough history for {args.player!r} ({hist.height} games)")
     stats = simulate_stats(fit, args.starter_out, args.sims)
+    if args.opponent:
+        from nba_ladders.rebounding import live_rebound_multiplier
+        from nba_ladders.scenarios import positions
+
+        pg_all = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
+        m = live_rebound_multiplier(pg_all, positions(), int(hist["player_id"][0]), args.opponent)
+        print(f"opponent {args.opponent}: rebound rate x{m:.3f}")
+        fit.reb_rate = fit.reb_rate * m
+        stats = simulate_stats(fit, args.starter_out, args.sims)
     n_out = int(hist["starter_out"].sum()) if "starter_out" in hist.columns else 0
     print(f"{args.player}: {hist.height} {kind} "
           f"({hist['game_date'].min()} to {hist['game_date'].max()}), {n_out} with starter out")
