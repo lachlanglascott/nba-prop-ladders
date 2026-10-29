@@ -16,7 +16,8 @@ def _row(player_id, name, game_id, game_date, minutes, pts=0, reb=0, matchup="AA
         "SEASON_ID": "22025", "PLAYER_ID": player_id, "PLAYER_NAME": name, "TEAM_ID": 1,
         "TEAM_ABBREVIATION": "AAA", "GAME_ID": game_id, "GAME_DATE": game_date,
         "MATCHUP": matchup, "MIN": minutes, "PTS": pts, "OREB": 0, "DREB": reb, "REB": reb,
-        "AST": 0, "FGA": 0, "FTA": 0, "PF": 0, "PLUS_MINUS": 0, "WL": "W",
+        "AST": 0, "FGM": 0, "FGA": 0, "FG3M": 0, "FG3A": 0, "FTM": 0, "FTA": 0, "PF": 0,
+        "PLUS_MINUS": 0, "WL": "W",
     }
     return [vals[h] for h in HEADERS]
 

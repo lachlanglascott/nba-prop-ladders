@@ -47,6 +47,7 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/sources/tracking.py` | Per-game tracking stats (potential/secondary assists, passes, rebound chances, contested boards) via one-day LeagueDashPtStats queries, cached. |
 | `src/nba_ladders/luck.py` | Opportunity vs outcome: do potential assists / rebound chances predict future production better than actuals? Per-player luck report. |
 | `src/nba_ladders/status_calibration.py` | P(sits) by injury-report status, from past reports vs box scores. |
+| `src/nba_ladders/rebounding.py` | Rebounding vs opponent and by position: expected rebounds (as-at), opponent factors, persistence tests. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
@@ -78,6 +79,7 @@ What every file in this repo is for, grouped by job.
 | `docs/simulator.md` | How the simulator works, backtest and calibration results, limitations. |
 | `docs/angle_d_fouls.md` | Results for angle D (foul trouble). |
 | `docs/context_model.md` | Any-teammate-out model: method, tuning, holdout results, next steps. |
+| `docs/rebounding.md` | Opponent and position rebounding effects; Camara worked example. |
 | `docs/luck.md` | Potential assists / rebound chances: does luck revert? Blend weights. |
 | `docs/status_calibration.md` | Injury-report status → P(sits), 2025-26. |
 | `docs/phase1_findings.md` | First results from the data. |
