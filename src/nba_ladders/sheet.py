@@ -8,7 +8,7 @@ of "plays" and "sits". Writes data/processed/sheets/sheet_<date>.md.
 """
 
 import argparse
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import polars as pl
 from nba_api.stats.static import teams
@@ -38,6 +38,7 @@ P_OUT = {"Out": 0.999, "Doubtful": 0.991, "Questionable": 0.53, "Probable": 0.12
 ALERT_STATUSES = {"Out", "Doubtful"}
 WATCH_STATUSES = {"Questionable"}
 RECENT_GAMES = 15
+ACTIVE_DAYS = 45  # no game in this window = long-term absent; not the current starter
 BACKUPS_PER_TEAM = 2
 COMBOS = ["8p/8r", "10p/10r", "12p/12r", "15p/12r", "10p/8r/2a", "12p/10r/3a"]
 TEAM_ABBR = {t["full_name"].replace(" ", ""): t["abbreviation"] for t in teams.get_teams()}
@@ -50,8 +51,11 @@ def depth_chart(pg: pl.DataFrame, roster: pl.DataFrame, pos: pl.DataFrame) -> pl
     """Bigs per current team, ranked by recent minutes, with the starting centre flagged.
 
     roster: player_id -> team_now (current player index). Recent minutes are each player's
-    last RECENT_GAMES games on any team, so offseason moves are handled.
+    last RECENT_GAMES games on any team, so offseason moves are handled. Players who haven't
+    played in the last ACTIVE_DAYS (long-term injured) rank below everyone active, so the
+    depth chart reflects who is actually starting now.
     """
+    cutoff = pg["game_date"].max() - timedelta(days=ACTIVE_DAYS)
     recent = (
         pg.sort("game_date")
         .group_by("player_id")
@@ -61,6 +65,7 @@ def depth_chart(pg: pl.DataFrame, roster: pl.DataFrame, pos: pl.DataFrame) -> pl
             pl.col("player_name").last(),
             pl.col("minutes").mean().alias("recent_min"),
             (pl.col("reb").sum() / pl.col("minutes").sum() * 36).alias("reb36"),
+            (pl.col("game_date").max() >= cutoff).alias("active"),
         )
     )
     bigs = (
@@ -73,7 +78,7 @@ def depth_chart(pg: pl.DataFrame, roster: pl.DataFrame, pos: pl.DataFrame) -> pl
             .alias("is_centre"),
             pl.col("player_name").map_elements(player_key, return_dtype=pl.String).alias("key"),
         )
-        .sort("recent_min", descending=True)
+        .sort(["active", "recent_min"], descending=[True, True])
     )
     starters = (
         bigs.filter(pl.col("is_centre"))

@@ -31,3 +31,15 @@ def test_is_new_absence():
     ])
     assert is_new_absence(pg, 1, "AAA", date(2026, 10, 22)) is True   # played last game (20th)
     assert is_new_absence(pg, 1, "AAA", date(2026, 10, 24)) is False  # already missed the 22nd
+
+
+def test_long_term_injured_centre_is_not_the_starter():
+    old, now = date(2026, 3, 1), date(2026, 10, 28)
+    pg = _pg([
+        (1, "Injured Starter", "AAA", old, 32, 11),   # hasn't played since March
+        (2, "Current Starter", "AAA", now, 26, 10),
+    ])
+    roster = pl.DataFrame({"player_id": [1, 2], "team_now": ["AAA"] * 2})
+    pos = pl.DataFrame({"player_id": [1, 2], "position": ["C", "C"]})
+    dc = depth_chart(pg, roster, pos)
+    assert dc.filter(pl.col("is_starter"))["player_name"].to_list() == ["Current Starter"]
