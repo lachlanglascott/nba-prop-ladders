@@ -29,6 +29,7 @@ from nba_ladders.absences import (
     shrunk_effects,
 )
 from nba_ladders.combos import best_combos
+from nba_ladders.context_adjust import adjust_history, history_adjustment
 from nba_ladders.luck import load as load_tracking
 from nba_ladders.luck import scan
 from nba_ladders.market import TEAM_ABBR, cushion, latest, model_p
@@ -205,7 +206,22 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
                 add(r["player_name"], r["team_now"], angle,
                     f"{r[f'{stat}_pg']}/g from {r['chances_pg']} chances (converting {r['conv_now']:.0%} vs "
                     f"{r['conv_career']:.0%} career); luck x{r[f'luck_{stat}']:.2f}")
+    CONTEXT.update(pg=pg, eff=eff, pri=pri, pos=pos, roster=roster)
     return cands, report, qwatch
+
+
+CONTEXT: dict = {}  # set by gather(): data needed to line history up with tonight's roster
+
+
+def _history_adjuster(team: str):
+    """Back out past absences of players on `team` tonight (current roster)."""
+    ctx = CONTEXT
+    roster_ids = set(ctx["roster"].filter(pl.col("team_now") == team)["player_id"].to_list())
+
+    def f(hist: pl.DataFrame) -> pl.DataFrame:
+        adj = history_adjustment(ctx["pg"], hist, roster_ids, ctx["eff"], ctx["pri"], ctx["pos"])
+        return adjust_history(hist, adj)
+    return f
 
 
 def tracking_profile(player_id: int) -> dict:
@@ -289,7 +305,7 @@ def _simulate(name: str, c: dict):
         mult = {s: base_mult.get(s, 1.0) * v.get("mult", {}).get(s, 1.0) for s in RATES}
         r = simulate_player(name, starter_out=v.get("starter_out", False), opponent=c["opp"],
                             verbose=False, n=40_000, extra_minutes=base_min + v.get("extra", 0.0),
-                            rate_mult=mult)
+                            rate_mult=mult, history_adjust=_history_adjuster(c["team"]))
         if r:
             sims.append((r, w))
             by_variant["sits" if (v.get("starter_out") or v.get("extra")) else "plays"] = r[0]

@@ -56,12 +56,17 @@ def player_history(name: str, as_of: date | None = None) -> tuple[pl.DataFrame, 
 def simulate_player(name: str, *, starter_out: bool = False, opponent: str | None = None,
                     as_of: date | None = None, luck: bool = True, n: int = 50_000,
                     verbose: bool = True, extra_minutes: float = 0.0,
-                    rate_mult: dict | None = None) -> tuple[dict, dict] | None:
+                    rate_mult: dict | None = None,
+                    history_adjust=None) -> tuple[dict, dict] | None:
     """Simulated stats for one player tonight (or as of a past date), with all live adjustments.
 
     Returns (stats, info) or None if there is too little history.
+    history_adjust: callable(hist) -> hist, e.g. backing out past absences of current
+    teammates (context_adjust); extra_minutes / rate_mult then add tonight's absences.
     """
     hist, kind = player_history(name, as_of)
+    if history_adjust is not None and hist.height:
+        hist = history_adjust(hist)
     fit = fit_player(hist)
     if fit is None:
         return None
