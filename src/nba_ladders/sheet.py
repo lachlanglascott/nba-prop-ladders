@@ -153,8 +153,10 @@ def minutes_unlocked(report: pl.DataFrame, pg: pl.DataFrame, roster: pl.DataFram
     eff_raw = pair_effects(pg, pos)
     pri = priors(eff_raw)
     eff = shrunk_effects(eff_raw, pri)
+    cutoff = pg["game_date"].max() - timedelta(days=ACTIVE_DAYS)
     recent = (pg.sort("game_date").group_by("player_id").tail(RECENT_GAMES)
-              .group_by("player_id").agg(pl.col("minutes").mean().alias("recent_min")))
+              .group_by("player_id").agg(pl.col("minutes").mean().alias("recent_min"),
+                                         (pl.col("game_date").max() >= cutoff).alias("active")))
     people = roster.join(recent, on="player_id").with_columns(
         pl.col("player_name").map_elements(player_key, return_dtype=pl.String).alias("player_key")
     )
@@ -163,7 +165,9 @@ def minutes_unlocked(report: pl.DataFrame, pg: pl.DataFrame, roster: pl.DataFram
     out_today = (
         listed.filter(pl.col("status").is_in(ALERT_STATUSES))
         .join(people, left_on=["team", "player_key"], right_on=["team_now", "player_key"])
-        .filter(pl.col("recent_min") >= MIN_MATE_MINUTES)
+        # Long-term absentees (no game in ACTIVE_DAYS) are already baked into everyone's recent
+        # minutes; counting them again tonight would double-count (e.g. SAC's Raynaud/Cardwell).
+        .filter(pl.col("recent_min") >= MIN_MATE_MINUTES, pl.col("active"))
         .select(pl.col("team").alias("team_id"), pl.col("player_id").alias("mate_id"),
                 pl.col("recent_min").alias("mate_min"), pl.lit("today").alias("game_id"))
     )
