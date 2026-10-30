@@ -38,6 +38,36 @@ over Sportsbet (PointsBet AU most often best).
 strategy shows profit on held-out games.** The model knows things the book doesn't
 (starter-out, luck reversion, rebounds) but not enough to beat the margin one leg at a time.
 
+## 4. Ladder tails and variance (blind, no model; `ladder_tails_check.py`)
+
+Betting *every* Sportsbet rung, by price band. Strong longshot bias: the margin grows with odds.
+
+| Band | Rungs | Blind ROI | Implied → actual |
+|---|---|---|---|
+| <$2 | 93,448 | −8% | 74% → 68% |
+| $2–3 | 35,079 | −12% | 42% → 37% |
+| $3–5 | 32,683 | −15% | 27% → 23% |
+| $5–10 | 18,249 | −21% | 16% → 13% |
+| $10–20 | 2,846 | −35% | 8.5% → 5.5% |
+
+Split by as-at minutes variance (sd of minutes over the previous 20 games; terciles 4.5 / 5.8):
+high-variance players' tails are **less** overpriced ($5–10: −18% vs −26% for low variance),
+the direction the thesis predicts, but still clearly negative. The model adds nothing in
+high-variance tails (coef 0.04 ± 0.05).
+
+**Thesis spots, blind tails (price ≥ $3):**
+
+| Spot | Bets | Hit | Avg price | Blind ROI | 90% CI |
+|---|---|---|---|---|---|
+| **Starter out × high variance** | 463 | 24.6% | $4.98 | **+9.5%** | −18% to +36% |
+| Starter out, reb & P+R tails | 461 | 23.9% | $4.99 | +4.9% | −21% to +35% |
+| Luck spots | 588 | ~19% | ~$4.9 | −10% to −18% | |
+| Everything else | ~30,000 | ~18% | ~$5.1 | −18% to −22% | −28% to −13% |
+
+**The one segment consistent with the thesis:** tail ladders on high-variance players when the
+starting centre is out beat the general pool by ~28 points of ROI. The CI still includes zero
+(463 bets, one season sample), so this is a lead to confirm with more starter-out games.
+
 ## Where the edge may still be (not testable with single legs)
 
 1. **SGM correlation pricing:** the original thesis. Books are efficient on each leg; the

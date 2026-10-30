@@ -54,6 +54,7 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/market.py` | Market vs model: Sportsbet ladder prices vs our fair prices, US no-vig reference, VALUE / CHECK NEWS flags. Live flags are research leads until backtested. |
 | `src/nba_ladders/market_backtest.py` | Historical model-vs-Sportsbet backtest: as-at pricing of every rung, information test, value-bet ROI with day-level bootstrap CIs, by angle and stat. |
 | `src/nba_ladders/market_blend_check.py` | Held-out market-anchored blend + best-AU-price check (one-off). |
+| `src/nba_ladders/ladder_tails_check.py` | Blind ladder-tail ROI by price band, as-at variance, and thesis angle (one-off). |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
