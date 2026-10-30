@@ -42,6 +42,7 @@ not a normal distribution.
 - Tracking (potential assists, rebound chances): `uv run python -m nba_ladders.sources.tracking --seasons 2024-25 2025-26`; luck test `uv run python -m nba_ladders.luck ["Player"]`
 - Combo explorer: `uv run python -m nba_ladders.combos "Player" --opponent XXX [--as-of YYYY-MM-DD]` (best P/R/A combos by correlation lift)
 - Potentials scan: `uv run python -m nba_ladders.luck --scan [YYYY-MM-DD]`
+- Odds (The Odds API, key in `.env` as ODDS_API_KEY): `uv run python -m nba_ladders.sources.odds_api coverage|snapshot|historical` (hard credit budget per run; never print the key)
 - Price a ladder: `uv run python -m nba_ladders.price "Player Name" [--starter-out] [--opponent MEM] [--combos 10p/10r,12r]` (see `docs/simulator.md`)
 - Install: `uv sync`
 - Test: `uv run pytest -q`

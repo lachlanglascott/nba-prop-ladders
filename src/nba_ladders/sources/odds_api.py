@@ -1,0 +1,250 @@
+"""The Odds API (v4): NBA player prop prices, with a hard credit budget.
+
+    uv run python -m nba_ladders.sources.odds_api coverage                 # ~1 credit
+    uv run python -m nba_ladders.sources.odds_api snapshot --max-credits 40
+    uv run python -m nba_ladders.sources.odds_api historical --date 2026-03-15T23:00:00Z --max-credits 100
+
+Key: ODDS_API_KEY in the environment or in .env at the repo root (git-ignored). It is never
+printed or logged. Costs (docs, Oct 2026): event odds = markets returned x regions; historical
+event odds = 10 x markets returned x regions; /events is free; empty responses are free.
+Every call is estimated before it's made and refused if it would exceed the run's budget or
+leave fewer than RESERVE credits in the account. Raw responses are cached under
+data/raw/odds_api/ and never overwritten.
+"""
+
+import argparse
+import json
+import math
+import os
+import time
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from pathlib import Path
+
+import polars as pl
+import requests
+import truststore
+
+from nba_ladders import config
+
+truststore.inject_into_ssl()
+
+BASE = "https://api.the-odds-api.com/v4"
+SPORT = "basketball_nba"
+RAW_DIR = config.DATA_RAW / "odds_api"
+RESERVE = 50  # never let a run take the account below this many credits
+DEFAULT_MARKETS = [
+    "player_points_alternate", "player_rebounds_alternate", "player_assists_alternate",
+    "player_points_rebounds_alternate",
+]
+STAT_OF_MARKET = {
+    "player_points": "pts", "player_rebounds": "reb", "player_assists": "ast",
+    "player_points_rebounds": "pts+reb", "player_points_assists": "pts+ast",
+    "player_rebounds_assists": "reb+ast", "player_points_rebounds_assists": "pts+reb+ast",
+}
+
+
+def api_key() -> str:
+    key = os.environ.get("ODDS_API_KEY")
+    env = config.ROOT / ".env"
+    if not key and env.exists():
+        for line in env.read_text().splitlines():
+            if line.strip().startswith("ODDS_API_KEY="):
+                key = line.split("=", 1)[1].strip().strip("'\"")
+    if not key:
+        raise SystemExit("ODDS_API_KEY not set (add ODDS_API_KEY=... to .env at the repo root)")
+    return key
+
+
+class BudgetExceeded(RuntimeError):
+    pass
+
+
+@dataclass
+class Budget:
+    """Caps credits spent in one run; tracks the account's remaining credits from headers."""
+
+    max_credits: int
+    spent: int = 0
+    remaining: int | None = None
+    log: list[str] = field(default_factory=list)
+
+    def check(self, estimate: int, what: str) -> None:
+        if self.spent + estimate > self.max_credits:
+            raise BudgetExceeded(f"{what}: ~{estimate} credits would exceed run budget "
+                                 f"({self.spent}/{self.max_credits} spent)")
+        if self.remaining is not None and self.remaining - estimate < RESERVE:
+            raise BudgetExceeded(f"{what}: would leave < {RESERVE} credits "
+                                 f"(account has {self.remaining})")
+
+    def record(self, headers, what: str) -> None:
+        last = int(headers.get("x-requests-last", 0) or 0)
+        self.spent += last
+        if headers.get("x-requests-remaining") is not None:
+            self.remaining = int(float(headers["x-requests-remaining"]))
+        self.log.append(f"{what}: cost {last}, account remaining {self.remaining}")
+
+
+def _get(path: str, params: dict, budget: Budget, estimate: int, what: str,
+         session=requests) -> dict | list:
+    budget.check(estimate, what)
+    resp = session.get(f"{BASE}{path}", params={**params, "apiKey": api_key()}, timeout=30)
+    budget.record(resp.headers, what)
+    if resp.status_code != 200:
+        # never echo the URL: it contains the key
+        raise RuntimeError(f"{what}: HTTP {resp.status_code}: {resp.text[:300]}")
+    time.sleep(0.3)
+    return resp.json()
+
+
+def _save(kind: str, name: str, payload) -> Path:
+    path = RAW_DIR / kind / f"{name}.json"
+    if path.exists():
+        return path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".json.part")
+    tmp.write_text(json.dumps(payload))
+    tmp.rename(path)
+    return path
+
+
+def _stamp() -> str:
+    return datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+
+
+def events(budget: Budget, session=requests) -> list[dict]:
+    """Upcoming NBA events (free endpoint)."""
+    return _get(f"/sports/{SPORT}/events", {}, budget, 0, "events", session)
+
+
+def event_markets(event_id: str, regions: str, budget: Budget, session=requests) -> dict:
+    """Which markets each bookmaker currently offers for one event (costs ~1)."""
+    out = _get(f"/sports/{SPORT}/events/{event_id}/markets", {"regions": regions}, budget, 1,
+               f"markets {event_id}", session)
+    _save("markets", f"{event_id}_{_stamp()}", out)
+    return out
+
+
+def event_odds(event_id: str, markets: list[str], regions: str, budget: Budget,
+               session=requests) -> dict:
+    n_regions = len(regions.split(","))
+    out = _get(f"/sports/{SPORT}/events/{event_id}/odds",
+               {"regions": regions, "markets": ",".join(markets), "oddsFormat": "decimal"},
+               budget, len(markets) * n_regions, f"odds {event_id}", session)
+    _save("live", f"{event_id}_{_stamp()}", out)
+    return out
+
+
+def historical_events(date_iso: str, budget: Budget, session=requests) -> dict:
+    return _get(f"/historical/sports/{SPORT}/events", {"date": date_iso}, budget, 1,
+                f"historical events {date_iso}", session)
+
+
+def historical_event_odds(event_id: str, date_iso: str, markets: list[str], regions: str,
+                          budget: Budget, session=requests) -> dict:
+    n_regions = len(regions.split(","))
+    out = _get(f"/historical/sports/{SPORT}/events/{event_id}/odds",
+               {"date": date_iso, "regions": regions, "markets": ",".join(markets),
+                "oddsFormat": "decimal"},
+               budget, 10 * len(markets) * n_regions, f"historical odds {event_id}", session)
+    _save("historical", f"{event_id}_{date_iso.replace(':', '')}", out)
+    return out
+
+
+def threshold(point: float | None, name: str) -> int | None:
+    """'Over 19.5' -> 20 (i.e. 20+). Milestone lines without a point are already X+."""
+    if point is None:
+        return None
+    return math.floor(point) + 1 if name.lower() == "over" else None
+
+
+def parse_event_odds(payload: dict, snapshot: str) -> pl.DataFrame:
+    """Tidy rows: one per bookmaker x market x player x line. Handles live and historical shape."""
+    ev = payload.get("data", payload)
+    rows = []
+    for bk in ev.get("bookmakers", []):
+        for mk in bk.get("markets", []):
+            base = mk["key"].removesuffix("_alternate")
+            for o in mk.get("outcomes", []):
+                rows.append({
+                    "snapshot": snapshot, "event_id": ev["id"], "commence_time": ev["commence_time"],
+                    "home_team": ev["home_team"], "away_team": ev["away_team"],
+                    "bookmaker": bk["key"], "market": mk["key"],
+                    "stat": STAT_OF_MARKET.get(base, base), "alternate": mk["key"].endswith("_alternate"),
+                    "player": o.get("description"), "side": o.get("name"), "point": o.get("point"),
+                    "threshold": threshold(o.get("point"), o.get("name", "")),
+                    "price": o.get("price"), "last_update": mk.get("last_update"),
+                })
+    schema = {"snapshot": pl.String, "event_id": pl.String, "commence_time": pl.String,
+              "home_team": pl.String, "away_team": pl.String, "bookmaker": pl.String,
+              "market": pl.String, "stat": pl.String, "alternate": pl.Boolean, "player": pl.String,
+              "side": pl.String, "point": pl.Float64, "threshold": pl.Int64, "price": pl.Float64,
+              "last_update": pl.String}
+    return pl.DataFrame(rows, schema=schema)
+
+
+def load_cached(kind: str = "live") -> pl.DataFrame:
+    """All cached responses of a kind, parsed (no network)."""
+    frames = []
+    for p in sorted((RAW_DIR / kind).glob("*.json")):
+        snap = p.stem.split("_", 1)[1] if "_" in p.stem else p.stem
+        frames.append(parse_event_odds(json.loads(p.read_text()), snap))
+    return pl.concat(frames) if frames else parse_event_odds({"bookmakers": [], "id": ""}, "")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    c = sub.add_parser("coverage", help="which books offer which NBA markets (~1 credit)")
+    c.add_argument("--regions", default="us,au")
+    s = sub.add_parser("snapshot", help="player props for upcoming games")
+    s.add_argument("--regions", default="us")
+    s.add_argument("--markets", default=",".join(DEFAULT_MARKETS))
+    s.add_argument("--max-credits", type=int, default=40)
+    s.add_argument("--max-events", type=int, default=15)
+    h = sub.add_parser("historical", help="props as of a past time (paid plans only)")
+    h.add_argument("--date", required=True, help="ISO time, e.g. 2026-03-15T23:00:00Z")
+    h.add_argument("--regions", default="us")
+    h.add_argument("--markets", default=",".join(DEFAULT_MARKETS))
+    h.add_argument("--max-credits", type=int, default=100)
+    args = ap.parse_args()
+
+    budget = Budget(max_credits=getattr(args, "max_credits", 5))
+    try:
+        if args.cmd == "coverage":
+            evs = events(budget)
+            if not evs:
+                raise SystemExit("no upcoming NBA events")
+            mk = event_markets(evs[0]["id"], args.regions, budget)
+            print(f"{evs[0]['away_team']} @ {evs[0]['home_team']} ({evs[0]['commence_time']}):")
+            for bk in mk.get("bookmakers", []):
+                keys = sorted(m["key"] for m in bk.get("markets", []))
+                props = [k for k in keys if k.startswith("player_")]
+                print(f"  {bk['key']:22s} {len(keys):3d} markets, {len(props):3d} player props: "
+                      f"{', '.join(props[:8])}{' ...' if len(props) > 8 else ''}")
+        elif args.cmd == "snapshot":
+            markets = args.markets.split(",")
+            evs = events(budget)[: args.max_events]
+            frames = []
+            for ev in evs:
+                payload = event_odds(ev["id"], markets, args.regions, budget)
+                frames.append(parse_event_odds(payload, _stamp()))
+            df = pl.concat(frames) if frames else pl.DataFrame()
+            print(f"{len(evs)} events, {df.height:,} prices, "
+                  f"{df['player'].n_unique() if df.height else 0} players")
+        elif args.cmd == "historical":
+            markets = args.markets.split(",")
+            evs = historical_events(args.date, budget).get("data", [])
+            for ev in evs:
+                historical_event_odds(ev["id"], args.date, markets, args.regions, budget)
+            print(f"{len(evs)} historical events saved")
+    except BudgetExceeded as err:
+        print(f"STOPPED: {err}")
+    finally:
+        print(f"credits spent this run: {budget.spent}; account remaining: {budget.remaining}")
+        for line in budget.log[-5:]:
+            print("  " + line)
+
+
+if __name__ == "__main__":
+    main()

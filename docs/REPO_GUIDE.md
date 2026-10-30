@@ -50,6 +50,7 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/rebounding.py` | Rebounding vs opponent and by position: expected rebounds (as-at), opponent factors, persistence tests. |
 | `src/nba_ladders/calibration.py` | Logistic recalibration of simulated probabilities (fit one season, check the next). Tried; not applied. |
 | `src/nba_ladders/combos.py` | Combo explorer: grid of P/R, P/A, R/A, P/R/A combos with fair price, independent-legs price and correlation lift; best per shape. |
+| `src/nba_ladders/sources/odds_api.py` | The Odds API v4 loader: coverage / live snapshot / historical player props, credit budget + reserve, raw cache, parser to X+ thresholds. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
@@ -62,6 +63,7 @@ What every file in this repo is for, grouped by job.
 | `tests/test_injury_report.py`, `tests/test_sheet.py` | Offline tests for report parsing, name keys, depth chart and new-absence logic. |
 | `tests/test_absences.py`, `tests/test_luck.py`, `tests/test_status_calibration.py` | Offline tests for absence effects, as-at luck features, status matching. |
 | `tests/test_combos.py` | Combo explorer: lift > 1 when legs share minutes, price range, realistic legs, per-shape picks. |
+| `tests/test_odds_api.py` | Offline loader tests (fake HTTP): thresholds, historical wrapper, budget refusal and reserve, caching. |
 | `tests/test_smoke.py` | Quick checks: data folders exist, bet log has the right columns, every scenario label is a known one. The hook runs these after each edit. Data-pipeline tests will use saved sample data so tests never need the network. |
 
 ## Data and bets
