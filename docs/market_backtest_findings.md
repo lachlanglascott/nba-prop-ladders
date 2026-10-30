@@ -68,6 +68,36 @@ high-variance tails (coef 0.04 ± 0.05).
 starting centre is out beat the general pool by ~28 points of ROI. The CI still includes zero
 (463 bets, one season sample), so this is a lead to confirm with more starter-out games.
 
+## 5. Every angle vs Sportsbet tails (blind, price ≥ $3; `angles_market_check.py`)
+
+All features pre-game only (freed minutes use teammates' season-average minutes, mild
+look-ahead). An angle must hold in both halves of the season (Oct–Jan, Feb–Apr).
+
+| Angle | Bets | ROI | 90% CI | Oct–Jan | Feb–Apr |
+|---|---|---|---|---|---|
+| All tails (baseline) | 54,339 | −18.0% | −20.7 / −15.2 | −17.3% | −19.7% |
+| **Foul spot** (backup big; starter fouls/36 × opp FTA/g, top third) | 765 | **+11.9%** | −14.4 / +38.3 | +12.1% | +10.8% (109) |
+| **Starter out × high minutes variance** | 463 | **+9.5%** | −17.2 / +36.8 | +2.8% | +61.9% (52) |
+| Starter out (all backup bigs) | 714 | −2.0% | −24.2 / +20.6 | −13.2% | +75.7% (90) |
+| Luck ≥ 1.10 | 190 | +31.4% | −25.7 / +85.2 | +26.9% | n=5 |
+| Luck ≥ 1.05 | 1,269 | −7.1% | −22.0 / +7.8 | −10.1% | n=48 |
+| Freed ≥ 20 / ≥ 40 min (absences) | 46k / 35k | −16% / −14% | excl. 0 | | |
+| Role trend ≥ +4 min | 4,905 | −20.0% | −27.2 / −12.4 | | |
+| Starter × high P+R CV | 5,075 | −15.5% | −25.9 / −5.1 | | |
+| Starter × high minutes variance | 8,035 | −17.5% | −25.8 / −9.7 | | |
+
+**Backup-big thesis (foul spot ∪ starter out × high variance; no overlap): 1,228 bets, +11.0%
+(CI −5.8 / +27.0).** By market: **P+R totals +30.2% (322 bets, CI +6.1 / +53.8)**, points +10.1%,
+rebounds 0.0%. Both price bands similar (+11%).
+
+**Rejected by the data:** "more minutes" (absences, role trend) is priced in; **high-variance
+starters' tails are overpriced** like everything else (−15% to −19%, CIs exclude 0). Moussa
+Diabaté himself, 2025-26 (34 games, ~25 min role): tails $3–5 −39%, $5+ −68% (5% hit).
+
+**Caveat: multiple testing.** 13 angles tested; at 90% CIs about one false positive is expected.
+The backup-big angles pass the both-halves check, but every CI except P+R totals includes 0.
+Confirm with more starter-out / foul-spot games before staking seriously.
+
 ## Where the edge may still be (not testable with single legs)
 
 1. **SGM correlation pricing:** the original thesis. Books are efficient on each leg; the
