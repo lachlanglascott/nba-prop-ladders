@@ -98,6 +98,43 @@ Diabaté himself, 2025-26 (34 games, ~25 min role): tails $3–5 −39%, $5+ −
 The backup-big angles pass the both-halves check, but every CI except P+R totals includes 0.
 Confirm with more starter-out / foul-spot games before staking seriously.
 
+## 6. Two seasons: 664,048 rungs, 1,983 games (2024-25 ~726 games + all 2025-26)
+
+**The §5 backup-big leads did not survive the bigger sample** (multiple testing, as warned):
+
+| Angle (tails ≥ $3) | §5 (491 games) | Two seasons | 2024-25 | 2025-26 |
+|---|---|---|---|---|
+| Baseline | −18.0% | −18.3% (183,118) | −15.8% | −19.2% |
+| Foul spot | +11.9% (765) | **−21.2%** (2,539) | −39.5% | −17.4% |
+| Starter out × high variance | +9.5% (463) | **−15.8%** (1,605) | −14.2% | −16.6% |
+| Starter out (all) | −2.0% | −12.8% (2,651) | −11.1% | −13.5% |
+| Backup-big union, P+R tails | +30.2% (322) | **−10.6%** (956) | −18.5% | −9.4% |
+| Season-to-date luck ≥ 1.10 | +31% (190) | **+8.1%** (732) | +4.3% | +10.5% |
+
+All prices: baseline −10.7% (664k). More minutes (freed, role trend), high-variance starters,
+rolling 10-game luck and the guard high-potentials cut all lose (−4% to −15%).
+
+**The one consistent signal: potentials luck on assists.**
+
+| Assist rungs, season-to-date luck | Bets | At Sportsbet | **At best AU price** | 90% CI (best) | 2024-25 | 2025-26 |
+|---|---|---|---|---|---|---|
+| ≥ 1.10 | 1,875 | +0.7% | **+3.7%** | −4.1% / +11.6% | +3.8% | +3.5% |
+| ≥ 1.05 | 8,947 | −3.5% | −1.2% | −4.5% / +2.3% | −1.6% | −0.7% |
+| Rolling-10 luck ≥ 1.10 | 5,883 | −4.0% | −1.7% | −5.5% / +2.4% | +1.4% | −3.9% |
+| Baseline (all rungs) | 664,048 | −10.7% | −9.4% | | −7.6% | −10.2% |
+
+The potentials information is worth about the bookmaker's margin (~10 points over baseline);
+with line shopping (best of Sportsbet/TAB/Dabble/Neds/Ladbrokes/PointsBet) it's a small,
+consistent positive. Not monotonic in the threshold (≥1.15 is worse), so treat it as a modest
+effect. Not proven: CI includes 0.
+
+**Verdict (data-led):**
+- Retire the single-leg backup-big / foul-spot / variance angles as betting signals.
+- Candidate: assist rungs where season-to-date assists lag potential assists (luck ≥ 1.10), at the
+  best AU price, small stakes, tracked. Needs ~3–4× more bets to confirm (2023-24 would add a
+  season; prop history starts May 2023).
+- The SGM correlation thesis remains untested and is still the main hypothesis.
+
 ## Where the edge may still be (not testable with single legs)
 
 1. **SGM correlation pricing:** the original thesis. Books are efficient on each leg; the

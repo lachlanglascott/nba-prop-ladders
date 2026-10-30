@@ -19,9 +19,10 @@ Single legs are efficiently priced: no single-leg strategy profits on held-out g
 adds real information in starter-out (coef 0.24) and luck (0.39) spots and on rebounds, but less
 than the margin. Remaining edge candidates: **SGM correlation pricing** and **timing after news**.
 
-**Angle check vs Sportsbet tails (2025-26):** backup-big spots (foul spot, starter out × high
-variance) +11% blind, P+R totals +30% (CI excludes 0); "more minutes" and high-variance starters
-are priced in / overpriced. Details: docs/market_backtest_findings.md §5.
+**Angle check vs Sportsbet, two seasons (664k rungs):** the 2025-26 backup-big leads were noise
+(−11% to −21% on the full sample). Only **potentials luck on assists** holds: luck ≥ 1.10 at the
+best AU price +3.7% (+3.8% / +3.5% by season, CI includes 0). Details:
+docs/market_backtest_findings.md §6.
 
 ## A vs B are different players
 
