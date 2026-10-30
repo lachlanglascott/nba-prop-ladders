@@ -19,11 +19,33 @@ from datetime import date
 import polars as pl
 
 from nba_ladders import config
+from nba_ladders.absences import position_groups
+from nba_ladders.luck import BLEND, CHANCES, K_CONV, league_conversion
+from nba_ladders.luck import load as load_tracking
 from nba_ladders.market_backtest import roi
+from nba_ladders.scenarios import positions
 from nba_ladders.with_without import teammate_status
 
 TAIL = 3.0
 SPLIT = date(2026, 2, 1)
+
+
+def rolling_luck(window: int = 10) -> pl.DataFrame:
+    """Per player-game, from strictly earlier games: last-`window` luck multiplier for AST and REB
+    (blended / actual, blend weights from luck.py) and potential assists per game."""
+    trk = load_tracking().sort("player_id", "game_date")
+    lg = league_conversion(trk)
+    cols = []
+    for s, c in CHANCES.items():
+        prior_cum = lambda col: pl.col(col).shift(1).cum_sum().over("player_id").fill_null(0)
+        win = lambda col: pl.col(col).shift(1).rolling_sum(window, min_samples=window).over("player_id")
+        conv = (prior_cum(s) + K_CONV[s] * lg[s]) / (prior_cum(c) + K_CONV[s])
+        blended = BLEND[s] * win(c) * conv + (1 - BLEND[s]) * win(s)
+        cols.append((blended / win(s).clip(lower_bound=1)).alias(f"luck10_{s}"))
+    cols.append((pl.col("potential_ast").shift(1).rolling_mean(window, min_samples=window)
+                 .over("player_id")).alias("pot_ast10"))
+    return trk.with_columns(cols).select("player_id", "game_date", "luck10_ast", "luck10_reb",
+                                         "pot_ast10")
 
 
 def features() -> pl.DataFrame:
@@ -73,6 +95,8 @@ def features() -> pl.DataFrame:
                (pl.col("min20") >= 28).alias("starter"),
                pl.col("starter_id").is_not_null().alias("backup_big"),
            ))
+    out = (out.join(rolling_luck(), on=["player_id", "game_date"], how="left")
+           .join(position_groups(positions()), on="player_id", how="left"))
     q = out.select(pl.col("min_sd").quantile(0.667), pl.col("pr_cv").quantile(0.667),
                    (pl.col("starter_pf36") * pl.col("opp_fta")).quantile(0.667)).row(0)
     return out.with_columns(
@@ -96,11 +120,19 @@ ANGLES = {
     "starter x high min var": pl.col("starter") & pl.col("hi_min_var"),
     "starter x high P+R CV, reb/P+R": pl.col("starter") & pl.col("hi_pr_cv") & pl.col("stat").is_in(["reb", "pts+reb"]),
     "freed>=20 & luck>=1.05": (pl.col("freed") >= 20) & (pl.col("luck_stat") >= 1.05),
+    # rolling last-10 potentials (works all season, unlike season-to-date)
+    "AST rungs, luck10 >= 1.10": (pl.col("stat") == "ast") & (pl.col("luck10_ast") >= 1.10),
+    "AST rungs, luck10 >= 1.20": (pl.col("stat") == "ast") & (pl.col("luck10_ast") >= 1.20),
+    "AST rungs, guards, pot>=8, luck10>=1.15": (pl.col("stat") == "ast") & (pl.col("grp") == "G")
+        & (pl.col("pot_ast10") >= 8) & (pl.col("luck10_ast") >= 1.15),
+    "AST rungs, luck10 <= 0.90 (lucky: fade?)": (pl.col("stat") == "ast") & (pl.col("luck10_ast") <= 0.90),
+    "REB rungs, luck10 >= 1.10": (pl.col("stat") == "reb") & (pl.col("luck10_reb") >= 1.10),
+    "REB/P+R rungs, luck10 >= 1.10": pl.col("stat").is_in(["reb", "pts+reb"]) & (pl.col("luck10_reb") >= 1.10),
 }
 
 
-def table(f: pl.DataFrame) -> pl.DataFrame:
-    tails = f.filter(pl.col("price") >= TAIL)
+def table(f: pl.DataFrame, min_price: float = TAIL) -> pl.DataFrame:
+    tails = f.filter(pl.col("price") >= min_price)
     rows = []
     for name, cond in ANGLES.items():
         x = tails.filter(cond)
@@ -118,8 +150,14 @@ def table(f: pl.DataFrame) -> pl.DataFrame:
 def main() -> None:
     f = features()
     print(f"{f.height:,} rungs; tails (>= ${TAIL:.0f}): {f.filter(pl.col('price') >= TAIL).height:,}")
-    with pl.Config(tbl_hide_column_data_types=True, tbl_rows=30, tbl_width_chars=200, fmt_str_lengths=34):
-        print(table(f))
+    cols = ["angle", "bets", "hit", "avg_$", "roi", "ci90_lo", "ci90_hi", "roi_oct_jan", "n1",
+            "roi_feb_apr", "n2"]
+    with pl.Config(tbl_hide_column_data_types=True, tbl_rows=40, tbl_cols=12, tbl_width_chars=220,
+                   fmt_str_lengths=40):
+        print(f"\nTAILS (price >= ${TAIL:.0f})")
+        print(table(f).select(cols))
+        print("\nALL PRICES")
+        print(table(f, min_price=1.0).select(cols))
 
 
 if __name__ == "__main__":
