@@ -344,9 +344,14 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
             lines.append(f"| {r['threshold']}+ {r['stat']} | {sbp} | ${r['best_au']:.2f} ({r['best_book']}) | "
                          f"${r['fair']:.2f} | ${r['fair_cal']:.2f} | {r['ev_cal']:+.0%} | {r['note']}{tail} |")
             if r["note"] == "**value (calibrated)**":
-                value.append({"player": name, "team": c["team"], "rung": f"{r['threshold']}+ {r['stat']}",
+                first = next(iter(c["reasons"]))
+                value.append({"player": name, "team": c["team"], "opp": c["opp"],
+                              "rung": f"{r['threshold']}+ {r['stat']}",
                               "price": r["best_au"], "book": r["best_book"], "fair": r["fair_cal"],
-                              "model_fair": r["fair"], "ev": r["ev_cal"], "angles": list(c["reasons"])})
+                              "model_fair": r["fair"], "ev": r["ev_cal"], "angles": list(c["reasons"]),
+                              "pred": (f"{stats['minutes'].mean():.0f} min · {stats['pts'].mean():.1f} pts / "
+                                       f"{stats['reb'].mean():.1f} reb / {stats['ast'].mean():.1f} ast"),
+                              "why": c["reasons"][first]})
         lines.append("")
     else:
         lines.append("- No AU ladder prices in the snapshot for this player yet.")
@@ -393,6 +398,20 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
                    "Sportsbet's own price: log loss 0.5602 vs 0.5667). EV uses the calibrated fair at the best AU price. "
                    "Raw model-vs-book gaps lose money historically, so trust the calibrated column. SGM combos are "
                    "model-only (no SGM prices to calibrate against): compare them with the builder.")]
+    best_per_player = {}
+    for s in sorted(shortlist, key=lambda s: -s["ev"]):
+        best_per_player.setdefault(s["player"], s)
+    top5 = list(best_per_player.values())[:5]
+    lines += ["", "## Top 5 candidates", ""]
+    if top5:
+        lines += ["| # | Player | Game | Bet | Best AU | Calibrated fair | Cal. EV | Angle | Predicted | Why |",
+                  "|---|---|---|---|---|---|---|---|---|---|"]
+        for i, s in enumerate(top5, 1):
+            lines.append(f"| {i} | **{s['player']}** | {s['team']} vs {s['opp']} | {s['rung']} | "
+                         f"${s['price']:.2f} ({s['book']}) | ${s['fair']:.2f} | {s['ev']:+.0%} | "
+                         f"{ANGLE_LABEL[s['angles'][0]]} | {s['pred']} | {s['why']} |")
+    else:
+        lines.append("No rungs clear the calibrated cushion at current prices.")
     lines += ["", f"## Shortlist: calibrated EV ≥ {CAL_CUSHION:.0%} at the best AU price", ""]
     if shortlist:
         lines += ["| Player | Rung | Best AU | Calibrated fair | Model fair | Cal. EV | Angles |",
@@ -423,6 +442,71 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
     return "\n".join(lines) + "\n"
 
 
+CSS = """
+:root { --bg:#f7f7f5; --card:#ffffff; --ink:#1d1d1f; --muted:#6b6b70; --line:#e3e3e0;
+        --accent:#2f5bd3; --good:#137a3a; --goodbg:#e6f4ea; --bad:#a3302a; --badbg:#fbeaea; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#131315; --card:#1c1c1f; --ink:#ececee; --muted:#9a9aa1; --line:#2e2e33;
+  --accent:#7aa2ff; --good:#5fd38a; --goodbg:#163222; --bad:#ff7b72; --badbg:#3a1a1a; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+main { max-width:1100px; margin:0 auto; padding:24px 16px 64px; }
+h1 { font-size:26px; margin:0 0 4px; }
+h2 { font-size:19px; margin:32px 0 10px; }
+h3 { font-size:16px; margin:0; display:inline; }
+p, li { color:var(--ink); }
+em { color:var(--muted); }
+code { background:var(--line); padding:1px 5px; border-radius:4px; font-size:13px; }
+.wrap { overflow-x:auto; }
+table { border-collapse:collapse; width:100%; margin:10px 0 14px; font-size:13.5px; background:var(--card); }
+th, td { border-bottom:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top; }
+th { color:var(--muted); font-weight:600; background:var(--bg); position:sticky; top:0; }
+.game { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 18px 14px; margin:18px 0; }
+.game > h2 { margin-top:14px; }
+details { border-top:1px solid var(--line); padding:10px 0 4px; }
+summary { cursor:pointer; list-style:none; }
+summary::-webkit-details-marker { display:none; }
+summary::before { content:"▸ "; color:var(--muted); }
+details[open] > summary::before { content:"▾ "; }
+.ev-pos { color:var(--good); background:var(--goodbg); font-weight:600; border-radius:4px; padding:1px 5px; }
+.ev-neg { color:var(--bad); }
+.top5 table { font-size:14px; }
+.top5 td:nth-child(2) { white-space:nowrap; }
+.note { color:var(--muted); font-size:13px; }
+"""
+
+
+def to_html(md_text: str, title: str) -> str:
+    """Markdown -> styled standalone HTML: game cards, collapsible candidates, EV highlighting."""
+    import re
+
+    import markdown
+
+    body = markdown.markdown(md_text, extensions=["tables"])
+    body = body.replace("<table>", '<div class="wrap"><table>').replace("</table>", "</table></div>")
+    body = re.sub(r"<td>([+−-]\d+%)</td>",
+                  lambda m: f'<td><span class="{"ev-pos" if m.group(1).startswith("+") else "ev-neg"}">'
+                            f"{m.group(1)}</span></td>", body)
+    # top sections: wrap "Top 5" in a highlighted block
+    body = body.replace("<h2>Top 5 candidates</h2>", '<section class="top5"><h2>Top 5 candidates</h2>', 1)
+    body = body.replace("<h2>Shortlist", "</section><h2>Shortlist", 1)
+    # each game (h2 "AWAY @ HOME") becomes a card; each candidate (h3) a collapsible section
+    parts = re.split(r"(?=<h2>[A-Z]{2,3} @ [A-Z]{2,3}</h2>)", body)
+    out = [parts[0]]
+    for g in parts[1:]:
+        segs = re.split(r"(?=<h3>)", g)
+        head, cands = segs[0], segs[1:]
+        html = f'<section class="game">{head}'
+        for c in cands:
+            m = re.match(r"<h3>(.*?)</h3>(.*)", c, re.DOTALL)
+            html += f"<details><summary><h3>{m.group(1)}</h3></summary>{m.group(2)}</details>" if m else c
+        out.append(html + "</section>")
+    return (f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
+            f'<meta name="viewport" content="width=device-width, initial-scale=1">'
+            f"<title>{title}</title><style>{CSS}</style></head><body><main>{''.join(out)}</main></body></html>")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--date", type=date.fromisoformat, default=datetime.now(ET).date())
@@ -432,8 +516,10 @@ def main() -> None:
     out = config.ROOT / "docs" / "slates" / f"{args.date.isoformat()}.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(md)
+    html = out.with_suffix(".html")
+    html.write_text(to_html(md, f"NBA slate {args.date}"))
     print(md)
-    print(f"wrote {out}")
+    print(f"wrote {out}\nwrote {html}")
 
 
 if __name__ == "__main__":

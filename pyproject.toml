@@ -10,6 +10,7 @@ dependencies = [
     "scipy>=1.11",
     "truststore>=0.10.5",
     "pdfplumber>=0.11.10",
+    "markdown>=3.11.2",
 ]
 
 [dependency-groups]
