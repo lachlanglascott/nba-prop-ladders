@@ -35,7 +35,7 @@ RAW_DIR = config.DATA_RAW / "odds_api"
 RESERVE = 50  # never let a run take the account below this many credits
 AU_BASE = "sportsbet"
 US_REFERENCE = ["fanduel", "draftkings", "fanatics"]
-AU_REFERENCE = ["tab"]  # leg prices only (the API has no SGM prices)
+AU_REFERENCE = ["tab", "dabble_au", "betr_au", "neds", "ladbrokes_au", "pointsbetau"]  # legs only (no SGM in API)
 DEFAULT_BOOKMAKERS = [AU_BASE, *AU_REFERENCE, *US_REFERENCE]  # <= 10 books = 1 region of cost
 DEFAULT_MARKETS = [
     "player_points_alternate", "player_rebounds_alternate", "player_assists_alternate",
@@ -165,6 +165,43 @@ def historical_event_odds(event_id: str, date_iso: str, markets: list[str], regi
     return out
 
 
+def backfill(game_days: list, budget: Budget, markets: list[str], bookmakers: list[str],
+             hours_before: float = 2.0, seed: int = 0, session=requests) -> int:
+    """Historical props for every game on the given ET game days, in random day order.
+
+    Snapshot = tip-off minus hours_before. Resumable: events already cached are skipped (no
+    credits). Stops cleanly when the budget or reserve would be breached. Returns games saved.
+    """
+    import random
+    from datetime import timedelta
+    from zoneinfo import ZoneInfo
+
+    et = ZoneInfo("America/New_York")
+    days = list(game_days)
+    random.Random(seed).shuffle(days)
+    saved = 0
+    for d in days:
+        done_marker = RAW_DIR / "historical" / "_days" / f"{d.isoformat()}.done"
+        if done_marker.exists():
+            continue
+        noon_utc = datetime(d.year, d.month, d.day, 16, 0, tzinfo=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        evs = historical_events(noon_utc, budget, session).get("data", [])
+        todays = [e for e in evs if datetime.fromisoformat(e["commence_time"])
+                  .astimezone(et).date() == d]
+        for ev in todays:
+            tip = datetime.fromisoformat(ev["commence_time"])
+            when = (tip - timedelta(hours=hours_before)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            if (RAW_DIR / "historical" / f"{ev['id']}_{when.replace(':', '')}.json").exists():
+                continue
+            historical_event_odds(ev["id"], when, markets, None, budget, session, bookmakers)
+            saved += 1
+        done_marker.parent.mkdir(parents=True, exist_ok=True)
+        done_marker.write_text(str(len(todays)))
+        print(f"{d}: {len(todays)} games | spent {budget.spent} | remaining {budget.remaining}",
+              flush=True)
+    return saved
+
+
 def threshold(point: float | None, name: str) -> int | None:
     """'Over 19.5' -> 20 (i.e. 20+). Milestone lines without a point are already X+."""
     if point is None:
@@ -223,6 +260,11 @@ def main() -> None:
     h.add_argument("--bookmakers", default=",".join(DEFAULT_BOOKMAKERS))
     h.add_argument("--markets", default=",".join(DEFAULT_MARKETS))
     h.add_argument("--max-credits", type=int, default=100)
+    b = sub.add_parser("backfill", help="historical props for a whole season (resumable)")
+    b.add_argument("--season-id", default="22025")
+    b.add_argument("--markets", default=",".join(DEFAULT_MARKETS[:4]))
+    b.add_argument("--bookmakers", default=",".join(DEFAULT_BOOKMAKERS))
+    b.add_argument("--max-credits", type=int, required=True)
     args = ap.parse_args()
 
     budget = Budget(max_credits=getattr(args, "max_credits", 5))
@@ -249,6 +291,11 @@ def main() -> None:
             df = pl.concat(frames) if frames else pl.DataFrame()
             print(f"{len(evs)} events, {df.height:,} prices, "
                   f"{df['player'].n_unique() if df.height else 0} players")
+        elif args.cmd == "backfill":
+            pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
+            days = pg.filter(pl.col("season_id") == args.season_id)["game_date"].unique().sort().to_list()
+            n = backfill(days, budget, args.markets.split(","), args.bookmakers.split(","))
+            print(f"backfill: {n} games saved this run")
         elif args.cmd == "historical":
             markets = args.markets.split(",")
             evs = historical_events(args.date, budget).get("data", [])

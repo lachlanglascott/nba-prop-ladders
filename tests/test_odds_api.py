@@ -99,3 +99,23 @@ def test_bookmakers_param_counts_as_one_region_per_ten():
     assert params == {"bookmakers": "sportsbet,fanduel,draftkings,fanatics"} and n == 1
     assert oa._book_params(None, [f"b{i}" for i in range(11)])[1] == 2
     assert oa._book_params("us,au", None) == ({"regions": "us,au"}, 2)
+
+
+def test_backfill_skips_cached_and_marks_days(tmp_path):
+    from datetime import date
+
+    ev = {**EVENT, "commence_time": "2026-03-16T00:00:00Z"}  # 8 PM ET on 2026-03-15
+    class Sess:
+        def __init__(self):
+            self.calls = []
+
+        def get(self, url, params, timeout):
+            self.calls.append(url)
+            payload = {"data": [ev]} if url.endswith("/events") else {"data": EVENT}
+            return FakeResp(payload, 1 if url.endswith("/events") else 40, 10_000)
+    s = Sess()
+    n = oa.backfill([date(2026, 3, 15)], oa.Budget(200), ["player_points_alternate"], ["sportsbet"], session=s)
+    assert n == 1 and (tmp_path / "historical" / "_days" / "2026-03-15.done").exists()
+    calls = len(s.calls)
+    assert oa.backfill([date(2026, 3, 15)], oa.Budget(200), ["x"], ["sportsbet"], session=s) == 0
+    assert len(s.calls) == calls  # finished day: no further requests
