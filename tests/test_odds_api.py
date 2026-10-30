@@ -119,3 +119,18 @@ def test_backfill_skips_cached_and_marks_days(tmp_path):
     calls = len(s.calls)
     assert oa.backfill([date(2026, 3, 15)], oa.Budget(200), ["x"], ["sportsbet"], session=s) == 0
     assert len(s.calls) == calls  # finished day: no further requests
+
+
+def test_backfill_skips_not_found_events(tmp_path):
+    from datetime import date
+
+    ev = {**EVENT, "commence_time": "2026-03-16T00:00:00Z"}
+
+    class Sess:
+        def get(self, url, params, timeout):
+            if url.endswith("/events"):
+                return FakeResp({"data": [ev]}, 1, 10_000)
+            return FakeResp({"message": "Event not found"}, 0, 10_000, status=404)
+
+    n = oa.backfill([date(2026, 3, 15)], oa.Budget(200), ["x"], ["sportsbet"], session=Sess())
+    assert n == 0 and (tmp_path / "historical" / "_days" / "2026-03-15.done").exists()

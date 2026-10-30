@@ -67,6 +67,10 @@ class BudgetExceeded(RuntimeError):
     pass
 
 
+class NotFound(RuntimeError):
+    """404 (e.g. a historical event that was postponed or re-issued). Free; skip it."""
+
+
 @dataclass
 class Budget:
     """Caps credits spent in one run; tracks the account's remaining credits from headers."""
@@ -108,6 +112,8 @@ def _get(path: str, params: dict, budget: Budget, estimate: int, what: str,
     else:
         raise RuntimeError(f"{what}: no response after retries")
     budget.record(resp.headers, what)
+    if resp.status_code == 404:
+        raise NotFound(f"{what}: HTTP 404: {resp.text[:200]}")
     if resp.status_code != 200:
         # never echo the URL: it contains the key
         raise RuntimeError(f"{what}: HTTP {resp.status_code}: {resp.text[:300]}")
@@ -206,7 +212,12 @@ def backfill(game_days: list, budget: Budget, markets: list[str], bookmakers: li
             when = (tip - timedelta(hours=hours_before)).strftime("%Y-%m-%dT%H:%M:%SZ")
             if (RAW_DIR / "historical" / f"{ev['id']}_{when.replace(':', '')}.json").exists():
                 continue
-            historical_event_odds(ev["id"], when, markets, None, budget, session, bookmakers)
+            try:
+                historical_event_odds(ev["id"], when, markets, None, budget, session, bookmakers)
+            except NotFound:
+                print(f"  skip {ev['away_team']} @ {ev['home_team']} ({ev['commence_time']}): not found",
+                      flush=True)
+                continue
             saved += 1
         done_marker.parent.mkdir(parents=True, exist_ok=True)
         done_marker.write_text(str(len(todays)))
