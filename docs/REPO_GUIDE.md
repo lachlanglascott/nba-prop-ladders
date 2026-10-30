@@ -49,6 +49,7 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/status_calibration.py` | P(sits) by injury-report status, from past reports vs box scores. |
 | `src/nba_ladders/rebounding.py` | Rebounding vs opponent and by position: expected rebounds (as-at), opponent factors, persistence tests. |
 | `src/nba_ladders/calibration.py` | Logistic recalibration of simulated probabilities (fit one season, check the next). Tried; not applied. |
+| `src/nba_ladders/combos.py` | Combo explorer: grid of P/R, P/A, R/A, P/R/A combos with fair price, independent-legs price and correlation lift; best per shape. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
@@ -60,6 +61,7 @@ What every file in this repo is for, grouped by job.
 | `tests/test_fouls.py` | Offline tests for foul parsing, starter inference and the foul-trouble analysis. |
 | `tests/test_injury_report.py`, `tests/test_sheet.py` | Offline tests for report parsing, name keys, depth chart and new-absence logic. |
 | `tests/test_absences.py`, `tests/test_luck.py`, `tests/test_status_calibration.py` | Offline tests for absence effects, as-at luck features, status matching. |
+| `tests/test_combos.py` | Combo explorer: lift > 1 when legs share minutes, price range, realistic legs, per-shape picks. |
 | `tests/test_smoke.py` | Quick checks: data folders exist, bet log has the right columns, every scenario label is a known one. The hook runs these after each edit. Data-pipeline tests will use saved sample data so tests never need the network. |
 
 ## Data and bets
@@ -81,6 +83,7 @@ What every file in this repo is for, grouped by job.
 | `docs/angle_d_fouls.md` | Results for angle D (foul trouble). |
 | `docs/context_model.md` | Any-teammate-out model: method, tuning, holdout results, next steps. |
 | `docs/rebounding.md` | Opponent and position rebounding effects; Camara worked example. |
+| `docs/combos.md` | Combo explorer: why (Achiuwa 24p/9r), how lift works, replay. |
 | `docs/luck.md` | Potential assists / rebound chances: does luck revert? Blend weights. |
 | `docs/status_calibration.md` | Injury-report status → P(sits), 2025-26. |
 | `docs/phase1_findings.md` | First results from the data. |

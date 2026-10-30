@@ -123,16 +123,37 @@ if __name__ == "__main__":
 SEASON_DIR = RAW_ROOT / "ptstats_season"
 
 
+def _snapshot_path(raw_dir: Path, season: str, measure: str, as_of: date) -> Path | None:
+    """Cached snapshot for an ET game day. Snapshots before 2026-10-31 were named by the
+    local (AEDT) date, a day ahead of ET, so for replays also accept as_of + 1."""
+    from datetime import timedelta
+
+    for d in (as_of, as_of + timedelta(days=1)):
+        path = raw_dir / season / measure.lower() / f"{d.isoformat()}.json"
+        if path.exists():
+            return path
+    return None
+
+
 def season_totals(season: str, as_of: date | None = None, raw_dir: Path = SEASON_DIR) -> pl.DataFrame:
-    """Season-to-date tracking totals (both measures), snapshotted once per day.
+    """Season-to-date tracking totals (both measures), snapshotted once per ET day.
 
     For the current season, one-day queries come back empty, but season totals work. Daily
     snapshots also allow differencing later (today - yesterday = per-game numbers).
+    as_of (a past ET game day) reads the snapshot taken that day and never fetches: today's
+    totals would include the game being replayed. Raises FileNotFoundError if none exists.
     """
-    as_of = as_of or date.today()
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    replay = as_of is not None
+    as_of = as_of or datetime.now(ZoneInfo("America/New_York")).date()
     frames = []
     for m in MEASURES:
-        path = raw_dir / season / m.lower() / f"{as_of.isoformat()}.json"
+        cached = _snapshot_path(raw_dir, season, m, as_of) if replay else None
+        path = cached or raw_dir / season / m.lower() / f"{as_of.isoformat()}.json"
+        if replay and cached is None:
+            raise FileNotFoundError(f"no {m} tracking snapshot for {as_of}")
         if path.exists():
             payload = json.loads(path.read_text())
         else:

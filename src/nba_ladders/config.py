@@ -10,6 +10,6 @@ NBA_API_MIN_SECONDS_BETWEEN_CALLS = 0.6
 
 # Why we expected the minutes/production. Keep in sync with the log-bet skill.
 SCENARIOS = frozenset(
-    {"starter_out", "new_starter", "role_change", "foul_trouble_opp", "blowout_risk", "matchup",
-     "other"}
+    {"starter_out", "new_starter", "role_change", "luck_reversion", "foul_trouble_opp", "blowout_risk",
+     "matchup", "other"}
 )

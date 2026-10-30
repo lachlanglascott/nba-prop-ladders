@@ -8,6 +8,7 @@ the per-minute rate is being judged.
 
     uv run python -m nba_ladders.luck                     # predictive test, 2024-25 + 2025-26
     uv run python -m nba_ladders.luck "Deni Avdija"       # a player's recent luck
+    uv run python -m nba_ladders.luck --scan [YYYY-MM-DD] # a game day's luck candidates
 """
 
 import argparse
@@ -127,7 +128,18 @@ def player_report(feat: pl.DataFrame, name: str, last: int = 10) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("player", nargs="?")
+    ap.add_argument("--scan", nargs="?", const="today", metavar="YYYY-MM-DD",
+                    help="scan a game day's players for luck gaps (default: today ET)")
     args = ap.parse_args()
+    if args.scan:
+        from datetime import date as _date
+        from datetime import datetime as _dt
+        from zoneinfo import ZoneInfo
+
+        day = (_dt.now(ZoneInfo("America/New_York")).date() if args.scan == "today"
+               else _date.fromisoformat(args.scan))
+        _cli_scan(day)
+        return
     df = load()
     feat = rolling_features(df, league_conversion(df))
     if args.player:
@@ -141,9 +153,6 @@ def main() -> None:
             print(f"{s}: next game by luck over the last {WINDOW}")
             print(luck_buckets(feat, s).with_columns(pl.col(pl.Float64).round(2)))
 
-
-if __name__ == "__main__":
-    main()
 
 
 K_LUCK = {"ast": 25.0, "reb": 40.0}  # pseudo-chances: small samples barely move the price
@@ -175,12 +184,17 @@ def luck_multipliers(current: pl.DataFrame, history: pl.DataFrame,
     return d.select("player_id", *out)
 
 
-def live_luck(season: str = "2026-27") -> pl.DataFrame:
-    """Current-season luck multipliers for every player (snapshots tracking totals today)."""
+def live_luck(season: str = "2026-27", as_of=None) -> pl.DataFrame:
+    """Current-season luck multipliers for every player (snapshots tracking totals today).
+
+    as_of: replay a past ET game day from that day's snapshot (raises FileNotFoundError).
+    """
     from nba_ladders.sources.tracking import season_totals
 
     hist = load()
-    return luck_multipliers(season_totals(season), hist, league_conversion(hist))
+    if as_of is not None:
+        hist = hist.filter(pl.col("game_date") < as_of)
+    return luck_multipliers(season_totals(season, as_of=as_of), hist, league_conversion(hist))
 
 
 def effective_luck(mult: float, weights, current_season) -> float:
@@ -199,3 +213,71 @@ def effective_luck(mult: float, weights, current_season) -> float:
     w = np.ones(cur.size) if weights is None else np.asarray(weights, dtype=float)
     share = float(w[cur].sum() / w.sum())
     return 1 + (mult - 1) * share
+
+
+SCAN_MIN_MPG = 20.0
+SCAN_MIN_CHANCES = {"ast": 20, "reb": 25}
+
+
+def scan(report: pl.DataFrame, game_day, top: int = 6) -> dict[str, pl.DataFrame]:
+    """Players in game_day's games whose season-to-date output lags their chances most.
+
+    report: parsed injury report with a 'team' abbreviation column. Excludes Out/Doubtful.
+    Returns {"ast": df, "reb": df} with actual vs expected per game and the luck multiplier.
+    """
+    from nba_ladders.screens import parse_player_index
+    from nba_ladders.sources.injury_report import player_key
+    from nba_ladders.sources.nba_stats import get_player_index
+    from nba_ladders.sources.tracking import season_totals
+
+    day = report.filter(pl.col("game_date") == game_day)
+    games = day.select("matchup", "team").unique().drop_nulls()
+    out_keys = day.filter(pl.col("status").is_in(["Out", "Doubtful"]))["player_key"].drop_nulls()
+    idx = parse_player_index(get_player_index("2026-27")).with_columns(
+        pl.col("player_name").map_elements(player_key, return_dtype=pl.String).alias("key"))
+    hist = load()
+    lg = league_conversion(hist)
+    conv = hist.group_by("player_id").agg(
+        *[pl.col(s).sum().alias(f"h_{s}") for s in CHANCES],
+        *[pl.col(c).sum().alias(f"h_{c}") for c in CHANCES.values()])
+    d = (season_totals("2026-27").join(idx, on="player_id").join(games, left_on="team_now", right_on="team")
+         .join(conv, on="player_id", how="left").fill_null(0)
+         .filter(~pl.col("key").is_in(out_keys.implode()))
+         .with_columns((pl.col("min") / pl.col("gp")).alias("mpg"))
+         .filter(pl.col("mpg") >= SCAN_MIN_MPG)
+         .join(live_luck(), on="player_id"))
+    res = {}
+    for s, c in CHANCES.items():
+        k = K_CONV[s]
+        player_conv = (pl.col(f"h_{s}") + k * lg[s]) / (pl.col(f"h_{c}") + k)
+        t = (d.filter(pl.col(c) >= SCAN_MIN_CHANCES[s])
+             .with_columns((pl.col(c) * player_conv).alias("exp"))
+             .with_columns(((pl.col("exp") - pl.col(s)) / pl.col("gp")).alias("short_pg"))
+             .sort("short_pg", descending=True).head(top))
+        res[s] = t.select(
+            "player_id", "player_name", "team_now", "matchup", "gp", pl.col("mpg").round(1),
+            (pl.col(s) / pl.col("gp")).round(1).alias(f"{s}_pg"),
+            (pl.col(c) / pl.col("gp")).round(1).alias("chances_pg"),
+            (pl.col("exp") / pl.col("gp")).round(1).alias("exp_pg"),
+            (pl.col(s) / pl.col(c)).round(2).alias("conv_now"), player_conv.round(2).alias("conv_career"),
+            pl.col(f"luck_{s}").round(2))
+    return res
+
+
+def _cli_scan(game_day) -> None:
+    from nba_api.stats.static import teams
+
+    from nba_ladders.sources.injury_report import report_for_date
+
+    abbr = {t["full_name"].replace(" ", ""): t["abbreviation"] for t in teams.get_teams()}
+    rep = report_for_date(game_day).with_columns(
+        pl.col("team_name").replace_strict(abbr, default=None).alias("team"))
+    res = scan(rep, game_day, top=10)
+    with pl.Config(tbl_hide_column_data_types=True, tbl_rows=12, tbl_cols=14, tbl_width_chars=200):
+        for s in CHANCES:
+            print(f"\n{s.upper()}: furthest below expected (season to date), {game_day}")
+            print(res[s].drop("player_id"))
+
+
+if __name__ == "__main__":
+    main()

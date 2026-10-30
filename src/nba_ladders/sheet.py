@@ -224,6 +224,37 @@ def minutes_unlocked(report: pl.DataFrame, pg: pl.DataFrame, roster: pl.DataFram
     return out
 
 
+def potentials_section(report: pl.DataFrame, game_day: date, top: int = 4) -> list[str]:
+    """Players furthest below expected assists / rebounds, each with their best combos by lift."""
+    from nba_ladders.combos import best_combos
+    from nba_ladders.luck import scan
+    from nba_ladders.price import simulate_player
+
+    try:
+        res = scan(report, game_day, top=top)
+    except (OSError, ValueError, KeyError) as err:
+        return [f"Unavailable: {err!r}"]
+    out = []
+    for stat, label, shapes in (("reb", "Rebounds", ["p/r", "r/a"]), ("ast", "Assists", ["p/a", "r/a"])):
+        out += [f"### {label}", ""]
+        for r in res[stat].iter_rows(named=True):
+            opp = _opponent(r["matchup"], r["team_now"])
+            line = (f"- **{r['player_name']}** ({r['team_now']} vs {opp}, {r['mpg']} min): "
+                    f"{r[f'{stat}_pg']} per game from {r['chances_pg']} chances "
+                    f"(converting {r['conv_now']:.0%} vs {r['conv_career']:.0%} career; "
+                    f"expected {r['exp_pg']})")
+            sim = simulate_player(r["player_name"], opponent=opp, verbose=False, n=40_000)
+            if sim is None:
+                out.append(line + ". Too little history to price combos.")
+                continue
+            combos = best_combos(sim[0], per_shape=2, shapes=shapes)
+            picks = "; ".join(f"{c['combo']} fair ${c['fair']:.2f} (indep ${c['fair_indep']:.2f})"
+                              for c in combos.iter_rows(named=True))
+            out.append(line + (f". Best combos: {picks}" if picks else ""))
+        out.append("")
+    return out
+
+
 def build_sheet(game_day: date) -> str:
     report = report_for_date(game_day)
     if report.is_empty():
@@ -318,6 +349,8 @@ def build_sheet(game_day: date) -> str:
     lines += ["", f"## Minutes unlocked: everyone else (+{UNLOCK_MIN_SHIFT:.0f} min or more)", ""]
     alert_backups = {b for b in priced_ids}
     lines += minutes_unlocked(report, pg, roster, pos_all, alert_backups, reb_table, luck)
+    lines += ["", "## Potentials: output lagging chances (luck reversion)", ""]
+    lines += potentials_section(report, game_day)
     lines += [""]
     return "\n".join(lines)
 

@@ -2,12 +2,15 @@
 
     uv run python -m nba_ladders.price "Andre Drummond" --starter-out
     uv run python -m nba_ladders.price "Yaxel Lendeborg" --combos 20p/10r/3a,20p/7r/3a,18p/10r/5a
+    uv run python -m nba_ladders.price "Precious Achiuwa" --opponent NOP --as-of 2026-10-29
 
 Backup bigs use their backup-role games (with starter-out flags); anyone else uses all of
-their games, with no starter-out scenario.
+their games, with no starter-out scenario. --as-of replays a past game using only earlier
+data (luck uses the tracking snapshot taken before that game, if one exists).
 """
 
 import argparse
+from datetime import date
 
 import polars as pl
 
@@ -18,14 +21,70 @@ from nba_ladders.sim import combo_probs, fit_player, parse_combo, price_table, s
 MIN_BACKUP_GAMES = 20  # fewer backup-role games than this: use all his games instead
 
 
-def player_history(name: str) -> tuple[pl.DataFrame, str]:
-    bg = pl.read_parquet(config.DATA_PROCESSED / "backup_big_games.parquet")
+def player_history(name: str, as_of: date | None = None) -> tuple[pl.DataFrame, str]:
+    def before(df: pl.DataFrame) -> pl.DataFrame:
+        return df.filter(pl.col("game_date") < as_of) if as_of else df
+
+    bg = before(pl.read_parquet(config.DATA_PROCESSED / "backup_big_games.parquet"))
     hist = bg.filter(pl.col("player_name") == name)
     if hist.height >= MIN_BACKUP_GAMES:
         return hist.sort("game_date").tail(HISTORY_GAMES), "backup-role games"
-    pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
+    pg = before(pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet"))
     hist = pg.filter(pl.col("player_name") == name)
     return hist.sort("game_date").tail(HISTORY_GAMES), "games (all roles)"
+
+
+def simulate_player(name: str, *, starter_out: bool = False, opponent: str | None = None,
+                    as_of: date | None = None, luck: bool = True, n: int = 50_000,
+                    verbose: bool = True) -> tuple[dict, dict] | None:
+    """Simulated stats for one player tonight (or as of a past date), with all live adjustments.
+
+    Returns (stats, info) or None if there is too little history.
+    """
+    hist, kind = player_history(name, as_of)
+    fit = fit_player(hist)
+    if fit is None:
+        return None
+    pid = int(hist["player_id"][0])
+    info = {"player_id": pid, "games": hist.height, "kind": kind,
+            "from": hist["game_date"].min(), "to": hist["game_date"].max(),
+            "luck_ast": 1.0, "luck_reb": 1.0, "opp_reb": 1.0}
+    if luck:
+        from nba_ladders.luck import effective_luck, live_luck
+
+        try:
+            row = live_luck(as_of=as_of).filter(pl.col("player_id") == pid)
+        except FileNotFoundError:
+            row = pl.DataFrame()
+            if verbose:
+                print(f"no tracking snapshot for {as_of}; pricing without luck")
+        if row.height:
+            cur = (hist["season_id"] == hist["season_id"].max()).to_numpy()
+            info["luck_ast"] = effective_luck(row["luck_ast"][0], fit.weights, cur)
+            info["luck_reb"] = effective_luck(row["luck_reb"][0], fit.weights, cur)
+            fit.ast_rate = fit.ast_rate * info["luck_ast"]
+            fit.reb_rate = fit.reb_rate * info["luck_reb"]
+    if opponent:
+        from nba_ladders.rebounding import live_rebound_multiplier
+        from nba_ladders.scenarios import positions
+
+        pg_all = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
+        if as_of:
+            pg_all = pg_all.filter(pl.col("game_date") < as_of)
+        info["opp_reb"] = live_rebound_multiplier(pg_all, positions(), pid, opponent)
+        fit.reb_rate = fit.reb_rate * info["opp_reb"]
+    stats = simulate_stats(fit, starter_out, n)
+    if verbose:
+        n_out = int(hist["starter_out"].sum()) if "starter_out" in hist.columns else 0
+        print(f"{name}: {hist.height} {kind} ({info['from']} to {info['to']}), {n_out} with starter out")
+        if hist.height < 20:
+            print(f"WARNING: only {hist.height} games; prices rest on a tiny sample")
+        opp = f", vs {opponent} rebounds x{info['opp_reb']:.3f}" if opponent else ""
+        print(f"adjustments: luck AST x{info['luck_ast']:.3f} REB x{info['luck_reb']:.3f}{opp}")
+        m = stats["minutes"]
+        print(f"scenario: starter {'OUT' if starter_out else 'plays'}; "
+              f"sim minutes mean {m.mean():.1f}, P(25+) {(m >= 25).mean():.2f}")
+    return stats, info
 
 
 def main() -> None:
@@ -36,43 +95,14 @@ def main() -> None:
     ap.add_argument("--sims", type=int, default=50_000)
     ap.add_argument("--opponent", help="team abbreviation: applies the opponent rebound effect")
     ap.add_argument("--no-luck", action="store_true", help="skip the current-season luck adjustment")
+    ap.add_argument("--as-of", type=date.fromisoformat, help="replay: only use data before this date")
     args = ap.parse_args()
 
-    hist, kind = player_history(args.player)
-    fit = fit_player(hist)
-    if fit is None:
-        raise SystemExit(f"not enough history for {args.player!r} ({hist.height} games)")
-    stats = simulate_stats(fit, args.starter_out, args.sims)
-    pid = int(hist["player_id"][0])
-    if not args.no_luck:
-        from nba_ladders.luck import effective_luck, live_luck
-
-        row = live_luck().filter(pl.col("player_id") == pid)
-        if row.height:
-            cur = (hist["season_id"] == hist["season_id"].max()).to_numpy()
-            la = effective_luck(row["luck_ast"][0], fit.weights, cur)
-            lr = effective_luck(row["luck_reb"][0], fit.weights, cur)
-            print(f"luck (season to date): AST x{row['luck_ast'][0]:.3f}, REB x{row['luck_reb'][0]:.3f} "
-                  f"on this season's games -> applied AST x{la:.3f}, REB x{lr:.3f}")
-            fit.ast_rate, fit.reb_rate = fit.ast_rate * la, fit.reb_rate * lr
-            stats = simulate_stats(fit, args.starter_out, args.sims)
-    if args.opponent:
-        from nba_ladders.rebounding import live_rebound_multiplier
-        from nba_ladders.scenarios import positions
-
-        pg_all = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
-        m = live_rebound_multiplier(pg_all, positions(), pid, args.opponent)
-        print(f"opponent {args.opponent}: rebound rate x{m:.3f}")
-        fit.reb_rate = fit.reb_rate * m
-        stats = simulate_stats(fit, args.starter_out, args.sims)
-    n_out = int(hist["starter_out"].sum()) if "starter_out" in hist.columns else 0
-    print(f"{args.player}: {hist.height} {kind} "
-          f"({hist['game_date'].min()} to {hist['game_date'].max()}), {n_out} with starter out")
-    if hist.height < 20:
-        print(f"WARNING: only {hist.height} games; prices rest on a tiny sample")
-    m = stats["minutes"]
-    print(f"scenario: starter {'OUT' if args.starter_out else 'plays'}; "
-          f"sim minutes mean {m.mean():.1f}, P(25+) {(m >= 25).mean():.2f}")
+    out = simulate_player(args.player, starter_out=args.starter_out, opponent=args.opponent,
+                          as_of=args.as_of, luck=not args.no_luck, n=args.sims)
+    if out is None:
+        raise SystemExit(f"not enough history for {args.player!r}")
+    stats, _ = out
     with pl.Config(tbl_hide_column_data_types=True, tbl_rows=20, fmt_str_lengths=60,
                    tbl_width_chars=160):
         if args.combos:
