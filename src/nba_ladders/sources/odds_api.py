@@ -33,9 +33,14 @@ BASE = "https://api.the-odds-api.com/v4"
 SPORT = "basketball_nba"
 RAW_DIR = config.DATA_RAW / "odds_api"
 RESERVE = 50  # never let a run take the account below this many credits
+AU_BASE = "sportsbet"
+US_REFERENCE = ["fanduel", "draftkings", "fanatics"]
+AU_REFERENCE = ["tab"]  # leg prices only (the API has no SGM prices)
+DEFAULT_BOOKMAKERS = [AU_BASE, *AU_REFERENCE, *US_REFERENCE]  # <= 10 books = 1 region of cost
 DEFAULT_MARKETS = [
     "player_points_alternate", "player_rebounds_alternate", "player_assists_alternate",
-    "player_points_rebounds_alternate",
+    "player_points_rebounds_alternate", "player_points_assists_alternate",
+    "player_rebounds_assists_alternate",
 ]
 STAT_OF_MARKET = {
     "player_points": "pts", "player_rebounds": "reb", "player_assists": "ast",
@@ -127,11 +132,18 @@ def event_markets(event_id: str, regions: str, budget: Budget, session=requests)
     return out
 
 
-def event_odds(event_id: str, markets: list[str], regions: str, budget: Budget,
-               session=requests) -> dict:
-    n_regions = len(regions.split(","))
+def _book_params(regions: str | None, bookmakers: list[str] | None) -> tuple[dict, int]:
+    """API params and the region-equivalent count used for cost (10 bookmakers = 1 region)."""
+    if bookmakers:
+        return {"bookmakers": ",".join(bookmakers)}, math.ceil(len(bookmakers) / 10)
+    return {"regions": regions}, len(regions.split(","))
+
+
+def event_odds(event_id: str, markets: list[str], regions: str | None, budget: Budget,
+               session=requests, bookmakers: list[str] | None = None) -> dict:
+    params, n_regions = _book_params(regions, bookmakers)
     out = _get(f"/sports/{SPORT}/events/{event_id}/odds",
-               {"regions": regions, "markets": ",".join(markets), "oddsFormat": "decimal"},
+               {**params, "markets": ",".join(markets), "oddsFormat": "decimal"},
                budget, len(markets) * n_regions, f"odds {event_id}", session)
     _save("live", f"{event_id}_{_stamp()}", out)
     return out
@@ -142,12 +154,12 @@ def historical_events(date_iso: str, budget: Budget, session=requests) -> dict:
                 f"historical events {date_iso}", session)
 
 
-def historical_event_odds(event_id: str, date_iso: str, markets: list[str], regions: str,
-                          budget: Budget, session=requests) -> dict:
-    n_regions = len(regions.split(","))
+def historical_event_odds(event_id: str, date_iso: str, markets: list[str], regions: str | None,
+                          budget: Budget, session=requests,
+                          bookmakers: list[str] | None = None) -> dict:
+    params, n_regions = _book_params(regions, bookmakers)
     out = _get(f"/historical/sports/{SPORT}/events/{event_id}/odds",
-               {"date": date_iso, "regions": regions, "markets": ",".join(markets),
-                "oddsFormat": "decimal"},
+               {"date": date_iso, **params, "markets": ",".join(markets), "oddsFormat": "decimal"},
                budget, 10 * len(markets) * n_regions, f"historical odds {event_id}", session)
     _save("historical", f"{event_id}_{date_iso.replace(':', '')}", out)
     return out
@@ -200,13 +212,15 @@ def main() -> None:
     c = sub.add_parser("coverage", help="which books offer which NBA markets (~1 credit)")
     c.add_argument("--regions", default="us,au")
     s = sub.add_parser("snapshot", help="player props for upcoming games")
-    s.add_argument("--regions", default="us")
+    s.add_argument("--regions", default=None, help="instead of --bookmakers, e.g. us,au")
+    s.add_argument("--bookmakers", default=",".join(DEFAULT_BOOKMAKERS))
     s.add_argument("--markets", default=",".join(DEFAULT_MARKETS))
     s.add_argument("--max-credits", type=int, default=40)
     s.add_argument("--max-events", type=int, default=15)
     h = sub.add_parser("historical", help="props as of a past time (paid plans only)")
     h.add_argument("--date", required=True, help="ISO time, e.g. 2026-03-15T23:00:00Z")
-    h.add_argument("--regions", default="us")
+    h.add_argument("--regions", default=None)
+    h.add_argument("--bookmakers", default=",".join(DEFAULT_BOOKMAKERS))
     h.add_argument("--markets", default=",".join(DEFAULT_MARKETS))
     h.add_argument("--max-credits", type=int, default=100)
     args = ap.parse_args()
@@ -229,7 +243,8 @@ def main() -> None:
             evs = events(budget)[: args.max_events]
             frames = []
             for ev in evs:
-                payload = event_odds(ev["id"], markets, args.regions, budget)
+                books = None if args.regions else args.bookmakers.split(",")
+                payload = event_odds(ev["id"], markets, args.regions, budget, bookmakers=books)
                 frames.append(parse_event_odds(payload, _stamp()))
             df = pl.concat(frames) if frames else pl.DataFrame()
             print(f"{len(evs)} events, {df.height:,} prices, "
@@ -238,7 +253,9 @@ def main() -> None:
             markets = args.markets.split(",")
             evs = historical_events(args.date, budget).get("data", [])
             for ev in evs:
-                historical_event_odds(ev["id"], args.date, markets, args.regions, budget)
+                books = None if args.regions else args.bookmakers.split(",")
+                historical_event_odds(ev["id"], args.date, markets, args.regions, budget,
+                                      bookmakers=books)
             print(f"{len(evs)} historical events saved")
     except BudgetExceeded as err:
         print(f"STOPPED: {err}")

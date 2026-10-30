@@ -51,6 +51,7 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/calibration.py` | Logistic recalibration of simulated probabilities (fit one season, check the next). Tried; not applied. |
 | `src/nba_ladders/combos.py` | Combo explorer: grid of P/R, P/A, R/A, P/R/A combos with fair price, independent-legs price and correlation lift; best per shape. |
 | `src/nba_ladders/sources/odds_api.py` | The Odds API v4 loader: coverage / live snapshot / historical player props, credit budget + reserve, raw cache, parser to X+ thresholds. |
+| `src/nba_ladders/market.py` | Market vs model: Sportsbet ladder prices vs our fair prices, US no-vig reference, VALUE / CHECK NEWS flags. Live flags are research leads until backtested. |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests

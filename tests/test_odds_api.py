@@ -92,3 +92,10 @@ def test_placeholder_key_is_rejected_before_any_call(monkeypatch):
     monkeypatch.setenv("ODDS_API_KEY", "your_key_here")
     with pytest.raises(SystemExit, match="placeholder"):
         oa.api_key()
+
+
+def test_bookmakers_param_counts_as_one_region_per_ten():
+    params, n = oa._book_params(None, ["sportsbet", "fanduel", "draftkings", "fanatics"])
+    assert params == {"bookmakers": "sportsbet,fanduel,draftkings,fanatics"} and n == 1
+    assert oa._book_params(None, [f"b{i}" for i in range(11)])[1] == 2
+    assert oa._book_params("us,au", None) == ({"regions": "us,au"}, 2)

@@ -12,6 +12,7 @@ the per-minute rate is being judged.
 """
 
 import argparse
+from functools import lru_cache
 
 import polars as pl
 
@@ -184,6 +185,7 @@ def luck_multipliers(current: pl.DataFrame, history: pl.DataFrame,
     return d.select("player_id", *out)
 
 
+@lru_cache(maxsize=8)
 def live_luck(season: str = "2026-27", as_of=None) -> pl.DataFrame:
     """Current-season luck multipliers for every player (snapshots tracking totals today).
 

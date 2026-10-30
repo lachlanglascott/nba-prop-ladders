@@ -11,6 +11,7 @@ data (luck uses the tracking snapshot taken before that game, if one exists).
 
 import argparse
 from datetime import date
+from functools import lru_cache
 
 import polars as pl
 
@@ -21,15 +22,33 @@ from nba_ladders.sim import combo_probs, fit_player, parse_combo, price_table, s
 MIN_BACKUP_GAMES = 20  # fewer backup-role games than this: use all his games instead
 
 
+@lru_cache(maxsize=4)
+def _frame(name: str) -> pl.DataFrame:
+    """Processed tables, read once per process (pricing many players reuses them)."""
+    return pl.read_parquet(config.DATA_PROCESSED / f"{name}.parquet")
+
+
+@lru_cache(maxsize=4)
+def _reb_table(as_of: date | None) -> pl.DataFrame:
+    from nba_ladders.rebounding import live_multiplier_table
+    from nba_ladders.scenarios import positions
+
+    pg = _frame("player_games")
+    return live_multiplier_table(pg.filter(pl.col("game_date") < as_of) if as_of else pg, positions())
+
+
 def player_history(name: str, as_of: date | None = None) -> tuple[pl.DataFrame, str]:
     def before(df: pl.DataFrame) -> pl.DataFrame:
         return df.filter(pl.col("game_date") < as_of) if as_of else df
 
-    bg = before(pl.read_parquet(config.DATA_PROCESSED / "backup_big_games.parquet"))
+    pg = before(_frame("player_games"))
+    bg = before(_frame("backup_big_games"))
     hist = bg.filter(pl.col("player_name") == name)
-    if hist.height >= MIN_BACKUP_GAMES:
+    latest_any = pg.filter(pl.col("player_name") == name)["game_date"].max()
+    # Backup-role history only if it's his current role: its latest game must be his latest game.
+    # (Al Horford's backup-role rows were all from 2021-22.)
+    if hist.height >= MIN_BACKUP_GAMES and hist["game_date"].max() == latest_any:
         return hist.sort("game_date").tail(HISTORY_GAMES), "backup-role games"
-    pg = before(pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet"))
     hist = pg.filter(pl.col("player_name") == name)
     return hist.sort("game_date").tail(HISTORY_GAMES), "games (all roles)"
 
@@ -68,10 +87,11 @@ def simulate_player(name: str, *, starter_out: bool = False, opponent: str | Non
         from nba_ladders.rebounding import live_rebound_multiplier
         from nba_ladders.scenarios import positions
 
-        pg_all = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
+        pg_all = _frame("player_games")
         if as_of:
             pg_all = pg_all.filter(pl.col("game_date") < as_of)
-        info["opp_reb"] = live_rebound_multiplier(pg_all, positions(), pid, opponent)
+        info["opp_reb"] = live_rebound_multiplier(pg_all, positions(), pid, opponent,
+                                                  _reb_table(as_of))
         fit.reb_rate = fit.reb_rate * info["opp_reb"]
     stats = simulate_stats(fit, starter_out, n)
     if verbose:
