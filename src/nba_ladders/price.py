@@ -55,7 +55,8 @@ def player_history(name: str, as_of: date | None = None) -> tuple[pl.DataFrame, 
 
 def simulate_player(name: str, *, starter_out: bool = False, opponent: str | None = None,
                     as_of: date | None = None, luck: bool = True, n: int = 50_000,
-                    verbose: bool = True) -> tuple[dict, dict] | None:
+                    verbose: bool = True, extra_minutes: float = 0.0,
+                    rate_mult: dict | None = None) -> tuple[dict, dict] | None:
     """Simulated stats for one player tonight (or as of a past date), with all live adjustments.
 
     Returns (stats, info) or None if there is too little history.
@@ -93,6 +94,10 @@ def simulate_player(name: str, *, starter_out: bool = False, opponent: str | Non
         info["opp_reb"] = live_rebound_multiplier(pg_all, positions(), pid, opponent,
                                                   _reb_table(as_of))
         fit.reb_rate = fit.reb_rate * info["opp_reb"]
+    if extra_minutes:  # e.g. minutes unlocked by tonight's absences (absences.context_effects)
+        fit.role_shift += extra_minutes
+    for s, m in (rate_mult or {}).items():
+        setattr(fit, f"{s}_rate", getattr(fit, f"{s}_rate") * m)
     stats = simulate_stats(fit, starter_out, n)
     if verbose:
         n_out = int(hist["starter_out"].sum()) if "starter_out" in hist.columns else 0

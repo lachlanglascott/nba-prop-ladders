@@ -56,6 +56,8 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/market_blend_check.py` | Held-out market-anchored blend + best-AU-price check (one-off). |
 | `src/nba_ladders/ladder_tails_check.py` | Blind ladder-tail ROI by price band, as-at variance, and thesis angle (one-off). |
 | `src/nba_ladders/angles_market_check.py` | Every angle (luck, freed minutes, role trend, foul spot, starter out, starter variance) vs Sportsbet tails, both season halves. |
+| `src/nba_ladders/candidates.py` | Game-day write-up: every angle's candidates grouped by game, evidence notes, prediction + tracking volume/variance, ladder prices (Sportsbet / best AU / model / calibrated fair / EV), SGM combos, Questionable watch. |
+| `src/nba_ladders/blend.py` | Calibrated fair probability: Sportsbet price + model, weights learned on the two-season backtest (beats Sportsbet out of season). |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
@@ -93,6 +95,7 @@ What every file in this repo is for, grouped by job.
 | `docs/rebounding.md` | Opponent and position rebounding effects; Camara worked example. |
 | `docs/combos.md` | Combo explorer: why (Achiuwa 24p/9r), how lift works, replay. |
 | `docs/market_backtest_findings.md` | Model vs 2025-26 Sportsbet: accuracy, value-bet ROI, blend, line shopping, verdict. |
+| `docs/slates/` | Per-game write-ups for each slate (`candidates.py`). |
 | `docs/luck.md` | Potential assists / rebound chances: does luck revert? Blend weights. |
 | `docs/status_calibration.md` | Injury-report status → P(sits), 2025-26. |
 | `docs/phase1_findings.md` | First results from the data. |
