@@ -50,8 +50,12 @@ def build(n_sims: int = 30_000) -> pl.DataFrame:
                             .alias("key"))
     rows = []
     days = sorted(sb["game_date"].unique().to_list())
+    no_luck = pl.DataFrame(schema={"player_id": pl.Int64, "luck_ast": pl.Float64, "luck_reb": pl.Float64})
     for i, d in enumerate(days, 1):
-        luck = live_luck(as_of=d)
+        try:
+            luck = live_luck(as_of=d)
+        except FileNotFoundError:  # opening nights: no season-to-date tracking yet
+            luck = no_luck
         day_games = games.filter(pl.col("game_date") == d)
         for (who, home, away), g in sb.filter(pl.col("game_date") == d).group_by(
                 ["player", "home_team", "away_team"]):
