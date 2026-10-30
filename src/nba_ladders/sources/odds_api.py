@@ -75,13 +75,14 @@ class Budget:
     spent: int = 0
     remaining: int | None = None
     log: list[str] = field(default_factory=list)
+    reserve: int = RESERVE  # never let the account drop below this
 
     def check(self, estimate: int, what: str) -> None:
         if self.spent + estimate > self.max_credits:
             raise BudgetExceeded(f"{what}: ~{estimate} credits would exceed run budget "
                                  f"({self.spent}/{self.max_credits} spent)")
-        if self.remaining is not None and self.remaining - estimate < RESERVE:
-            raise BudgetExceeded(f"{what}: would leave < {RESERVE} credits "
+        if self.remaining is not None and self.remaining - estimate < self.reserve:
+            raise BudgetExceeded(f"{what}: would leave < {self.reserve} credits "
                                  f"(account has {self.remaining})")
 
     def record(self, headers, what: str) -> None:
@@ -176,8 +177,9 @@ def historical_event_odds(event_id: str, date_iso: str, markets: list[str], regi
 
 
 def backfill(game_days: list, budget: Budget, markets: list[str], bookmakers: list[str],
-             hours_before: float = 2.0, seed: int = 0, session=requests) -> int:
-    """Historical props for every game on the given ET game days, in random day order.
+             hours_before: float = 2.0, seed: int = 0, session=requests,
+             shuffle: bool = True) -> int:
+    """Historical props for every game on the given ET game days (random order unless shuffle=False).
 
     Snapshot = tip-off minus hours_before. Resumable: events already cached are skipped (no
     credits). Stops cleanly when the budget or reserve would be breached. Returns games saved.
@@ -188,7 +190,8 @@ def backfill(game_days: list, budget: Budget, markets: list[str], bookmakers: li
 
     et = ZoneInfo("America/New_York")
     days = list(game_days)
-    random.Random(seed).shuffle(days)
+    if shuffle:
+        random.Random(seed).shuffle(days)
     saved = 0
     for d in days:
         done_marker = RAW_DIR / "historical" / "_days" / f"{d.isoformat()}.done"
@@ -272,12 +275,15 @@ def main() -> None:
     h.add_argument("--max-credits", type=int, default=100)
     b = sub.add_parser("backfill", help="historical props for a whole season (resumable)")
     b.add_argument("--season-id", default="22025")
-    b.add_argument("--markets", default=",".join(DEFAULT_MARKETS[:4]))
+    b.add_argument("--markets", default=",".join(DEFAULT_MARKETS[:4]))  # pts, reb, ast, P+R ladders
     b.add_argument("--bookmakers", default=",".join(DEFAULT_BOOKMAKERS))
     b.add_argument("--max-credits", type=int, required=True)
+    b.add_argument("--reserve", type=int, default=RESERVE, help="stop if the account would drop below this")
+    b.add_argument("--prioritize-spots", action="store_true",
+                   help="days with the most backup-big spots (starter out) first, instead of random")
     args = ap.parse_args()
 
-    budget = Budget(max_credits=getattr(args, "max_credits", 5))
+    budget = Budget(max_credits=getattr(args, "max_credits", 5), reserve=getattr(args, "reserve", RESERVE))
     try:
         if args.cmd == "coverage":
             evs = events(budget)
@@ -304,7 +310,16 @@ def main() -> None:
         elif args.cmd == "backfill":
             pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
             days = pg.filter(pl.col("season_id") == args.season_id)["game_date"].unique().sort().to_list()
-            n = backfill(days, budget, args.markets.split(","), args.bookmakers.split(","))
+            shuffle = True
+            if args.prioritize_spots:
+                bg = pl.read_parquet(config.DATA_PROCESSED / "backup_big_games.parquet")
+                score = (bg.filter(pl.col("season_id") == args.season_id, pl.col("starter_out"))
+                         .group_by("game_date").len())
+                ranked = score.sort("len", descending=True)["game_date"].to_list()
+                days = ranked + [d for d in days if d not in set(ranked)]
+                shuffle = False
+            n = backfill(days, budget, args.markets.split(","), args.bookmakers.split(","),
+                         shuffle=shuffle)
             print(f"backfill: {n} games saved this run")
         elif args.cmd == "historical":
             markets = args.markets.split(",")
