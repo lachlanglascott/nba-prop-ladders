@@ -9,8 +9,9 @@ For each historical Sportsbet rung (market_backtest.parquet) adds pre-game featu
 - foul: backup bigs only; starter's fouls/36 x opponent FTA per game (both prior-only)
 - starter / variance: 28+ mpg over the last 20, and sd of minutes / CV of P+R over the last 20
 
-Then blind ROI of tail rungs (price >= $3) per angle, overall and in each half of the season
-(Oct-Jan, Feb-Apr). An angle only counts if it holds in both halves.
+Then blind ROI of tail rungs (price >= $3) per angle, overall, by half of season (Oct-Jan,
+Feb-Apr, pooled across seasons) and by season (2024-25, 2025-26). An angle only counts if it
+holds in both seasons.
 Caveat: freed minutes use each absent teammate's season-average minutes (mild look-ahead).
 """
 
@@ -27,7 +28,7 @@ from nba_ladders.scenarios import positions
 from nba_ladders.with_without import teammate_status
 
 TAIL = 3.0
-SPLIT = date(2026, 2, 1)
+SEASON_SPLIT = date(2025, 8, 1)  # before = 2024-25, after = 2025-26
 
 
 def rolling_luck(window: int = 10) -> pl.DataFrame:
@@ -136,23 +137,28 @@ def table(f: pl.DataFrame, min_price: float = TAIL) -> pl.DataFrame:
     rows = []
     for name, cond in ANGLES.items():
         x = tails.filter(cond)
-        a, h1, h2 = roi(x, 1000), roi(x.filter(pl.col("game_date") < SPLIT), 500), roi(
-            x.filter(pl.col("game_date") >= SPLIT), 500)
+        a = roi(x, 1000)
         if not a["bets"]:
             continue
+        early = pl.col("game_date").dt.month().is_in([10, 11, 12, 1])
+        h1, h2 = roi(x.filter(early), 500), roi(x.filter(~early), 500)
+        s1 = roi(x.filter(pl.col("game_date") < SEASON_SPLIT), 500)
+        s2 = roi(x.filter(pl.col("game_date") >= SEASON_SPLIT), 500)
         rows.append({"angle": name, "bets": a["bets"], "hit": a["hit_rate"], "avg_$": a["avg_price"],
                      "roi": a["roi"], "ci90_lo": a["roi_ci90"][0], "ci90_hi": a["roi_ci90"][1],
                      "roi_oct_jan": h1.get("roi"), "n1": h1.get("bets"),
-                     "roi_feb_apr": h2.get("roi"), "n2": h2.get("bets")})
+                     "roi_feb_apr": h2.get("roi"), "n2": h2.get("bets"),
+                     "roi_2425": s1.get("roi"), "n_2425": s1.get("bets"),
+                     "roi_2526": s2.get("roi"), "n_2526": s2.get("bets")})
     return pl.DataFrame(rows)
 
 
 def main() -> None:
     f = features()
     print(f"{f.height:,} rungs; tails (>= ${TAIL:.0f}): {f.filter(pl.col('price') >= TAIL).height:,}")
-    cols = ["angle", "bets", "hit", "avg_$", "roi", "ci90_lo", "ci90_hi", "roi_oct_jan", "n1",
-            "roi_feb_apr", "n2"]
-    with pl.Config(tbl_hide_column_data_types=True, tbl_rows=40, tbl_cols=12, tbl_width_chars=220,
+    cols = ["angle", "bets", "hit", "avg_$", "roi", "ci90_lo", "ci90_hi", "roi_oct_jan",
+            "roi_feb_apr", "roi_2425", "n_2425", "roi_2526", "n_2526"]
+    with pl.Config(tbl_hide_column_data_types=True, tbl_rows=40, tbl_cols=14, tbl_width_chars=240,
                    fmt_str_lengths=40):
         print(f"\nTAILS (price >= ${TAIL:.0f})")
         print(table(f).select(cols))
