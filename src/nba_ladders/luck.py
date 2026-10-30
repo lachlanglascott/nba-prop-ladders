@@ -196,7 +196,25 @@ def live_luck(season: str = "2026-27", as_of=None) -> pl.DataFrame:
     hist = load()
     if as_of is not None:
         hist = hist.filter(pl.col("game_date") < as_of)
+        current = _season_to_date_from_tracking(hist, as_of)
+        if current is not None:  # past seasons: rebuild season-to-date from per-game tracking
+            prior = hist.filter(pl.col("season_id") != current["season_id"][0]).drop("season_id")
+            return luck_multipliers(current.drop("season_id"), prior, league_conversion(hist))
     return luck_multipliers(season_totals(season, as_of=as_of), hist, league_conversion(hist))
+
+
+def _season_to_date_from_tracking(hist: pl.DataFrame, as_of) -> pl.DataFrame | None:
+    """Season-to-date totals before as_of from per-game tracking, if that season has it."""
+    if hist.is_empty():
+        return None
+    season = hist.filter(pl.col("game_date") == hist["game_date"].max())["season_id"][0]
+    cur = hist.filter(pl.col("season_id") == season)
+    # only if the season is actually in progress at as_of (last tracked game within ~10 days)
+    if (as_of - cur["game_date"].max()).days > 10:
+        return None
+    return cur.group_by("player_id").agg(
+        pl.lit(season).alias("season_id"),
+        *[pl.col(s).sum() for s in CHANCES], *[pl.col(c).sum() for c in CHANCES.values()])
 
 
 def effective_luck(mult: float, weights, current_season) -> float:
