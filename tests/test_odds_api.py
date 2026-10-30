@@ -39,7 +39,7 @@ class FakeSession:
 
 @pytest.fixture(autouse=True)
 def key(monkeypatch, tmp_path):
-    monkeypatch.setenv("ODDS_API_KEY", "test-key")
+    monkeypatch.setenv("ODDS_API_KEY", "t" * 32)
     monkeypatch.setattr(oa, "RAW_DIR", tmp_path)
     monkeypatch.setattr(oa.time, "sleep", lambda s: None)
 
@@ -86,3 +86,9 @@ def test_responses_cached_once(tmp_path):
     session = FakeSession(FakeResp(EVENT, cost=2, remaining=400))
     oa.event_odds("ev1", ["player_rebounds"], "us", oa.Budget(100), session=session)
     assert len(list((tmp_path / "live").glob("ev1_*.json"))) == 1
+
+
+def test_placeholder_key_is_rejected_before_any_call(monkeypatch):
+    monkeypatch.setenv("ODDS_API_KEY", "your_key_here")
+    with pytest.raises(SystemExit, match="placeholder"):
+        oa.api_key()

@@ -53,6 +53,8 @@ def api_key() -> str:
                 key = line.split("=", 1)[1].strip().strip("'\"")
     if not key:
         raise SystemExit("ODDS_API_KEY not set (add ODDS_API_KEY=... to .env at the repo root)")
+    if key in {"your_key_here", "..."} or len(key) < 20:
+        raise SystemExit("ODDS_API_KEY looks like a placeholder; paste the real key into .env")
     return key
 
 
