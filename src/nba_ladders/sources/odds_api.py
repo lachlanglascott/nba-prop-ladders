@@ -95,7 +95,17 @@ class Budget:
 def _get(path: str, params: dict, budget: Budget, estimate: int, what: str,
          session=requests) -> dict | list:
     budget.check(estimate, what)
-    resp = session.get(f"{BASE}{path}", params={**params, "apiKey": api_key()}, timeout=30)
+    for attempt, wait in enumerate((0, 5, 20, 60)):
+        if wait:
+            time.sleep(wait)
+        try:
+            resp = session.get(f"{BASE}{path}", params={**params, "apiKey": api_key()}, timeout=60)
+            break
+        except (requests.Timeout, requests.ConnectionError) as err:
+            # never echo the request: its URL contains the key
+            print(f"  {what}: {type(err).__name__}, retry {attempt + 1}/3", flush=True)
+    else:
+        raise RuntimeError(f"{what}: no response after retries")
     budget.record(resp.headers, what)
     if resp.status_code != 200:
         # never echo the URL: it contains the key
