@@ -53,6 +53,7 @@ What every file in this repo is for, grouped by job.
 | `src/nba_ladders/sources/odds_api.py` | The Odds API v4 loader: coverage / live snapshot / historical player props, credit budget + reserve, raw cache, parser to X+ thresholds. |
 | `src/nba_ladders/market.py` | Market vs model: Sportsbet ladder prices vs our fair prices, US no-vig reference, VALUE / CHECK NEWS flags. Live flags are research leads until backtested. |
 | `src/nba_ladders/market_backtest.py` | Historical model-vs-Sportsbet backtest: as-at pricing of every rung, information test, value-bet ROI with day-level bootstrap CIs, by angle and stat. |
+| `src/nba_ladders/market_blend_check.py` | Held-out market-anchored blend + best-AU-price check (one-off). |
 | `src/nba_ladders/config.py` | One place for settings: data paths, bet log location, stats.nba.com throttle (0.6s between calls), allowed scenario labels. Code imports from here instead of hard-coding paths. |
 
 ## Tests
@@ -89,6 +90,7 @@ What every file in this repo is for, grouped by job.
 | `docs/context_model.md` | Any-teammate-out model: method, tuning, holdout results, next steps. |
 | `docs/rebounding.md` | Opponent and position rebounding effects; Camara worked example. |
 | `docs/combos.md` | Combo explorer: why (Achiuwa 24p/9r), how lift works, replay. |
+| `docs/market_backtest_findings.md` | Model vs 2025-26 Sportsbet: accuracy, value-bet ROI, blend, line shopping, verdict. |
 | `docs/luck.md` | Potential assists / rebound chances: does luck revert? Blend weights. |
 | `docs/status_calibration.md` | Injury-report status → P(sits), 2025-26. |
 | `docs/phase1_findings.md` | First results from the data. |
