@@ -175,7 +175,7 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
             extra_minutes=r["shift_min"], rate_mult={s: r[f"mult_{s}"] for s in RATES})
 
     # Questionable watch: who gains if a Questionable rotation player sits (hypothetical absence)
-    q = (report.filter(pl.col("status") == "Questionable")
+    q = (report.filter(pl.col("status") == "Questionable", ~pl.col("reason").str.contains("(?i)g ?league|two-way"))
          .join(people, left_on=["team", "player_key"], right_on=["team_now", "player_key"])
          .filter(pl.col("min20") >= MIN_MATE_MINUTES, pl.col("last_game") >= cutoff))
     for qr in q.iter_rows(named=True):
