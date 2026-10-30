@@ -52,3 +52,14 @@ def test_luck_multiplier_raises_unlucky_and_shrinks_small_samples():
     assert m[1]["luck_ast"] > 1.2                      # unlucky passer, decent sample
     assert 1.0 < m[2]["luck_ast"] < m[1]["luck_ast"]   # same luck, tiny sample: shrunk
     assert abs(m[1]["luck_reb"] - 1.0) < 0.02          # neutral rebounder
+
+
+def test_effective_luck_only_scales_current_season_share():
+    import numpy as np
+
+    from nba_ladders.luck import effective_luck
+
+    w = np.array([1.0, 1.0, 1.0, 1.0])
+    cur = np.array([False, False, False, True])
+    assert abs(effective_luck(1.2, w, cur) - 1.05) < 1e-12   # 25% of weight is this season
+    assert effective_luck(1.2, None, [True] * 3) == 1.2

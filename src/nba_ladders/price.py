@@ -45,12 +45,15 @@ def main() -> None:
     stats = simulate_stats(fit, args.starter_out, args.sims)
     pid = int(hist["player_id"][0])
     if not args.no_luck:
-        from nba_ladders.luck import live_luck
+        from nba_ladders.luck import effective_luck, live_luck
 
         row = live_luck().filter(pl.col("player_id") == pid)
         if row.height:
-            la, lr = row["luck_ast"][0], row["luck_reb"][0]
-            print(f"luck (season to date): AST rate x{la:.3f}, REB rate x{lr:.3f}")
+            cur = (hist["season_id"] == hist["season_id"].max()).to_numpy()
+            la = effective_luck(row["luck_ast"][0], fit.weights, cur)
+            lr = effective_luck(row["luck_reb"][0], fit.weights, cur)
+            print(f"luck (season to date): AST x{row['luck_ast'][0]:.3f}, REB x{row['luck_reb'][0]:.3f} "
+                  f"on this season's games -> applied AST x{la:.3f}, REB x{lr:.3f}")
             fit.ast_rate, fit.reb_rate = fit.ast_rate * la, fit.reb_rate * lr
             stats = simulate_stats(fit, args.starter_out, args.sims)
     if args.opponent:

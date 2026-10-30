@@ -24,7 +24,7 @@ from nba_ladders.absences import (
     shrunk_effects,
 )
 from nba_ladders.context_sim import fit_context, simulate_context
-from nba_ladders.luck import live_luck
+from nba_ladders.luck import effective_luck, live_luck
 from nba_ladders.price import player_history
 from nba_ladders.rebounding import live_multiplier_table, live_rebound_multiplier
 from nba_ladders.scenarios import CENTRE_REB36, positions
@@ -117,8 +117,9 @@ def mixed_prices(name: str, p_out: float, combos: list[str], reb_mult: float = 1
     fit = fit_player(hist)
     if fit is None:
         return None
+    cur = (hist["season_id"] == hist["season_id"].max()).to_numpy()
     fit.reb_rate = fit.reb_rate * reb_mult
-    fit.ast_rate = fit.ast_rate * ast_mult
+    fit.ast_rate = fit.ast_rate * effective_luck(ast_mult, fit.weights, cur)
     parsed = [parse_combo(c) for c in combos]
     sits = combo_probs(simulate_stats(fit, True, 30_000, seed=1), parsed)
     plays = combo_probs(simulate_stats(fit, False, 30_000, seed=2), parsed)
@@ -194,6 +195,8 @@ def minutes_unlocked(report: pl.DataFrame, pg: pl.DataFrame, roster: pl.DataFram
         opp = _opponent(matchup, r["team_id"])
         rm = live_rebound_multiplier(pg, pos, r["player_id"], opp, reb_table)
         la, lr = _luck(luck, r["player_id"])
+        cur = (hist["season_id"] == hist["season_id"].max()).to_numpy()
+        la, lr = effective_luck(la, fit.weights, cur), effective_luck(lr, fit.weights, cur)
         mult["reb"] *= rm * lr
         mult["ast"] *= la
         sim_today = simulate_context(fit, r["shift_min"], mult, 30_000, seed=1)
@@ -281,6 +284,10 @@ def build_sheet(game_day: date) -> str:
             opp = _opponent(matchup, team)
             rm = live_rebound_multiplier(pg, pos_all, b["player_id"], opp, reb_table)
             la, lr = _luck(luck, b["player_id"])
+            hist_b, _ = player_history(b["player_name"])
+            fit_b = fit_player(hist_b)
+            cur_b = (hist_b["season_id"] == hist_b["season_id"].max()).to_numpy()
+            lr = effective_luck(lr, fit_b.weights if fit_b else None, cur_b)
             prices = mixed_prices(b["player_name"], p_out, COMBOS, rm * lr, la)
             if prices is None:
                 block.append(f"- {b['player_name']}: not enough history to price")

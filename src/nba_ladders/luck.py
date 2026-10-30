@@ -181,3 +181,21 @@ def live_luck(season: str = "2026-27") -> pl.DataFrame:
 
     hist = load()
     return luck_multipliers(season_totals(season), hist, league_conversion(hist))
+
+
+def effective_luck(mult: float, weights, current_season) -> float:
+    """Apply a season-to-date luck multiplier only to the current season's share of the fit.
+
+    The multiplier corrects *this season's* actual rate toward its expected rate. The simulator
+    samples a recency-weighted mix of this season and older games; older games carry no recent
+    luck, so scaling all of them would double-count the reversion.
+    weights: template weights (None = equal); current_season: bool mask per template game.
+    """
+    import numpy as np
+
+    cur = np.asarray(current_season, dtype=bool)
+    if cur.size == 0:
+        return 1.0
+    w = np.ones(cur.size) if weights is None else np.asarray(weights, dtype=float)
+    share = float(w[cur].sum() / w.sum())
+    return 1 + (mult - 1) * share
