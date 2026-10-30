@@ -28,7 +28,7 @@ eps = 1e-4
 def ll(p, y): p = np.clip(p, eps, 1-eps); return float(-np.mean(y*np.log(p)+(1-y)*np.log(1-p)))
 ytest = test['hit'].to_numpy().astype(float)
 pb_test = pblend(test)
-print('TEST logloss: book %.5f | blend %.5f' % (ll(test['p_book'].to_numpy(), ytest), ll(pb_test, ytest)))
+print('TEST logloss: book {:.5f} | blend {:.5f}'.format(ll(test['p_book'].to_numpy(), ytest), ll(pb_test, ytest)))
 test = test.with_columns(pl.Series('p_blend', pb_test)).with_columns((pl.col('price')*pl.col('p_blend')-1).alias('ev'))
 for c in (0.02, 0.05, 0.10):
     bets = test.filter(pl.col('ev') >= c, (1/pl.col('p_blend')) <= 15)
@@ -48,7 +48,7 @@ best = (odds.filter(pl.col('bookmaker').is_in(au)).group_by('event_id', 'player'
              pl.col('bookmaker').n_unique().alias('n_books')))
 t2 = test.join(best.rename({'player': 'player_api'}), on=['event_id', 'player_api', 'stat', 'threshold'], how='left')
 print('\nrungs with 2+ AU books:', t2.filter(pl.col('n_books') >= 2).height, '/', t2.height,
-      '| avg best/Sportsbet price ratio %.3f' % t2.filter(pl.col('n_books') >= 2).select((pl.col('best_au') / pl.col('price')).mean()).item())
+      '| avg best/Sportsbet price ratio {:.3f}'.format(t2.filter(pl.col('n_books') >= 2).select((pl.col('best_au') / pl.col('price')).mean()).item()))
 t2 = t2.with_columns((pl.col('best_au') * pl.col('p_blend') - 1).alias('ev_best'))
 for c in (0.02, 0.05, 0.10):
     bets = t2.filter(pl.col('ev_best') >= c, (1 / pl.col('p_blend')) <= 15).with_columns(pl.col('best_au').alias('price'))
