@@ -200,6 +200,9 @@ def live_luck(season: str = "2026-27", as_of=None) -> pl.DataFrame:
         if current is not None:  # past seasons: rebuild season-to-date from per-game tracking
             prior = hist.filter(pl.col("season_id") != current["season_id"][0]).drop("season_id")
             return luck_multipliers(current.drop("season_id"), prior, league_conversion(hist))
+    from nba_ladders.sources.tracking import SEASON_IDS
+
+    hist = hist.filter(pl.col("season_id") != SEASON_IDS[season])  # current season comes from season totals
     return luck_multipliers(season_totals(season, as_of=as_of), hist, league_conversion(hist))
 
 
@@ -255,7 +258,7 @@ def scan(report: pl.DataFrame, game_day, top: int = 6) -> dict[str, pl.DataFrame
     out_keys = day.filter(pl.col("status").is_in(["Out", "Doubtful"]))["player_key"].drop_nulls()
     idx = parse_player_index(get_player_index("2026-27")).with_columns(
         pl.col("player_name").map_elements(player_key, return_dtype=pl.String).alias("key"))
-    hist = load()
+    hist = load().filter(pl.col("season_id") != "22026")  # career = before this season
     lg = league_conversion(hist)
     conv = hist.group_by("player_id").agg(
         *[pl.col(s).sum().alias(f"h_{s}") for s in CHANCES],

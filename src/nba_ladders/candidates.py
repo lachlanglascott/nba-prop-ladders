@@ -117,10 +117,11 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
     cands: dict[str, dict] = {}
     qwatch: dict[str, list[str]] = {}
 
-    def add(name, team, angle, detail, **scenario):
+    def add(name, team, angle, detail, strength: float = 0.0, **scenario):
         c = cands.setdefault(name, {"team": team, "opp": _opp(matchups[team], team), "reasons": {},
-                                    "scenario": {}})
+                                    "scenario": {}, "strength": {}})
         c["reasons"][angle] = detail
+        c["strength"][angle] = strength
         c["scenario"].update(scenario)
 
     for team in sorted(matchups):
@@ -140,7 +141,7 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
                 if new:
                     add(b["player_name"], team, "starter_out",
                         f"{s['player_name']} {s_status} (P(sits) {P_OUT[s_status]:.0%}), **NEW** (played last game)",
-                        p_out=P_OUT[s_status])
+                        strength=P_OUT[s_status], p_out=P_OUT[s_status])
                 else:  # ongoing absence: his recent minutes already reflect it; price his current role
                     add(b["player_name"], team, "starter_out",
                         f"{s['player_name']} {s_status}, ongoing absence (already in his recent role and the price)")
@@ -172,7 +173,8 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
     ctx = context_effects(playing, absent.drop("mate"), eff, pri, pos).join(playing.drop("game_id"), on="player_id")
     for r in ctx.filter(pl.col("shift_min") >= UNLOCK_MIN).iter_rows(named=True):
         who = absent.filter(pl.col("team_id") == r["team_id"])["mate"].to_list()
-        add(r["player_name"], r["team_id"], "unlocked", f"+{r['shift_min']:.1f} min; out: {', '.join(who)}")
+        add(r["player_name"], r["team_id"], "unlocked", f"+{r['shift_min']:.1f} min; out: {', '.join(who)}",
+            strength=r["shift_min"])
 
     # Questionable watch: who gains if a Questionable rotation player sits (hypothetical absence)
     q = (report.filter(pl.col("status") == "Questionable", ~pl.col("reason").str.contains("(?i)g ?league|two-way"))
@@ -195,16 +197,40 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
         for r in hyp.filter(pl.col("gain") >= Q_WATCH_MIN).iter_rows(named=True):
             add(r["player_name"], r["team_id"], "q_watch",
                 f"{qr['player_name']} Questionable ({qr['reason']}); if he sits: +{r['gain']:.1f} min",
-                q_minutes=r["gain"], q_mult={s: r[f"mult_{s}"] for s in RATES})
+                strength=r["gain"], q_minutes=r["gain"], q_mult={s: r[f"mult_{s}"] for s in RATES})
 
     # potentials luck (season to date)
     lk = scan(report, day, top=8)
     for stat, angle in (("ast", "luck_ast"), ("reb", "luck_reb")):
         for r in lk[stat].iter_rows(named=True):
-            if r[f"luck_{stat}"] >= 1.05:
+            if r[f"luck_{stat}"] >= 1.05 and r["chances_pg"] >= LUCK_MIN_CHANCES_PG[stat]:
                 add(r["player_name"], r["team_now"], angle,
                     f"{r[f'{stat}_pg']}/g from {r['chances_pg']} chances (converting {r['conv_now']:.0%} vs "
-                    f"{r['conv_career']:.0%} career); luck x{r[f'luck_{stat}']:.2f}")
+                    f"{r['conv_career']:.0%} career); luck x{r[f'luck_{stat}']:.2f}",
+                    strength=r[f"luck_{stat}"])
+    # last 1-2 games of potentials, counted only when the lineup matched tonight's
+    season_min = (pg.filter(pl.col("season_id") == "22026").group_by("player_id")
+                  .agg(pl.col("minutes").mean().alias("mpg_now")))
+    rot = people.join(season_min, on="player_id").filter(  # rotation = 15+ mpg this season
+        pl.col("team_now").is_in(list(matchups)), pl.col("mpg_now") >= ROTATION_MPG)
+    RECENT.clear()
+    for r in playing.iter_rows(named=True):
+        games = recent_games(pg, r["player_id"], r["team_id"], rot, out_keys)
+        if not games:
+            continue
+        RECENT[r["player_name"]] = games
+        for stat, angle in (("ast", "luck_ast"), ("reb", "luck_reb")):
+            sig = recent_signal(games, stat, r["player_id"])
+            if sig is None:
+                continue
+            note = sig["detail"]
+            if angle in cands.get(r["player_name"], {}).get("reasons", {}):
+                c = cands[r["player_name"]]
+                c["reasons"][angle] += f"; {note}"
+                c["strength"][angle] = max(c["strength"][angle], sig["luck"])
+            else:
+                add(r["player_name"], r["team_id"], angle, note, strength=sig["luck"])
+
     # tonight's absences (current teammates Out/Doubtful) for EVERY player: the history
     # adjustment backs out past absences of current teammates, so this adds tonight's back
     tonight = {r["player_name"]: (r["shift_min"], {s: r[f"mult_{s}"] for s in RATES})
@@ -214,6 +240,87 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
 
 
 CONTEXT: dict = {}  # set by gather(): data needed to line history up with tonight's roster
+ROTATION_MPG = 15.0  # teammates whose absence counts as a different lineup
+LUCK_MIN_CHANCES_PG = {"ast": 6.0, "reb": 8.0}  # volume needed before conversion luck means much
+RECENT: dict = {}  # player name -> last games with potentials and a same-lineup flag
+RECENT_N = 2
+RECENT_MIN = {"ast": 7.0, "reb": 12.0}  # chances per same-lineup game to bother flagging
+RECENT_SHORT = {"ast": 1.5, "reb": 2.0}  # expected minus actual, per game
+
+
+def recent_games(pg: pl.DataFrame, player_id: int, team: str, rot: pl.DataFrame, out_keys: set,
+                 n: int = RECENT_N) -> list[dict]:
+    """Last n games this season with potentials, and whether the rotation around him matched
+    tonight's (same rotation teammates missing; teammates who have since left are ignored)."""
+    trk = (_tracking_now().filter(pl.col("player_id") == player_id)
+           .drop_nulls(["potential_ast", "reb_chances"]).sort("game_date").tail(n))
+    if trk.is_empty():
+        return []
+    mates = rot.filter(pl.col("team_now") == team, pl.col("player_id") != player_id)
+    out_tonight = set(mates.filter(pl.col("player_key").is_in(list(out_keys)))["player_name"])
+    out = []
+    for g in trk.iter_rows(named=True):
+        played = set(pg.filter(pl.col("game_id") == g["game_id"], pl.col("minutes") > 0)["player_id"])
+        missing = set(mates.filter(~pl.col("player_id").is_in(list(played)))["player_name"])
+        out.append({**g, "same": missing == out_tonight, "missing": missing - out_tonight,
+                    "back": out_tonight - missing})
+    return out[::-1]  # most recent first
+
+
+def _tracking_now() -> pl.DataFrame:
+    if "trk_now" not in CONTEXT:
+        CONTEXT["trk_now"] = load_tracking().filter(pl.col("season_id") == "22026")
+    return CONTEXT["trk_now"]
+
+
+def _career_conv(player_id: int, stat: str) -> float:
+    from nba_ladders.luck import CHANCES, K_CONV, league_conversion
+
+    if "trk_hist" not in CONTEXT:
+        h = load_tracking().filter(pl.col("season_id") != "22026")
+        CONTEXT["trk_hist"] = (h, league_conversion(h))
+    h, lg = CONTEXT["trk_hist"]
+    me = h.filter(pl.col("player_id") == player_id)
+    c = CHANCES[stat]
+    return float((me[stat].sum() + K_CONV[stat] * lg[stat]) / (me[c].sum() + K_CONV[stat]))
+
+
+def recent_signal(games: list[dict], stat: str, player_id: int) -> dict | None:
+    """Same-lineup recent games where output lagged the chances. luck = blended / actual,
+    on the same scale as the season luck multiplier."""
+    from nba_ladders.luck import BLEND, CHANCES
+
+    same = [g for g in games if g["same"]]
+    if not same:
+        return None
+    ch = sum(g[CHANCES[stat]] for g in same)
+    act = sum(g[stat] for g in same)
+    if ch / len(same) < RECENT_MIN[stat]:
+        return None
+    exp = ch * _career_conv(player_id, stat)
+    if (exp - act) / len(same) < RECENT_SHORT[stat]:
+        return None
+    luck = min((BLEND[stat] * exp + (1 - BLEND[stat]) * act) / max(act, 1), 1.6)
+    label = "potential ast" if stat == "ast" else "reb chances"
+    per = "; ".join(f"{g[stat]} from {g[CHANCES[stat]]} {label} vs {g['opponent']}" for g in same)
+    return {"luck": luck, "detail": f"last {len(same)} same-lineup game{'s' * (len(same) > 1)}: {per} "
+                                    f"(expected {exp:.1f}, got {act})"}
+
+
+def recent_line(name: str, stat: str | None = None) -> str | None:
+    """Per-game potentials for the last games, with the lineup flag (stat: just ast or reb)."""
+    games = RECENT.get(name)
+    if not games:
+        return None
+    parts = []
+    for g in games:
+        lineup = "same lineup ✓" if g["same"] else "lineup differed: " + ", ".join(
+            [f"{m} out" for m in sorted(g["missing"])] + [f"{m} played" for m in sorted(g["back"])])
+        a = f"{g['ast']} ast from {g['potential_ast']} potential"
+        r = f"{g['reb']} reb from {g['reb_chances']} chances"
+        what = {"ast": a, "reb": r}.get(stat, f"{a}, {r}")
+        parts.append(f"{g['game_date']:%d %b} vs {g['opponent']}: {g['minutes']:.0f} min, {what} ({lineup})")
+    return "; ".join(parts)
 
 
 def _history_adjuster(team: str):
@@ -285,9 +392,32 @@ def ladder(odds: pl.DataFrame, name: str, stats: dict, focus: list[str], luck_ra
     return rows.group_by("stat", maintain_order=True).head(4).sort("stat", "threshold").drop("sb")
 
 
-ANGLE_LABEL = {"starter_out": "starting centre out", "q_watch": "questionable teammate",
-               "luck_ast": "assist potentials", "unlocked": "minutes unlocked",
+ANGLE_LABEL = {"luck_ast": "assist potentials", "starter_out": "starting centre out",
+               "q_watch": "questionable teammate", "unlocked": "minutes unlocked",
                "luck_reb": "rebound chances", "foul_spot": "foul spot", "hi_var_backup": "high-variance backup"}
+BASELINE_PRICE = (1.5, 5.0)  # the first rung sits in a realistic range; the ladder climbs from there
+LADDER_MAX, LADDER_RUNGS = 15.0, 3  # rungs shown above the baseline
+STAR_PTS = 20.0  # projected points: stars stay in the game sections, picks are the second tier
+
+
+def spot_score(c: dict) -> float:
+    """How strongly the angles fire (not EV). Ranks picks within each angle group."""
+    st, out = c.get("strength", {}), []
+    for a in c["reasons"]:
+        v = st.get(a, 0.0)
+        if a == "luck_ast":
+            out.append(2.0 + 10 * (v - 1.05))
+        elif a == "starter_out":
+            out.append(1.0 + 2.5 * v if "p_out" in c["scenario"] else 0.3)  # ongoing absence: weak
+        elif a == "q_watch":
+            out.append(1.5 + 0.3 * v)
+        elif a == "unlocked":
+            out.append(1.2 + 0.2 * (v - 3))
+        elif a == "luck_reb":
+            out.append(1.0 + 5 * (v - 1.05))
+        else:
+            out.append(0.5 if a == "foul_spot" else 0.4)
+    return max(out) + 0.2 * (len(out) - 1)
 ORDER = list(ANGLE_LABEL)
 
 
@@ -341,6 +471,9 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
                  f"vs {c['opp']} rebounds ×{info['opp_reb']:.2f}.")
     if trk:
         lines.append(f"- **Tracking**: {'; '.join(trk)}.")
+    rl = recent_line(name)
+    if rl:
+        lines.append(f"- **Last {RECENT_N} games**: {rl}.")
     focus = sorted({f for a in c["reasons"] for f in FOCUS[a]})
     from nba_ladders.luck import live_luck
 
@@ -380,7 +513,32 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
         lines.append("- **SGM combos** (worth it if the SGM builder pays at least fair): " + "; ".join(
             f"{r['combo']} fair ${r['fair']:.2f} (legs priced independently ${r['fair_indep']:.2f})"
             for r in combos.iter_rows(named=True)))
+    c["pick"] = _pick(name, c, stats, lad, combos)
     return lines, value
+
+
+def _pick(name: str, c: dict, stats: dict, lad: pl.DataFrame, combos: pl.DataFrame) -> dict | None:
+    """Baseline bet for the spot: the primary angle's main stat at a realistic price."""
+    primary = min(c["reasons"], key=ORDER.index)
+    main_stat = FOCUS[primary][0]
+    base, ladder_up = None, []
+    if lad.height:
+        rows = lad.filter(pl.col("stat") == main_stat).sort("threshold")
+        ok = rows.filter(pl.col("best_au").is_between(*BASELINE_PRICE))
+        if ok.height:
+            # the rung closest to a ~$2.50 price, preferring the better calibrated EV
+            base = ok.with_columns(((pl.col("best_au") - 2.5).abs() - 2 * pl.col("ev_cal")).alias("k")) \
+                .sort("k").row(0, named=True)
+            up = rows.filter(pl.col("threshold") > base["threshold"], pl.col("best_au") <= LADDER_MAX)
+            ladder_up = up.head(LADDER_RUNGS).to_dicts()
+    sgm = combos.filter(pl.col("shape") == SHAPES[primary][0]) if combos.height else combos
+    return {"player": name, "team": c["team"], "opp": c["opp"], "primary": primary,
+            "angles": sorted(c["reasons"], key=ORDER.index), "score": spot_score(c),
+            "why": c["reasons"][primary], "base": base, "up": ladder_up,
+            "sgm": sgm.row(0, named=True) if sgm.height else None,
+            "star": float(stats["pts"].mean()) >= STAR_PTS, "recent": recent_line(name, "reb" if "reb" in main_stat else "ast"),
+            "pred": (f"{stats['minutes'].mean():.0f} min · {stats['pts'].mean():.1f} pts / "
+                     f"{stats['reb'].mean():.1f} reb / {stats['ast'].mean():.1f} ast")}
 
 
 def _injuries(report: pl.DataFrame, team: str) -> str:
@@ -417,20 +575,39 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
                    "Sportsbet's own price: log loss 0.5602 vs 0.5667). EV uses the calibrated fair at the best AU price. "
                    "Raw model-vs-book gaps lose money historically, so trust the calibrated column. SGM combos are "
                    "model-only (no SGM prices to calibrate against): compare them with the builder.")]
-    best_per_player = {}
-    for s in sorted(shortlist, key=lambda s: -s["ev"]):
-        best_per_player.setdefault(s["player"], s)
-    top5 = list(best_per_player.values())[:5]
-    lines += ["", "## Top 5 candidates", ""]
-    if top5:
-        lines += ["| # | Player | Game | Bet | Best AU | Calibrated fair | Cal. EV | Angle | Predicted | Why |",
-                  "|---|---|---|---|---|---|---|---|---|---|"]
-        for i, s in enumerate(top5, 1):
-            lines.append(f"| {i} | **{s['player']}** | {s['team']} vs {s['opp']} | {s['rung']} | "
-                         f"${s['price']:.2f} ({s['book']}) | ${s['fair']:.2f} | {s['ev']:+.0%} | "
-                         f"{ANGLE_LABEL[s['angles'][0]]} | {s['pred']} | {s['why']} |")
-    else:
-        lines.append("No rungs clear the calibrated cushion at current prices.")
+    picks = [c["pick"] for c in cands.values() if c.get("pick") and c["pick"]["base"]]
+    for p in picks:  # value only nudges the ranking; a clearly bad price drops the spot
+        ev = p["base"]["ev_cal"]
+        p["rank"] = p["score"] + (min(ev, 0.3) if ev > 0 else (-1.0 if ev < -0.05 else 0.0))
+
+    def rung(r, bold=False):
+        s = f"{r['threshold']}+ ${r['best_au']:.2f}"
+        return (f"**{s}**" if bold else s) + f" (fair ${r['fair_cal']:.2f}, {r['best_book']})"
+
+    def pick_rows(group):
+        out = []
+        for i, s in enumerate(sorted(group, key=lambda s: -s["rank"]), 1):
+            b, g = s["base"], s["sgm"]
+            ladder = " → ".join([rung(b, bold=True)] + [rung(u) for u in s["up"]])
+            sgm = f"{g['combo']} fair ${g['fair']:.2f}" if g else "n/a"
+            why = s["why"] + (f"<br><small>{s['recent']}</small>" if s["recent"] else "")
+            out.append(f"| {i} | **{s['player']}** ({s['team']} vs {s['opp']}) | {why} | {b['stat']}: {ladder} | "
+                       f"{b['ev_cal']:+.0%} | {sgm} | {s['pred']} |")
+        return out
+
+    head = [("| # | Player | The spot (last 2 games: potentials, lineup) | Ladder (best AU, calibrated fair) | "
+             "EV 1st rung | SGM idea | Predicted |"), "|---|---|---|---|---|---|---|"]
+    stars = sorted(p["player"] for p in picks if p["star"])
+    picks = [p for p in picks if not p["star"]]
+    lines += ["", "## Picks: the spots", "",
+              (f"Second-tier players only (projected under {STAR_PTS:.0f} pts), chosen by angle strength, not EV. "
+               f"Each ladder starts at a $1.50–$5.00 rung and climbs up to ${LADDER_MAX:.0f}. "
+               "Potentials only count from recent games where the rotation matched tonight's. "
+               + (f"Stars with live angles are in the game sections: {', '.join(stars)}." if stars else ""))]
+    ast = [p for p in picks if p["primary"] == "luck_ast"]
+    rest = [p for p in picks if p["primary"] != "luck_ast"]
+    lines += ["", "### Assist potentials", ""] + (head + pick_rows(ast)[:6] if ast else ["None tonight."])
+    lines += ["", "### Other angles", ""] + (head + pick_rows(rest)[:8] if rest else ["None tonight."])
     lines += ["", f"## Shortlist: calibrated EV ≥ {CAL_CUSHION:.0%} at the best AU price", ""]
     if shortlist:
         lines += ["| Player | Rung | Best AU | Calibrated fair | Model fair | Cal. EV | Angles |",
@@ -508,7 +685,7 @@ def to_html(md_text: str, title: str) -> str:
                   lambda m: f'<td><span class="{"ev-pos" if m.group(1).startswith("+") else "ev-neg"}">'
                             f"{m.group(1)}</span></td>", body)
     # top sections: wrap "Top 5" in a highlighted block
-    body = body.replace("<h2>Top 5 candidates</h2>", '<section class="top5"><h2>Top 5 candidates</h2>', 1)
+    body = body.replace("<h2>Picks: the spots</h2>", '<section class="top5"><h2>Picks: the spots</h2>', 1)
     body = body.replace("<h2>Shortlist", "</section><h2>Shortlist", 1)
     # each game (h2 "AWAY @ HOME") becomes a card; each candidate (h3) a collapsible section
     parts = re.split(r"(?=<h2>[A-Z]{2,3} @ [A-Z]{2,3}</h2>)", body)
