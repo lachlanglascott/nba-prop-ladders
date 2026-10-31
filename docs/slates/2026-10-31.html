@@ -31,24 +31,21 @@ details[open] > summary::before { content:"▾ "; }
 .top5 td:nth-child(2) { white-space:nowrap; }
 .note { color:var(--muted); font-size:13px; }
 </style></head><body><main><h1>Game-day write-up: 2026-10-31 (US Eastern)</h1>
-<p>Injury report 2026-10-31 07:15:00 ET · odds snapshot 20261031T105411Z (Sportsbet, TAB, Dabble, Betr, Neds, Ladbrokes, PointsBet; US books for reference).</p>
+<p>Injury report 2026-10-31 07:30:00 ET · odds snapshot 20261031T105411Z (Sportsbet, TAB, Dabble, Betr, Neds, Ladbrokes, PointsBet; US books for reference).</p>
 <p><strong>Not yet submitted:</strong> CHA, HOU, MIN, PHI. Re-run closer to tip.</p>
-<p><strong>How to read this</strong>: <em>Model fair</em> = the simulator alone. <em>Calibrated fair</em> = Sportsbet's price and the model blended with weights learned on two seasons of results (out of season it beats Sportsbet's own price: log loss 0.5602 vs 0.5667). EV uses the calibrated fair at the best AU price. Raw model-vs-book gaps lose money historically, so trust the calibrated column. SGM combos are model-only (no SGM prices to calibrate against): compare them with the builder.</p>
-<section class="top5"><h2>Picks: the spots</h2>
-<p>Second-tier players only (stars = 20+ ppg last season), chosen by angle strength, not EV. Each ladder starts at a $1.50–$5.00 rung and climbs up to $15. Potentials only count from recent games where the rotation matched tonight's. Stars with live angles are in the game sections: James Harden, Kevin Durant, Lauri Markkanen, LeBron James, Shai Gilgeous-Alexander, Victor Wembanyama.</p>
-<h3>Monster potentials last game, missed</h3>
-<p><em>Last game 12+ potential assists and 4+ short of his conversion, same lineup: +12% blind at Sportsbet over two seasons (+6%/+17%, 400 rungs, CI −5% to +29%) vs −8% for all assist rungs. The calibrated EV below doesn't know this angle.</em></p>
-<p>None tonight.</p>
-<h3>Potentials volume spike</h3>
-<p><em>Last game 18+ potential assists (1.5x his average), same lineup. Split by conversion at Sportsbet over two seasons: didn't convert +21% (434 rungs, +28%/+14%); DID convert −21% (363 rungs, −28%/−17%): books overreact to the assists he made.</em></p>
+<p><strong>How to read this</strong>: <em>Model fair</em> = the projection alone: minutes as a scenario mix, per-minute rates lined up with tonight's lineup (absences in and out), opponent pace and defence (points, assists), opponent rebounding, and potentials / rebound chances. EV = best AU price × model probability − 1; <strong>value</strong> = EV ≥ 10% on a rung priced $3–$15. No backtest adjustments. SGM fair prices are model-only: compare with the builder.</p>
+<h2>Bets: model vs market, $3–$15</h2>
+<p>Second-tier players (stars = 20+ ppg last season), ranked by EV of their best rung in range. The ladder is every in-range rung of that stat. Stars with live angles are in the game sections: James Harden, Kevin Durant, Lauri Markkanen, LeBron James, Shai Gilgeous-Alexander, Victor Wembanyama.</p>
 <div class="wrap"><table>
 <thead>
 <tr>
 <th>#</th>
 <th>Player</th>
-<th>The spot (last 2 games: potentials, lineup)</th>
-<th>Ladder (best AU, calibrated fair)</th>
-<th>EV 1st rung</th>
+<th>Angle</th>
+<th>Bet (best AU)</th>
+<th>Model fair</th>
+<th>EV</th>
+<th>Ladder in range</th>
 <th>SGM idea</th>
 <th>Predicted</th>
 </tr>
@@ -56,294 +53,300 @@ details[open] > summary::before { content:"▾ "; }
 <tbody>
 <tr>
 <td>1</td>
-<td><strong>Stephon Castle</strong> (SAS vs MIN)</td>
-<td>last game 18 potential assists vs UTA (28 Oct), 1.6x his 11.5 average; 8 assists vs 10.0 expected, <strong>didn't convert: the backable side</strong>; same lineup tonight<br><small>28 Oct vs UTA: 38 min, 8 ast from 18 potential (same lineup ✓); 27 Oct vs SAC: 27 min, 5 ast from 9 potential (same lineup ✓)</small></td>
-<td>ast: <strong>6+ $1.72</strong> (fair $1.74, sportsbet) → 8+ $3.70 (fair $3.46, sportsbet) → 10+ $9.00 (fair $6.57, pointsbetau) → 12+ $15.00 (fair $12.52, sportsbet)</td>
-<td><span class="ev-neg">-1%</span></td>
-<td>20p/8a fair $5.10</td>
-<td>31 min · 18.2 pts / 5.9 reb / 7.3 ast</td>
-</tr>
-<tr>
-<td>2</td>
 <td><strong>Darius Acuff Jr.</strong> (SAC vs MEM)</td>
-<td>last game 22 potential assists vs NOP (29 Oct), 2.5x his 8.8 average; 14 assists vs 12.3 expected, <strong>converted: caution, books overreact to made assists (−21% in the backtest)</strong>; same lineup tonight<br><small>29 Oct vs NOP: 41 min, 14 ast from 22 potential (same lineup ✓); 27 Oct vs SAS: 33 min, 5 ast from 8 potential (same lineup ✓)</small></td>
-<td>ast: <strong>6+ $1.83</strong> (fair $1.93, pointsbetau) → 8+ $3.70 (fair $3.90, pointsbetau) → 10+ $9.50 (fair $7.48, pointsbetau) → 12+ $15.00 (fair $14.09, ladbrokes_au)</td>
-<td><span class="ev-neg">-5%</span></td>
-<td>30p/8a fair $7.80</td>
+<td>potentials volume spike<br><small>last game 22 potential assists vs NOP (29 Oct), 2.5x his 8.8 average; 14 assists vs 12.3 expected, converted; same lineup tonight; 29 Oct vs NOP: 41 min, 14 ast from 22 potential (same lineup ✓); 27 Oct vs SAS: 33 min, 5 ast from 8 potential (same lineup ✓)</small></td>
+<td><strong>10+ ast $9.50</strong> (pointsbetau) <strong>value</strong></td>
+<td>$4.38</td>
+<td><span class="ev-pos">+117%</span></td>
+<td>8+ $3.70 (fair $2.73) → 9+ $4.40 (fair $3.46) → 10+ $9.50 (fair $4.38) → 12+ $15.00 (fair $7.35)</td>
+<td>30p/8a fair $7.89</td>
 <td>37 min · 24.5 pts / 3.6 reb / 7.0 ast</td>
 </tr>
-</tbody>
-</table></div>
-<h3>Season assist potentials</h3>
-<div class="wrap"><table>
-<thead>
-<tr>
-<th>#</th>
-<th>Player</th>
-<th>The spot (last 2 games: potentials, lineup)</th>
-<th>Ladder (best AU, calibrated fair)</th>
-<th>EV 1st rung</th>
-<th>SGM idea</th>
-<th>Predicted</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td><strong>Dennis Schröder</strong> (CHA vs PHI)</td>
-<td>4.8/g from 11.2 chances (converting 43% vs 57% career); luck x1.11<br><small>28 Oct vs DET: 34 min, 5 ast from 11 potential (same lineup ✓); 26 Oct vs WAS: 36 min, 5 ast from 10 potential (same lineup ✓)</small></td>
-<td>ast: <strong>6+ $1.82</strong> (fair $1.70, dabble_au) → 8+ $3.40 (fair $3.17, dabble_au) → 9+ $3.80 (fair $3.79, ladbrokes_au) → 10+ $8.50 (fair $5.77, pointsbetau)</td>
-<td><span class="ev-pos">+7%</span></td>
-<td>15p/8a fair $6.93</td>
-<td>29 min · 12.2 pts / 3.2 reb / 6.1 ast</td>
-</tr>
 <tr>
 <td>2</td>
+<td><strong>Stephon Castle</strong> (SAS vs MIN)</td>
+<td>potentials volume spike, season assist potentials<br><small>last game 18 potential assists vs UTA (28 Oct), 1.6x his 11.5 average; 8 assists vs 10.0 expected, didn't convert; same lineup tonight; 28 Oct vs UTA: 38 min, 8 ast from 18 potential (same lineup ✓); 27 Oct vs SAC: 27 min, 5 ast from 9 potential (same lineup ✓)</small></td>
+<td><strong>10+ ast $9.00</strong> (pointsbetau) <strong>value</strong></td>
+<td>$4.44</td>
+<td><span class="ev-pos">+103%</span></td>
+<td>8+ $3.70 (fair $2.39) → 9+ $4.00 (fair $3.18) → 10+ $9.00 (fair $4.44) → 12+ $15.00 (fair $10.06)</td>
+<td>20p/8a fair $5.72</td>
+<td>31 min · 17.8 pts / 5.9 reb / 7.1 ast</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Precious Achiuwa</strong> (SAC vs MEM)</td>
+<td>rebound chances<br><small>6.2/g from 15.4 chances (converting 40% vs 60% career); luck x1.09; 29 Oct vs NOP: 41 min, 9 reb from 18 chances (same lineup ✓); 27 Oct vs SAS: 14 min, 1 reb from 5 chances (same lineup ✓)</small></td>
+<td><strong>12+ reb $7.50</strong> (betr_au) <strong>value</strong></td>
+<td>$3.71</td>
+<td><span class="ev-pos">+102%</span></td>
+<td>10+ $3.40 (fair $2.31) → 12+ $7.50 (fair $3.71) → 14+ $12.00 (fair $6.82)</td>
+<td>12r/2a fair $6.15</td>
+<td>30 min · 12.2 pts / 9.0 reb / 1.7 ast</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Kenrich Williams</strong> (OKC vs HOU)</td>
+<td>minutes unlocked<br><small>+5.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace; 28 Oct vs DAL: 17 min, 0 ast from 0 potential (same lineup ✓); 26 Oct vs PHX: 24 min, 0 ast from 3 potential (same lineup ✓)</small></td>
+<td><strong>15+ pts $11.00</strong> (neds) <strong>value</strong></td>
+<td>$5.84</td>
+<td><span class="ev-pos">+89%</span></td>
+<td>10+ $3.40 (fair $2.54) → 12+ $4.75 (fair $3.46) → 13+ $5.75 (fair $4.11) → 14+ $7.75 (fair $4.88) → 15+ $11.00 (fair $5.84)</td>
+<td>12p/6r fair $6.58</td>
+<td>20 min · 9.0 pts / 4.2 reb / 1.5 ast</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Zach Edey</strong> (MEM vs SAC)</td>
+<td>rebound chances<br><small>last 2 same-lineup games: 7 from 19 reb chances vs POR; 3 from 14 reb chances vs UTA (expected 18.7, got 10); 29 Oct vs POR: 19 min, 7 reb from 19 chances (same lineup ✓); 26 Oct vs UTA: 21 min, 3 reb from 14 chances (same lineup ✓)</small></td>
+<td><strong>14+ reb $12.00</strong> (pointsbetau) <strong>value</strong></td>
+<td>$7.03</td>
+<td><span class="ev-pos">+71%</span></td>
+<td>12+ $5.25 (fair $3.77) → 14+ $12.00 (fair $7.03) → 16+ $15.00 (fair $14.84)</td>
+<td>12r/2a fair $10.03</td>
+<td>23 min · 10.8 pts / 9.2 reb / 1.2 ast</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Onyeka Okongwu</strong> (ATL vs NOP)</td>
+<td>foul spot<br><small>Jock Landale 4.8 fouls/36 vs opponent 26.8 FTA/g; 29 Oct vs CLE: 33 min, 12 reb from 20 chances (same lineup ✓); 28 Oct vs MIA: 31 min, 4 reb from 9 chances (same lineup ✓)</small></td>
+<td><strong>12+ reb $9.00</strong> (betr_au) <strong>value</strong></td>
+<td>$5.96</td>
+<td><span class="ev-pos">+51%</span></td>
+<td>10+ $4.10 (fair $2.94) → 12+ $9.00 (fair $5.96) → 14+ $13.00 (fair $14.77)</td>
+<td>n/a</td>
+<td>30 min · 14.4 pts / 8.4 reb / 3.1 ast</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Cedric Coward</strong> (MEM vs SAC)</td>
+<td>rebound chances<br><small>last 2 same-lineup games: 7 from 18 reb chances vs POR; 11 from 16 reb chances vs UTA (expected 22.3, got 18); 29 Oct vs POR: 27 min, 7 reb from 18 chances (same lineup ✓); 26 Oct vs UTA: 31 min, 11 reb from 16 chances (same lineup ✓)</small></td>
+<td><strong>10+ reb $6.25</strong> (betr_au) <strong>value</strong></td>
+<td>$4.83</td>
+<td><span class="ev-pos">+29%</span></td>
+<td>8+ $3.28 (fair $2.75) → 9+ $3.35 (fair $3.60) → 10+ $6.25 (fair $4.83) → 12+ $12.00 (fair $9.57)</td>
+<td>8r/4a fair $6.43</td>
+<td>27 min · 15.7 pts / 6.6 reb / 3.1 ast</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Dyson Daniels</strong> (ATL vs NOP)</td>
+<td>rebound chances<br><small>last 2 same-lineup games: 6 from 11 reb chances vs CLE; 4 from 13 reb chances vs MIA (expected 15.2, got 10); 29 Oct vs CLE: 32 min, 6 reb from 11 chances (same lineup ✓); 28 Oct vs MIA: 28 min, 4 reb from 13 chances (same lineup ✓)</small></td>
+<td><strong>8+ reb $3.75</strong> (sportsbet) <strong>value</strong></td>
+<td>$3.28</td>
+<td><span class="ev-pos">+14%</span></td>
+<td>8+ $3.75 (fair $3.28) → 9+ $4.00 (fair $5.04) → 10+ $7.50 (fair $8.22) → 12+ $14.00 (fair $26.23)</td>
+<td>8r/6a fair $6.97</td>
+<td>30 min · 11.6 pts / 6.3 reb / 5.3 ast</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Toumani Camara</strong> (POR vs UTA)</td>
+<td>rebound chances<br><small>1.8/g from 8.5 chances (converting 21% vs 55% career); luck x1.23; 29 Oct vs MEM: 26 min, 2 reb from 11 chances (lineup differed: Ja Morant played); 27 Oct vs LAL: 24 min, 1 reb from 3 chances (lineup differed: Ja Morant played)</small></td>
+<td><strong>8+ reb $8.00</strong> (tab) <strong>value</strong></td>
+<td>$7.11</td>
+<td><span class="ev-pos">+13%</span></td>
+<td>7+ $4.10 (fair $4.41) → 8+ $8.00 (fair $7.11) → 9+ $7.50 (fair $12.01) → 10+ $12.00 (fair $21.81)</td>
+<td>6r/3a fair $6.65</td>
+<td>29 min · 13.3 pts / 4.7 reb / 2.2 ast</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Karlo Matković</strong> (NOP vs ATL)</td>
+<td>foul spot, high-variance backup<br><small>Derik Queen 3.3 fouls/36 vs opponent 20.6 FTA/g; 29 Oct vs SAC: 28 min, 4 reb from 17 chances (lineup differed: Dejounte Murray out); 28 Oct vs DEN: 18 min, 3 reb from 5 chances (same lineup ✓)</small></td>
+<td><strong>7+ reb $4.20</strong> (betr_au)</td>
+<td>$4.05</td>
+<td><span class="ev-pos">+4%</span></td>
+<td>7+ $4.20 (fair $4.05) → 8+ $6.00 (fair $6.11) → 9+ $7.50 (fair $9.52) → 10+ $12.00 (fair $16.20)</td>
+<td>n/a</td>
+<td>18 min · 7.4 pts / 4.7 reb / 1.1 ast</td>
+</tr>
+<tr>
+<td>11</td>
 <td><strong>Domantas Sabonis</strong> (SAC vs MEM)</td>
-<td>7.2/g from 13.6 chances (converting 53% vs 62% career); luck x1.06<br><small>29 Oct vs NOP: 40 min, 7 ast from 9 potential (same lineup ✓); 27 Oct vs SAS: 37 min, 8 ast from 16 potential (same lineup ✓)</small></td>
-<td>ast: <strong>8+ $3.10</strong> (fair $3.07, pointsbetau) → 10+ $7.00 (fair $5.55, pointsbetau)</td>
-<td><span class="ev-pos">+1%</span></td>
-<td>20p/8a fair $6.45</td>
+<td>season assist potentials, rebound chances<br><small>7.2/g from 13.6 chances (converting 53% vs 62% career); luck x1.06; 29 Oct vs NOP: 40 min, 15 reb from 29 chances (same lineup ✓); 27 Oct vs SAS: 37 min, 14 reb from 28 chances (same lineup ✓)</small></td>
+<td><strong>45+ pts+reb $10.00</strong> (sportsbet)</td>
+<td>$9.69</td>
+<td><span class="ev-pos">+3%</span></td>
+<td>40+ $4.50 (fair $4.50) → 45+ $10.00 (fair $9.69)</td>
+<td>20p/8a fair $6.48</td>
 <td>34 min · 18.1 pts / 13.8 reb / 6.1 ast</td>
 </tr>
 </tbody>
 </table></div>
-<h3>Other angles</h3>
-<div class="wrap"><table>
-<thead>
-<tr>
-<th>#</th>
-<th>Player</th>
-<th>The spot (last 2 games: potentials, lineup)</th>
-<th>Ladder (best AU, calibrated fair)</th>
-<th>EV 1st rung</th>
-<th>SGM idea</th>
-<th>Predicted</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td><strong>Zach Edey</strong> (MEM vs SAC)</td>
-<td>last 2 same-lineup games: 7 from 19 reb chances vs POR; 3 from 14 reb chances vs UTA (expected 18.7, got 10)<br><small>29 Oct vs POR: 19 min, 7 reb from 19 chances (same lineup ✓); 26 Oct vs UTA: 21 min, 3 reb from 14 chances (same lineup ✓)</small></td>
-<td>reb: <strong>10+ $2.60</strong> (fair $2.49, pointsbetau) → 12+ $5.25 (fair $4.46, pointsbetau) → 14+ $12.00 (fair $7.88, pointsbetau) → 16+ $15.00 (fair $13.86, ladbrokes_au)</td>
-<td><span class="ev-pos">+5%</span></td>
-<td>12p/12r fair $7.32</td>
-<td>23 min · 10.3 pts / 9.2 reb / 1.1 ast</td>
-</tr>
-<tr>
-<td>2</td>
-<td><strong>Toumani Camara</strong> (POR vs UTA)</td>
-<td>1.8/g from 8.5 chances (converting 21% vs 55% career); luck x1.23<br><small>29 Oct vs MEM: 26 min, 2 reb from 11 chances (lineup differed: Ja Morant played); 27 Oct vs LAL: 24 min, 1 reb from 3 chances (lineup differed: Ja Morant played)</small></td>
-<td>reb: <strong>6+ $2.75</strong> (fair $2.77, dabble_au) → 7+ $4.10 (fair $4.18, betr_au) → 8+ $8.00 (fair $6.14, tab)</td>
-<td><span class="ev-neg">-1%</span></td>
-<td>15p/6r fair $7.19</td>
-<td>29 min · 12.8 pts / 4.7 reb / 2.2 ast</td>
-</tr>
-<tr>
-<td>3</td>
-<td><strong>Kenrich Williams</strong> (OKC vs HOU)</td>
-<td>+5.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace<br><small>28 Oct vs DAL: 17 min, 0 ast from 0 potential (same lineup ✓); 26 Oct vs PHX: 24 min, 0 ast from 3 potential (same lineup ✓)</small></td>
-<td>pts: <strong>10+ $3.40</strong> (fair $3.44, betr_au) → 13+ $5.75 (fair $6.08, pointsbetau) → 14+ $7.75 (fair $8.01, neds) → 15+ $11.00 (fair $9.68, neds)</td>
-<td><span class="ev-neg">-1%</span></td>
-<td>12p/6r fair $6.40</td>
-<td>20 min · 9.2 pts / 4.2 reb / 1.6 ast</td>
-</tr>
-<tr>
-<td>4</td>
-<td><strong>Precious Achiuwa</strong> (SAC vs MEM)</td>
-<td>6.2/g from 15.4 chances (converting 40% vs 60% career); luck x1.09<br><small>29 Oct vs NOP: 41 min, 9 reb from 18 chances (same lineup ✓); 27 Oct vs SAS: 14 min, 1 reb from 5 chances (same lineup ✓)</small></td>
-<td>reb: <strong>10+ $3.40</strong> (fair $3.32, betr_au) → 12+ $7.50 (fair $6.13, betr_au) → 14+ $12.00 (fair $11.90, sportsbet)</td>
-<td><span class="ev-pos">+2%</span></td>
-<td>15p/12r fair $6.81</td>
-<td>30 min · 12.2 pts / 9.0 reb / 1.7 ast</td>
-</tr>
-<tr>
-<td>5</td>
-<td><strong>Jared McCain</strong> (OKC vs HOU)</td>
-<td>+3.0 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace<br><small>28 Oct vs DAL: 29 min, 4 ast from 4 potential (same lineup ✓); 26 Oct vs PHX: 30 min, 4 ast from 4 potential (same lineup ✓)</small></td>
-<td>pts: <strong>15+ $1.91</strong> (fair $1.98, betr_au) → 20+ $4.10 (fair $3.99, betr_au) → 25+ $10.50 (fair $8.09, neds)</td>
-<td><span class="ev-neg">-3%</span></td>
-<td>18p/4r fair $8.15</td>
-<td>26 min · 14.0 pts / 2.6 reb / 2.2 ast</td>
-</tr>
-<tr>
-<td>6</td>
-<td><strong>Dyson Daniels</strong> (ATL vs NOP)</td>
-<td>last 2 same-lineup games: 6 from 11 reb chances vs CLE; 4 from 13 reb chances vs MIA (expected 15.2, got 10)<br><small>29 Oct vs CLE: 32 min, 6 reb from 11 chances (same lineup ✓); 28 Oct vs MIA: 28 min, 4 reb from 13 chances (same lineup ✓)</small></td>
-<td>reb: <strong>6+ $1.80</strong> (fair $1.96, sportsbet) → 8+ $3.75 (fair $4.11, sportsbet) → 10+ $7.50 (fair $8.51, sportsbet)</td>
-<td><span class="ev-neg">-8%</span></td>
-<td>15p/8r fair $10.51</td>
-<td>30 min · 11.3 pts / 6.3 reb / 5.1 ast</td>
-</tr>
-<tr>
-<td>7</td>
-<td><strong>Ajay Mitchell</strong> (OKC vs HOU)</td>
-<td>+4.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace<br><small>28 Oct vs DAL: 28 min, 3 ast from 4 potential (same lineup ✓); 26 Oct vs PHX: 25 min, 5 ast from 6 potential (same lineup ✓)</small></td>
-<td>pts: <strong>20+ $2.11</strong> (fair $2.45, sportsbet) → 25+ $4.40 (fair $5.07, betr_au)</td>
-<td><span class="ev-neg">-14%</span></td>
-<td>18p/4r fair $6.53</td>
-<td>29 min · 15.2 pts / 3.2 reb / 3.4 ast</td>
-</tr>
-<tr>
-<td>8</td>
-<td><strong>Cedric Coward</strong> (MEM vs SAC)</td>
-<td>last 2 same-lineup games: 7 from 18 reb chances vs POR; 11 from 16 reb chances vs UTA (expected 22.3, got 18)<br><small>29 Oct vs POR: 27 min, 7 reb from 18 chances (same lineup ✓); 26 Oct vs UTA: 31 min, 11 reb from 16 chances (same lineup ✓)</small></td>
-<td>reb: <strong>8+ $3.28</strong> (fair $3.57, sportsbet) → 10+ $6.25 (fair $6.46, betr_au) → 12+ $12.00 (fair $12.62, sportsbet)</td>
-<td><span class="ev-neg">-8%</span></td>
-<td>18p/8r fair $6.96</td>
-<td>27 min · 15.0 pts / 6.6 reb / 2.9 ast</td>
-</tr>
-</tbody>
-</table></div>
-</section><h2>Shortlist: calibrated EV ≥ 5% at the best AU price</h2>
+<p>No positive in-range rung: Jarrett Allen, Dennis Schröder, Jared McCain, Moussa Diabaté, Donovan Clingan, Aday Mara, Ajay Mitchell, Isaiah Hartenstein, Robert Williams III.</p>
+<h2>Every value rung (EV ≥ 10%, $3–$15), stars included</h2>
 <div class="wrap"><table>
 <thead>
 <tr>
 <th>Player</th>
 <th>Rung</th>
 <th>Best AU</th>
-<th>Calibrated fair</th>
 <th>Model fair</th>
-<th>Cal. EV</th>
+<th>EV</th>
 <th>Angles</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Zach Edey (MEM)</td>
-<td>14+ reb</td>
+<td>James Harden (CLE)</td>
+<td>12+ ast</td>
 <td>$12.00 (pointsbetau)</td>
-<td>$7.88</td>
-<td>$7.24</td>
-<td><span class="ev-pos">+52%</span></td>
-<td>rebound chances</td>
-</tr>
-<tr>
-<td>Dennis Schröder (CHA)</td>
-<td>10+ ast</td>
-<td>$8.50 (pointsbetau)</td>
-<td>$5.77</td>
-<td>$7.75</td>
-<td><span class="ev-pos">+47%</span></td>
+<td>$5.19</td>
+<td><span class="ev-pos">+131%</span></td>
 <td>season assist potentials</td>
-</tr>
-<tr>
-<td>Toumani Camara (POR)</td>
-<td>8+ reb</td>
-<td>$8.00 (tab)</td>
-<td>$6.14</td>
-<td>$7.11</td>
-<td><span class="ev-pos">+30%</span></td>
-<td>rebound chances</td>
-</tr>
-<tr>
-<td>Jared McCain (OKC)</td>
-<td>25+ pts</td>
-<td>$10.50 (neds)</td>
-<td>$8.09</td>
-<td>$10.52</td>
-<td><span class="ev-pos">+30%</span></td>
-<td>minutes unlocked</td>
-</tr>
-<tr>
-<td>Domantas Sabonis (SAC)</td>
-<td>10+ ast</td>
-<td>$7.00 (pointsbetau)</td>
-<td>$5.55</td>
-<td>$7.45</td>
-<td><span class="ev-pos">+26%</span></td>
-<td>season assist potentials, rebound chances</td>
 </tr>
 <tr>
 <td>Kevin Durant (HOU)</td>
-<td>9+ ast</td>
-<td>$23.00 (neds)</td>
-<td>$18.77</td>
-<td>$15.41</td>
-<td><span class="ev-pos">+23%</span></td>
+<td>6+ ast</td>
+<td>$8.00 (pointsbetau)</td>
+<td>$3.57</td>
+<td><span class="ev-pos">+124%</span></td>
 <td>season assist potentials</td>
 </tr>
 <tr>
-<td>Stephon Castle (SAS)</td>
+<td>Darius Acuff Jr. (SAC)</td>
+<td>10+ ast</td>
+<td>$9.50 (pointsbetau)</td>
+<td>$4.38</td>
+<td><span class="ev-pos">+117%</span></td>
+<td>potentials volume spike</td>
+</tr>
+<tr>
+<td>Darius Acuff Jr. (SAC)</td>
 <td>12+ ast</td>
-<td>$15.00 (sportsbet)</td>
-<td>$12.52</td>
-<td>$8.80</td>
-<td><span class="ev-pos">+20%</span></td>
+<td>$15.00 (ladbrokes_au)</td>
+<td>$7.35</td>
+<td><span class="ev-pos">+104%</span></td>
+<td>potentials volume spike</td>
+</tr>
+<tr>
+<td>Stephon Castle (SAS)</td>
+<td>10+ ast</td>
+<td>$9.00 (pointsbetau)</td>
+<td>$4.44</td>
+<td><span class="ev-pos">+103%</span></td>
 <td>season assist potentials, potentials volume spike</td>
 </tr>
 <tr>
-<td>Zach Edey (MEM)</td>
+<td>Precious Achiuwa (SAC)</td>
 <td>12+ reb</td>
-<td>$5.25 (pointsbetau)</td>
-<td>$4.46</td>
-<td>$3.79</td>
-<td><span class="ev-pos">+18%</span></td>
+<td>$7.50 (betr_au)</td>
+<td>$3.71</td>
+<td><span class="ev-pos">+102%</span></td>
 <td>rebound chances</td>
+</tr>
+<tr>
+<td>Kenrich Williams (OKC)</td>
+<td>15+ pts</td>
+<td>$11.00 (neds)</td>
+<td>$5.84</td>
+<td><span class="ev-pos">+89%</span></td>
+<td>minutes unlocked</td>
+</tr>
+<tr>
+<td>James Harden (CLE)</td>
+<td>10+ ast</td>
+<td>$4.60 (betr_au)</td>
+<td>$2.57</td>
+<td><span class="ev-pos">+79%</span></td>
+<td>season assist potentials</td>
+</tr>
+<tr>
+<td>Precious Achiuwa (SAC)</td>
+<td>14+ reb</td>
+<td>$12.00 (sportsbet)</td>
+<td>$6.82</td>
+<td><span class="ev-pos">+76%</span></td>
+<td>rebound chances</td>
+</tr>
+<tr>
+<td>Zach Edey (MEM)</td>
+<td>14+ reb</td>
+<td>$12.00 (pointsbetau)</td>
+<td>$7.03</td>
+<td><span class="ev-pos">+71%</span></td>
+<td>rebound chances</td>
+</tr>
+<tr>
+<td>Kevin Durant (HOU)</td>
+<td>5+ ast</td>
+<td>$4.00 (betr_au)</td>
+<td>$2.37</td>
+<td><span class="ev-pos">+69%</span></td>
+<td>season assist potentials</td>
 </tr>
 <tr>
 <td>Shai Gilgeous-Alexander (OKC)</td>
 <td>10+ ast</td>
 <td>$9.50 (sportsbet)</td>
-<td>$8.13</td>
-<td>$4.91</td>
-<td><span class="ev-pos">+17%</span></td>
+<td>$5.98</td>
+<td><span class="ev-pos">+59%</span></td>
 <td>season assist potentials</td>
 </tr>
 <tr>
-<td>Zach Edey (MEM)</td>
+<td>Kenrich Williams (OKC)</td>
+<td>14+ pts</td>
+<td>$7.75 (neds)</td>
+<td>$4.88</td>
+<td><span class="ev-pos">+59%</span></td>
+<td>minutes unlocked</td>
+</tr>
+<tr>
+<td>Kenrich Williams (OKC)</td>
 <td>20+ pts+reb</td>
-<td>$2.90 (pointsbetau)</td>
-<td>$2.56</td>
-<td>$2.10</td>
-<td><span class="ev-pos">+13%</span></td>
-<td>rebound chances</td>
+<td>$8.00 (sportsbet)</td>
+<td>$5.07</td>
+<td><span class="ev-pos">+58%</span></td>
+<td>minutes unlocked</td>
 </tr>
 <tr>
 <td>Shai Gilgeous-Alexander (OKC)</td>
-<td>6+ ast</td>
-<td>$2.10 (dabble_au)</td>
-<td>$1.88</td>
-<td>$1.43</td>
-<td><span class="ev-pos">+12%</span></td>
+<td>8+ ast</td>
+<td>$4.25 (dabble_au)</td>
+<td>$2.70</td>
+<td><span class="ev-pos">+57%</span></td>
 <td>season assist potentials</td>
 </tr>
 <tr>
-<td>Victor Wembanyama (SAS)</td>
-<td>45+ pts+reb</td>
-<td>$5.00 (pointsbetau)</td>
-<td>$4.54</td>
-<td>$3.71</td>
-<td><span class="ev-pos">+10%</span></td>
-<td>rebound chances</td>
-</tr>
-<tr>
-<td>Jared McCain (OKC)</td>
-<td>6+ reb</td>
-<td>$8.00 (pointsbetau)</td>
-<td>$7.29</td>
-<td>$13.55</td>
-<td><span class="ev-pos">+10%</span></td>
-<td>minutes unlocked</td>
+<td>Stephon Castle (SAS)</td>
+<td>8+ ast</td>
+<td>$3.70 (sportsbet)</td>
+<td>$2.39</td>
+<td><span class="ev-pos">+55%</span></td>
+<td>season assist potentials, potentials volume spike</td>
 </tr>
 <tr>
 <td>Onyeka Okongwu (ATL)</td>
 <td>12+ reb</td>
 <td>$9.00 (betr_au)</td>
-<td>$8.21</td>
-<td>$5.85</td>
-<td><span class="ev-pos">+10%</span></td>
+<td>$5.96</td>
+<td><span class="ev-pos">+51%</span></td>
 <td>foul spot</td>
 </tr>
 <tr>
-<td>Toumani Camara (POR)</td>
-<td>4+ reb</td>
-<td>$1.55 (tab)</td>
-<td>$1.42</td>
-<td>$1.53</td>
-<td><span class="ev-pos">+9%</span></td>
+<td>Stephon Castle (SAS)</td>
+<td>12+ ast</td>
+<td>$15.00 (sportsbet)</td>
+<td>$10.06</td>
+<td><span class="ev-pos">+49%</span></td>
+<td>season assist potentials, potentials volume spike</td>
+</tr>
+<tr>
+<td>Precious Achiuwa (SAC)</td>
+<td>10+ reb</td>
+<td>$3.40 (betr_au)</td>
+<td>$2.31</td>
+<td><span class="ev-pos">+47%</span></td>
 <td>rebound chances</td>
+</tr>
+<tr>
+<td>Kenrich Williams (OKC)</td>
+<td>13+ pts</td>
+<td>$5.75 (pointsbetau)</td>
+<td>$4.11</td>
+<td><span class="ev-pos">+40%</span></td>
+<td>minutes unlocked</td>
 </tr>
 </tbody>
 </table></div>
@@ -355,8 +358,8 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 <details><summary><h3>Dyson Daniels (ATL)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: last 2 same-lineup games: 6 from 11 reb chances vs CLE; 4 from 13 reb chances vs MIA (expected 15.2, got 10). <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 30 min (28+ min 66%); 11.3 pts / 6.3 reb / 5.1 ast. Adjustments: luck AST ×1.00, REB ×1.03; vs NOP rebounds ×0.99.</li>
+<li><strong>rebound chances</strong>: last 2 same-lineup games: 6 from 11 reb chances vs CLE; 4 from 13 reb chances vs MIA (expected 15.2, got 10).</li>
+<li><strong>Predicted</strong>: 30 min (28+ min 66%); 11.6 pts / 6.3 reb / 5.3 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.03; vs NOP: pace ×1.01, points ×1.03, assists ×1.05, rebounds ×0.99.</li>
 <li><strong>Tracking</strong>: this season 7.8 potential ast/g, 11.3 reb chances/g; last season 9.8 ± 3.9 potential ast, 9.6 ± 4.0 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs CLE: 32 min, 5 ast from 9 potential, 6 reb from 11 chances (same lineup ✓); 28 Oct vs MIA: 28 min, 7 ast from 7 potential, 4 reb from 13 chances (same lineup ✓).</li>
 </ul>
@@ -366,85 +369,85 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>15+ pts+reb</td>
-<td>$1.36</td>
-<td>$1.38 (dabble_au)</td>
-<td>$1.53</td>
-<td>$1.49</td>
-<td><span class="ev-neg">-7%</span></td>
-<td></td>
-</tr>
-<tr>
 <td>20+ pts+reb</td>
 <td>$2.40</td>
 <td>$2.50 (pointsbetau)</td>
-<td>$2.84</td>
-<td>$2.74</td>
-<td><span class="ev-neg">-9%</span></td>
+<td><strong>$2.71</strong></td>
+<td><span class="ev-neg">-8%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>$5.50</td>
 <td>$5.50 (sportsbet)</td>
-<td>$6.85</td>
-<td>$6.23</td>
-<td><span class="ev-neg">-12%</span></td>
+<td><strong>$6.21</strong></td>
+<td><span class="ev-neg">-11%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>5+ reb</td>
-<td>n/a</td>
-<td>$1.40 (ladbrokes_au)</td>
-<td>$1.37</td>
-<td>$1.50</td>
-<td><span class="ev-neg">-7%</span></td>
+<td>30+ pts+reb</td>
+<td>$15.00</td>
+<td>$15.00 (sportsbet)</td>
+<td><strong>$18.03</strong></td>
+<td><span class="ev-neg">-17%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>6+ reb</td>
 <td>$1.80</td>
 <td>$1.80 (sportsbet)</td>
-<td>$1.70</td>
-<td>$1.96</td>
-<td><span class="ev-neg">-8%</span></td>
-<td></td>
+<td><strong>$1.71</strong></td>
+<td><span class="ev-pos">+5%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>$3.75</td>
 <td>$3.75 (sportsbet)</td>
-<td>$3.27</td>
-<td>$4.11</td>
-<td><span class="ev-neg">-9%</span></td>
+<td><strong>$3.28</strong></td>
+<td><span class="ev-pos">+14%</span></td>
+<td><strong>value</strong></td>
+</tr>
+<tr>
+<td>9+ reb</td>
+<td>n/a</td>
+<td>$4.00 (ladbrokes_au)</td>
+<td><strong>$5.04</strong></td>
+<td><span class="ev-neg">-21%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>$7.50</td>
 <td>$7.50 (sportsbet)</td>
-<td>$8.17</td>
-<td>$8.51</td>
-<td><span class="ev-neg">-12%</span></td>
+<td><strong>$8.22</strong></td>
+<td><span class="ev-neg">-9%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>12+ reb</td>
+<td>$14.00</td>
+<td>$14.00 (sportsbet)</td>
+<td><strong>$26.23</strong></td>
+<td><span class="ev-neg">-47%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/8r fair $10.51 (legs priced independently $12.52); 12p/8r fair $6.56 (legs priced independently $7.40); 8r/6a fair $7.66 (legs priced independently $8.36); 8r/5a fair $5.52 (legs priced independently $5.91)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/8r fair $9.93 (legs priced independently $11.71); 12p/8r fair $6.29 (legs priced independently $7.10); 8r/6a fair $6.97 (legs priced independently $7.63); 8r/5a fair $5.20 (legs priced independently $5.54)</li>
 </ul>
 </details><details><summary><h3>Onyeka Okongwu (ATL)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Jock Landale 4.8 fouls/36 vs opponent 26.8 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>Predicted</strong>: 30 min (28+ min 64%); 14.0 pts / 8.4 reb / 2.9 ast. Adjustments: luck AST ×1.02, REB ×1.02; vs NOP rebounds ×1.06.</li>
+<li><strong>foul spot</strong>: Jock Landale 4.8 fouls/36 vs opponent 26.8 FTA/g.</li>
+<li><strong>Predicted</strong>: 30 min (28+ min 64%); 14.4 pts / 8.4 reb / 3.1 ast. Adjustments: potentials AST ×1.02, rebound chances ×1.02; vs NOP: pace ×1.01, points ×1.03, assists ×1.05, rebounds ×1.06.</li>
 <li><strong>Tracking</strong>: this season 5.2 potential ast/g, 12.8 reb chances/g; last season 4.7 ± 2.3 potential ast, 10.7 ± 3.8 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs CLE: 33 min, 2 ast from 5 potential, 12 reb from 20 chances (same lineup ✓); 28 Oct vs MIA: 31 min, 4 ast from 9 potential, 4 reb from 9 chances (same lineup ✓).</li>
 </ul>
@@ -454,9 +457,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -465,84 +467,84 @@ details[open] > summary::before { content:"▾ "; }
 <td>20+ pts+reb</td>
 <td>$1.67</td>
 <td>$1.67 (sportsbet)</td>
-<td>$1.66</td>
-<td>$1.87</td>
-<td><span class="ev-neg">-11%</span></td>
-<td></td>
+<td><strong>$1.60</strong></td>
+<td><span class="ev-pos">+4%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>$3.00</td>
 <td>$3.10 (pointsbetau)</td>
-<td>$2.77</td>
-<td>$3.42</td>
-<td><span class="ev-neg">-9%</span></td>
-<td></td>
+<td><strong>$2.63</strong></td>
+<td><span class="ev-pos">+18%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$6.50</td>
 <td>$6.50 (sportsbet)</td>
-<td>$5.41</td>
-<td>$7.25</td>
-<td><span class="ev-neg">-10%</span></td>
-<td></td>
+<td><strong>$5.13</strong></td>
+<td><span class="ev-pos">+27%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>35+ pts+reb</td>
 <td>$18.00</td>
 <td>$18.00 (sportsbet)</td>
-<td>$12.27</td>
-<td>$18.98</td>
-<td><span class="ev-neg">-5%</span></td>
-<td></td>
+<td><strong>$11.55</strong></td>
+<td><span class="ev-pos">+56%</span></td>
+<td>value (short price)</td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>$2.10</td>
 <td>$2.10 (sportsbet)</td>
-<td>$1.74</td>
-<td>$2.24</td>
-<td><span class="ev-neg">-6%</span></td>
-<td></td>
+<td><strong>$1.74</strong></td>
+<td><span class="ev-pos">+21%</span></td>
+<td>value (short price)</td>
+</tr>
+<tr>
+<td>9+ reb</td>
+<td>n/a</td>
+<td>$2.50 (ladbrokes_au)</td>
+<td><strong>$2.21</strong></td>
+<td><span class="ev-pos">+13%</span></td>
+<td>value (short price)</td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>$3.70</td>
 <td>$4.10 (betr_au)</td>
-<td>$2.92</td>
-<td>$3.98</td>
-<td><span class="ev-pos">+3%</span></td>
-<td>marginal</td>
+<td><strong>$2.94</strong></td>
+<td><span class="ev-pos">+40%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>12+ reb</td>
 <td>$7.75</td>
 <td>$9.00 (betr_au)</td>
-<td>$5.85</td>
-<td>$8.21</td>
-<td><span class="ev-pos">+10%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$5.96</strong></td>
+<td><span class="ev-pos">+51%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>14+ reb</td>
 <td>$13.00</td>
 <td>$13.00 (sportsbet)</td>
-<td>$14.15</td>
-<td>$14.53</td>
-<td><span class="ev-neg">-11%</span></td>
+<td><strong>$14.77</strong></td>
+<td><span class="ev-neg">-12%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 18p/10r fair $7.86 (legs priced independently $10.71); 15p/10r fair $5.46 (legs priced independently $6.88)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 18p/10r fair $7.63 (legs priced independently $10.03); 15p/10r fair $5.38 (legs priced independently $6.56)</li>
 </ul>
 </details><details><summary><h3>Karlo Matković (NOP)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Derik Queen 3.3 fouls/36 vs opponent 20.6 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>high-variance backup</strong>: minutes sd 6.7 over last 20 (avg 17). <em>High-variance backups: −16% blind tails over two seasons; the variance is mostly priced. Your SGM-ladder angle.</em></li>
-<li><strong>Predicted</strong>: 18 min (28+ min 10%); 7.4 pts / 4.7 reb / 1.1 ast. Adjustments: luck AST ×1.00, REB ×1.03; vs ATL rebounds ×1.04.</li>
+<li><strong>foul spot</strong>: Derik Queen 3.3 fouls/36 vs opponent 20.6 FTA/g.</li>
+<li><strong>high-variance backup</strong>: minutes sd 6.7 over last 20 (avg 17).</li>
+<li><strong>Predicted</strong>: 18 min (28+ min 10%); 7.4 pts / 4.7 reb / 1.1 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.03; vs ATL: pace ×1.01, points ×1.00, assists ×1.02, rebounds ×1.04.</li>
 <li><strong>Tracking</strong>: this season 1.2 potential ast/g, 7.5 reb chances/g; last season 1.4 ± 1.5 potential ast, 5.6 ± 2.8 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs SAC: 28 min, 1 ast from 2 potential, 4 reb from 17 chances (lineup differed: Dejounte Murray out); 28 Oct vs DEN: 18 min, 1 ast from 1 potential, 3 reb from 5 chances (same lineup ✓).</li>
 </ul>
@@ -552,90 +554,90 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>10+ pts+reb</td>
-<td>$1.36</td>
-<td>$1.36 (pointsbetau)</td>
-<td>$1.64</td>
-<td>$1.49</td>
-<td><span class="ev-neg">-9%</span></td>
-<td></td>
-</tr>
-<tr>
 <td>15+ pts+reb</td>
 <td>$2.75</td>
 <td>$2.85 (pointsbetau)</td>
-<td>$3.07</td>
-<td>$3.15</td>
-<td><span class="ev-neg">-9%</span></td>
+<td><strong>$3.02</strong></td>
+<td><span class="ev-neg">-6%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>20+ pts+reb</td>
 <td>$7.00</td>
 <td>$7.00 (sportsbet)</td>
-<td>$7.35</td>
-<td>$7.82</td>
-<td><span class="ev-neg">-10%</span></td>
+<td><strong>$7.41</strong></td>
+<td><span class="ev-neg">-6%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>4+ reb</td>
-<td>$1.39</td>
-<td>$1.42 (pointsbetau)</td>
-<td>$1.61</td>
-<td>$1.53</td>
-<td><span class="ev-neg">-7%</span></td>
+<td>25+ pts+reb</td>
+<td>$21.00</td>
+<td>$21.00 (sportsbet)</td>
+<td><strong>$23.12</strong></td>
+<td><span class="ev-neg">-9%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>6+ reb</td>
 <td>$2.72</td>
 <td>$2.72 (sportsbet)</td>
-<td>$2.82</td>
-<td>$3.08</td>
-<td><span class="ev-neg">-12%</span></td>
+<td><strong>$2.81</strong></td>
+<td><span class="ev-neg">-3%</span></td>
 <td></td>
+</tr>
+<tr>
+<td>7+ reb</td>
+<td>n/a</td>
+<td>$4.20 (betr_au)</td>
+<td><strong>$4.05</strong></td>
+<td><span class="ev-pos">+4%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>$6.00</td>
 <td>$6.00 (sportsbet)</td>
-<td>$6.14</td>
-<td>$6.76</td>
-<td><span class="ev-neg">-11%</span></td>
+<td><strong>$6.11</strong></td>
+<td><span class="ev-neg">-2%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>9+ reb</td>
+<td>n/a</td>
+<td>$7.50 (ladbrokes_au)</td>
+<td><strong>$9.52</strong></td>
+<td><span class="ev-neg">-21%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>$12.00</td>
 <td>$12.00 (ladbrokes_au)</td>
-<td>$16.31</td>
-<td>$13.99</td>
-<td><span class="ev-neg">-14%</span></td>
+<td><strong>$16.20</strong></td>
+<td><span class="ev-neg">-26%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 10p/6r/2a fair $13.67 (legs priced independently $31.13); 10p/5r/2a fair $11.14 (legs priced independently $22.86); 10p/6r fair $6.28 (legs priced independently $9.52); 8p/6r fair $4.63 (legs priced independently $6.50)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 10p/6r/2a fair $13.20 (legs priced independently $30.08); 8p/6r/2a fair $9.95 (legs priced independently $20.49); 10p/6r fair $6.28 (legs priced independently $9.41); 8p/6r fair $4.61 (legs priced independently $6.41)</li>
 </ul>
 </details><details><summary><h3>DeAndre Jordan (NOP)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Derik Queen 3.3 fouls/36 vs opponent 20.6 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>high-variance backup</strong>: minutes sd 7.7 over last 20 (avg 16). <em>High-variance backups: −16% blind tails over two seasons; the variance is mostly priced. Your SGM-ladder angle.</em></li>
-<li><strong>Predicted</strong>: 13 min (28+ min 0%); 4.0 pts / 5.2 reb / 0.9 ast. Adjustments: luck AST ×1.00, REB ×1.00; vs ATL rebounds ×1.04.</li>
+<li><strong>foul spot</strong>: Derik Queen 3.3 fouls/36 vs opponent 20.6 FTA/g.</li>
+<li><strong>high-variance backup</strong>: minutes sd 7.7 over last 20 (avg 16).</li>
+<li><strong>Predicted</strong>: 13 min (28+ min 0%); 4.0 pts / 5.2 reb / 0.9 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.00; vs ATL: pace ×1.01, points ×1.00, assists ×1.02, rebounds ×1.04.</li>
 <li><strong>Tracking</strong>: this season 2.0 potential ast/g, 8.5 reb chances/g; last season 1.7 ± 1.3 potential ast, 7.8 ± 2.8 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DEN: 13 min, 0 ast from 2 potential, 4 reb from 7 chances (same lineup ✓); 24 Oct vs DEN: 20 min, 2 ast from 2 potential, 9 reb from 10 chances (same lineup ✓).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 5p/6r fair $4.97 (legs priced independently $6.44); 5p/5r fair $3.97 (legs priced independently $4.84)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 5p/6r fair $4.95 (legs priced independently $6.39); 5p/5r fair $3.96 (legs priced independently $4.82)</li>
 </ul>
 </details></section><section class="game"><h2>CLE @ MIL</h2>
 <ul>
@@ -645,8 +647,8 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 <details><summary><h3>James Harden (CLE)</h3></summary>
 <ul>
-<li><strong>season assist potentials</strong>: 6.2/g from 12.0 chances (converting 52% vs 62% career); luck x1.07. <em>Best single-leg signal: assist luck ≥1.10 at best AU price +3.7% (+3.8%/+3.5% by season, CI includes 0).</em></li>
-<li><strong>Predicted</strong>: 35 min (28+ min 92%); 22.1 pts / 5.0 reb / 8.5 ast. Adjustments: luck AST ×1.03, REB ×1.02; vs MIL rebounds ×1.05.</li>
+<li><strong>season assist potentials</strong>: 6.2/g from 12.0 chances (converting 52% vs 62% career); luck x1.07.</li>
+<li><strong>Predicted</strong>: 35 min (28+ min 92%); 22.8 pts / 5.0 reb / 8.8 ast. Adjustments: potentials AST ×1.03, rebound chances ×1.02; vs MIL: pace ×1.00, points ×1.03, assists ×1.03, rebounds ×1.05.</li>
 <li><strong>Tracking</strong>: this season 12.0 potential ast/g, 9.2 reb chances/g; last season 13.5 ± 4.4 potential ast, 7.0 ± 3.0 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs ATL: 36 min, 4 ast from 10 potential, 5 reb from 12 chances (lineup differed: Jaylon Tyson played); 28 Oct vs WAS: 34 min, 6 ast from 13 potential, 2 reb from 5 chances (lineup differed: Jaylon Tyson played).</li>
 </ul>
@@ -656,58 +658,61 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td>7+ ast</td>
+<td>n/a</td>
+<td>$1.64 (neds)</td>
+<td><strong>$1.32</strong></td>
+<td><span class="ev-pos">+24%</span></td>
+<td>value (short price)</td>
+</tr>
+<tr>
 <td>8+ ast</td>
 <td>$2.19</td>
 <td>$2.20 (pointsbetau)</td>
-<td>$1.65</td>
-<td>$2.34</td>
-<td><span class="ev-neg">-6%</span></td>
-<td></td>
+<td><strong>$1.56</strong></td>
+<td><span class="ev-pos">+41%</span></td>
+<td>value (short price)</td>
+</tr>
+<tr>
+<td>9+ ast</td>
+<td>n/a</td>
+<td>$2.65 (neds)</td>
+<td><strong>$1.95</strong></td>
+<td><span class="ev-pos">+36%</span></td>
+<td>value (short price)</td>
 </tr>
 <tr>
 <td>10+ ast</td>
 <td>$4.25</td>
 <td>$4.60 (betr_au)</td>
-<td>$2.81</td>
-<td>$4.42</td>
-<td><span class="ev-pos">+4%</span></td>
-<td>marginal</td>
+<td><strong>$2.57</strong></td>
+<td><span class="ev-pos">+79%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>12+ ast</td>
 <td>$9.50</td>
 <td>$12.00 (pointsbetau)</td>
-<td>$5.95</td>
-<td>$9.41</td>
-<td><span class="ev-pos">+28%</span></td>
-<td>model way off book: check news</td>
-</tr>
-<tr>
-<td>14+ ast</td>
-<td>$34.00</td>
-<td>$34.00 (sportsbet)</td>
-<td>$15.96</td>
-<td>$30.16</td>
-<td><span class="ev-pos">+13%</span></td>
-<td>model way off book: check news</td>
+<td><strong>$5.19</strong></td>
+<td><span class="ev-pos">+131%</span></td>
+<td>big gap: check news/role</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 25p/10a fair $7.05 (legs priced independently $8.02); 20p/10a fair $4.24 (legs priced independently $4.58); 6r/10a fair $6.54 (legs priced independently $7.29); 5r/10a fair $4.77 (legs priced independently $5.20)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 25p/10a fair $5.97 (legs priced independently $6.63); 25p/8a fair $3.77 (legs priced independently $4.03); 6r/10a fair $6.02 (legs priced independently $6.65); 5r/10a fair $4.40 (legs priced independently $4.78)</li>
 </ul>
 </details><details><summary><h3>Jarrett Allen (CLE)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Evan Mobley 2.7 fouls/36 vs opponent 19.0 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>Predicted</strong>: 27 min (28+ min 50%); 14.4 pts / 9.1 reb / 1.8 ast. Adjustments: luck AST ×1.04, REB ×1.00; vs MIL rebounds ×1.00.</li>
+<li><strong>foul spot</strong>: Evan Mobley 2.7 fouls/36 vs opponent 19.0 FTA/g.</li>
+<li><strong>Predicted</strong>: 27 min (28+ min 50%); 14.9 pts / 9.1 reb / 1.8 ast. Adjustments: potentials AST ×1.04, rebound chances ×1.00; vs MIL: pace ×1.00, points ×1.03, assists ×1.03, rebounds ×1.00.</li>
 <li><strong>Tracking</strong>: this season 2.6 potential ast/g, 14.8 reb chances/g; last season 2.5 ± 1.9 potential ast, 11.3 ± 3.9 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs ATL: 30 min, 1 ast from 2 potential, 8 reb from 10 chances (lineup differed: Jaylon Tyson played); 28 Oct vs WAS: 30 min, 2 ast from 3 potential, 12 reb from 17 chances (lineup differed: Jaylon Tyson played).</li>
 </ul>
@@ -717,73 +722,49 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>20+ pts+reb</td>
-<td>$1.36</td>
-<td>$1.38 (dabble_au)</td>
-<td>$1.43</td>
-<td>$1.49</td>
-<td><span class="ev-neg">-7%</span></td>
-<td></td>
-</tr>
-<tr>
 <td>25+ pts+reb</td>
 <td>$2.20</td>
 <td>$2.20 (pointsbetau)</td>
-<td>$2.35</td>
-<td>$2.50</td>
-<td><span class="ev-neg">-12%</span></td>
-<td></td>
+<td><strong>$2.20</strong></td>
+<td><span class="ev-pos">+0%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$4.20</td>
 <td>$4.50 (pointsbetau)</td>
-<td>$5.03</td>
-<td>$4.79</td>
-<td><span class="ev-neg">-6%</span></td>
+<td><strong>$4.51</strong></td>
+<td><span class="ev-neg">-0%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>35+ pts+reb</td>
 <td>$9.50</td>
 <td>$9.50 (sportsbet)</td>
-<td>$14.18</td>
-<td>$10.54</td>
-<td><span class="ev-neg">-10%</span></td>
+<td><strong>$12.16</strong></td>
+<td><span class="ev-neg">-22%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>$1.42</td>
 <td>$1.42 (sportsbet)</td>
-<td>$1.50</td>
-<td>$1.55</td>
-<td><span class="ev-neg">-8%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>10+ reb</td>
-<td>$2.01</td>
-<td>$2.02 (dabble_au)</td>
-<td>$2.32</td>
-<td>$2.29</td>
-<td><span class="ev-neg">-12%</span></td>
+<td><strong>$1.50</strong></td>
+<td><span class="ev-neg">-5%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>12+ reb</td>
 <td>$3.70</td>
 <td>$3.70 (sportsbet)</td>
-<td>$4.35</td>
-<td>$4.30</td>
+<td><strong>$4.31</strong></td>
 <td><span class="ev-neg">-14%</span></td>
 <td></td>
 </tr>
@@ -791,15 +772,30 @@ details[open] > summary::before { content:"▾ "; }
 <td>14+ reb</td>
 <td>$6.50</td>
 <td>$7.00 (pointsbetau)</td>
-<td>$9.89</td>
-<td>$7.85</td>
-<td><span class="ev-neg">-11%</span></td>
+<td><strong>$9.77</strong></td>
+<td><span class="ev-neg">-28%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>15+ reb</td>
+<td>n/a</td>
+<td>$11.00 (betr_au)</td>
+<td><strong>$15.96</strong></td>
+<td><span class="ev-neg">-31%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>16+ reb</td>
+<td>$12.00</td>
+<td>$12.00 (sportsbet)</td>
+<td><strong>$27.03</strong></td>
+<td><span class="ev-neg">-56%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 18p/10r fair $7.34 (legs priced independently $8.17); 15p/10r fair $4.62 (legs priced independently $4.99)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 18p/10r fair $6.55 (legs priced independently $7.32); 15p/10r fair $4.25 (legs priced independently $4.64)</li>
 </ul>
 </details></section><section class="game"><h2>MIN @ SAS</h2>
 <ul>
@@ -809,9 +805,9 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 <details><summary><h3>Stephon Castle (SAS)</h3></summary>
 <ul>
-<li><strong>season assist potentials</strong>: 5.4/g from 12.8 chances (converting 42% vs 56% career); luck x1.11. <em>Best single-leg signal: assist luck ≥1.10 at best AU price +3.7% (+3.8%/+3.5% by season, CI includes 0).</em></li>
-<li><strong>potentials volume spike</strong>: last game 18 potential assists vs UTA (28 Oct), 1.6x his 11.5 average; 8 assists vs 10.0 expected, <strong>didn't convert: the backable side</strong>; same lineup tonight. <em>Last game 18+ potential assists (1.5x his average), same lineup. Split by conversion at Sportsbet over two seasons: didn't convert +21% (434 rungs, +28%/+14%); DID convert −21% (363 rungs, −28%/−17%): books overreact to the assists he made.</em></li>
-<li><strong>Predicted</strong>: 31 min (28+ min 75%); 18.2 pts / 5.9 reb / 7.3 ast. Adjustments: luck AST ×1.05, REB ×1.01; vs MIN rebounds ×1.01.</li>
+<li><strong>season assist potentials</strong>: 5.4/g from 12.8 chances (converting 42% vs 56% career); luck x1.11.</li>
+<li><strong>potentials volume spike</strong>: last game 18 potential assists vs UTA (28 Oct), 1.6x his 11.5 average; 8 assists vs 10.0 expected, didn't convert; same lineup tonight.</li>
+<li><strong>Predicted</strong>: 31 min (28+ min 75%); 17.8 pts / 5.9 reb / 7.1 ast. Adjustments: potentials AST ×1.05, rebound chances ×1.01; vs MIN: pace ×1.01, points ×0.98, assists ×0.97, rebounds ×1.01.</li>
 <li><strong>Tracking</strong>: this season 12.8 potential ast/g, 10.2 reb chances/g; last season 12.6 ± 4.1 potential ast, 7.6 ± 3.8 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs UTA: 38 min, 8 ast from 18 potential, 6 reb from 10 chances (same lineup ✓); 27 Oct vs SAC: 27 min, 5 ast from 9 potential, 5 reb from 10 chances (same lineup ✓).</li>
 </ul>
@@ -821,58 +817,61 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>6+ ast</td>
-<td>$1.72</td>
-<td>$1.72 (sportsbet)</td>
-<td>$1.48</td>
-<td>$1.74</td>
-<td><span class="ev-neg">-1%</span></td>
-<td></td>
+<td>7+ ast</td>
+<td>n/a</td>
+<td>$2.40 (betr_au)</td>
+<td><strong>$1.86</strong></td>
+<td><span class="ev-pos">+29%</span></td>
+<td>value (short price)</td>
 </tr>
 <tr>
 <td>8+ ast</td>
 <td>$3.70</td>
 <td>$3.70 (sportsbet)</td>
-<td>$2.24</td>
-<td>$3.46</td>
-<td><span class="ev-pos">+7%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$2.39</strong></td>
+<td><span class="ev-pos">+55%</span></td>
+<td><strong>value</strong></td>
+</tr>
+<tr>
+<td>9+ ast</td>
+<td>n/a</td>
+<td>$4.00 (ladbrokes_au)</td>
+<td><strong>$3.18</strong></td>
+<td><span class="ev-pos">+26%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>10+ ast</td>
 <td>$7.50</td>
 <td>$9.00 (pointsbetau)</td>
-<td>$4.05</td>
-<td>$6.57</td>
-<td><span class="ev-pos">+37%</span></td>
-<td>model way off book: check news</td>
+<td><strong>$4.44</strong></td>
+<td><span class="ev-pos">+103%</span></td>
+<td>big gap: check news/role</td>
 </tr>
 <tr>
 <td>12+ ast</td>
 <td>$15.00</td>
 <td>$15.00 (sportsbet)</td>
-<td>$8.80</td>
-<td>$12.52</td>
-<td><span class="ev-pos">+20%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$10.06</strong></td>
+<td><span class="ev-pos">+49%</span></td>
+<td><strong>value</strong></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8r/8a fair $6.87 (legs priced independently $8.17); 8r/6a fair $4.92 (legs priced independently $5.42); 20p/8a fair $5.10 (legs priced independently $5.59); 18p/8a fair $4.03 (legs priced independently $4.35)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8r/8a fair $7.26 (legs priced independently $8.66); 6r/8a fair $4.14 (legs priced independently $4.59); 20p/8a fair $5.72 (legs priced independently $6.32); 18p/8a fair $4.48 (legs priced independently $4.88)</li>
 </ul>
 </details><details><summary><h3>Victor Wembanyama (SAS)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: 11.4/g from 23.0 chances (converting 50% vs 69% career); luck x1.09; last 2 same-lineup games: 14 from 25 reb chances vs UTA; 10 from 21 reb chances vs SAC (expected 32.0, got 24). <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 31 min (28+ min 69%); 26.4 pts / 11.4 reb / 3.4 ast. Adjustments: luck AST ×1.01, REB ×1.04; vs MIN rebounds ×0.97.</li>
+<li><strong>rebound chances</strong>: 11.4/g from 23.0 chances (converting 50% vs 69% career); luck x1.09; last 2 same-lineup games: 14 from 25 reb chances vs UTA; 10 from 21 reb chances vs SAC (expected 32.0, got 24).</li>
+<li><strong>Predicted</strong>: 31 min (28+ min 69%); 25.8 pts / 11.4 reb / 3.3 ast. Adjustments: potentials AST ×1.01, rebound chances ×1.04; vs MIN: pace ×1.01, points ×0.98, assists ×0.97, rebounds ×0.97.</li>
 <li><strong>Tracking</strong>: this season 5.2 potential ast/g, 23.0 reb chances/g; last season 5.5 ± 2.7 potential ast, 14.1 ± 5.1 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs UTA: 39 min, 5 ast from 9 potential, 14 reb from 25 chances (same lineup ✓); 27 Oct vs SAC: 27 min, 2 ast from 3 potential, 10 reb from 21 chances (same lineup ✓).</li>
 </ul>
@@ -882,9 +881,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -893,91 +891,91 @@ details[open] > summary::before { content:"▾ "; }
 <td>35+ pts+reb</td>
 <td>$1.62</td>
 <td>$1.62 (sportsbet)</td>
-<td>$1.69</td>
-<td>$1.81</td>
-<td><span class="ev-neg">-10%</span></td>
+<td><strong>$1.74</strong></td>
+<td><span class="ev-neg">-7%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>40+ pts+reb</td>
 <td>$2.40</td>
 <td>$2.50 (pointsbetau)</td>
-<td>$2.40</td>
-<td>$2.74</td>
-<td><span class="ev-neg">-9%</span></td>
+<td><strong>$2.51</strong></td>
+<td><span class="ev-neg">-0%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>45+ pts+reb</td>
 <td>$4.00</td>
 <td>$5.00 (pointsbetau)</td>
-<td>$3.71</td>
-<td>$4.54</td>
-<td><span class="ev-pos">+10%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$4.01</strong></td>
+<td><span class="ev-pos">+25%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>50+ pts+reb</td>
 <td>$7.50</td>
 <td>$7.50 (sportsbet)</td>
-<td>$6.40</td>
-<td>$8.32</td>
-<td><span class="ev-neg">-10%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>10+ reb</td>
-<td>$1.42</td>
-<td>$1.46 (ladbrokes_au)</td>
-<td>$1.50</td>
-<td>$1.55</td>
-<td><span class="ev-neg">-6%</span></td>
-<td></td>
+<td><strong>$7.05</strong></td>
+<td><span class="ev-pos">+6%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>12+ reb</td>
 <td>$2.12</td>
 <td>$2.12 (sportsbet)</td>
-<td>$2.13</td>
-<td>$2.36</td>
-<td><span class="ev-neg">-10%</span></td>
+<td><strong>$2.12</strong></td>
+<td><span class="ev-neg">-0%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>14+ reb</td>
 <td>$3.70</td>
 <td>$3.70 (sportsbet)</td>
-<td>$3.46</td>
-<td>$4.12</td>
-<td><span class="ev-neg">-10%</span></td>
-<td></td>
+<td><strong>$3.42</strong></td>
+<td><span class="ev-pos">+8%</span></td>
+<td>marginal</td>
+</tr>
+<tr>
+<td>15+ reb</td>
+<td>n/a</td>
+<td>$5.00 (betr_au)</td>
+<td><strong>$4.54</strong></td>
+<td><span class="ev-pos">+10%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>16+ reb</td>
 <td>$6.00</td>
 <td>$6.50 (pointsbetau)</td>
-<td>$6.33</td>
-<td>$6.80</td>
-<td><span class="ev-neg">-4%</span></td>
+<td><strong>$6.25</strong></td>
+<td><span class="ev-pos">+4%</span></td>
+<td>marginal</td>
+</tr>
+<tr>
+<td>18+ reb</td>
+<td>n/a</td>
+<td>$9.00 (ladbrokes_au)</td>
+<td><strong>$12.94</strong></td>
+<td><span class="ev-neg">-30%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12r/5a fair $6.71 (legs priced independently $8.09); 12r/4a fair $4.24 (legs priced independently $4.90); 30p/12r fair $5.00 (legs priced independently $6.00); 25p/12r fair $3.46 (legs priced independently $3.90)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 30p/12r fair $5.38 (legs priced independently $6.47); 25p/12r fair $3.54 (legs priced independently $4.06); 12r/4a fair $4.37 (legs priced independently $5.08); 10r/4a fair $3.24 (legs priced independently $3.60)</li>
 </ul>
 </details><details><summary><h3>Luke Kornet (SAS)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Victor Wembanyama 2.1 fouls/36 vs opponent 23.4 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>Predicted</strong>: 15 min (28+ min 1%); 4.4 pts / 4.5 reb / 1.3 ast. Adjustments: luck AST ×0.99, REB ×1.03; vs MIN rebounds ×0.99.</li>
+<li><strong>foul spot</strong>: Victor Wembanyama 2.1 fouls/36 vs opponent 23.4 FTA/g.</li>
+<li><strong>Predicted</strong>: 15 min (28+ min 1%); 4.2 pts / 4.5 reb / 1.3 ast. Adjustments: potentials AST ×0.99, rebound chances ×1.03; vs MIN: pace ×1.01, points ×0.98, assists ×0.97, rebounds ×0.99.</li>
 <li><strong>Tracking</strong>: this season 0.8 potential ast/g, 9.8 reb chances/g; last season 2.7 ± 1.8 potential ast, 9.9 ± 4.2 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs UTA: 14 min, 1 ast from 0 potential, 6 reb from 15 chances (same lineup ✓); 27 Oct vs SAC: 17 min, 1 ast from 3 potential, 4 reb from 8 chances (same lineup ✓).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 5p/6r fair $6.51 (legs priced independently $7.85); 5p/5r fair $4.68 (legs priced independently $5.39)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 5p/6r fair $6.82 (legs priced independently $8.10); 5p/5r fair $4.90 (legs priced independently $5.59)</li>
 </ul>
 </details><details><summary><h3>Tarris Reed Jr. (SAS)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Victor Wembanyama 2.1 fouls/36 vs opponent 23.4 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
+<li><strong>foul spot</strong>: Victor Wembanyama 2.1 fouls/36 vs opponent 23.4 FTA/g.</li>
 <li>Too little history to price.</li>
 </ul>
 </details></section><section class="game"><h2>OKC @ HOU</h2>
@@ -988,8 +986,8 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 <details><summary><h3>Shai Gilgeous-Alexander (OKC)</h3></summary>
 <ul>
-<li><strong>season assist potentials</strong>: 3.4/g from 13.0 chances (converting 26% vs 52% career); luck x1.35. <em>Best single-leg signal: assist luck ≥1.10 at best AU price +3.7% (+3.8%/+3.5% by season, CI includes 0).</em></li>
-<li><strong>Predicted</strong>: 32 min (28+ min 81%); 31.9 pts / 4.2 reb / 7.2 ast. Adjustments: luck AST ×1.14, REB ×1.01; vs HOU rebounds ×0.89.</li>
+<li><strong>season assist potentials</strong>: 3.4/g from 13.0 chances (converting 26% vs 52% career); luck x1.35.</li>
+<li><strong>Predicted</strong>: 32 min (28+ min 81%); 31.0 pts / 4.2 reb / 6.8 ast. Adjustments: potentials AST ×1.14, rebound chances ×1.01; vs HOU: pace ×0.99, points ×0.97, assists ×0.95, rebounds ×0.89.</li>
 <li><strong>Tracking</strong>: this season 13.0 potential ast/g, 8.8 reb chances/g; last season 12.7 ± 3.8 potential ast, 6.3 ± 2.7 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DAL: 28 min, 2 ast from 10 potential, 6 reb from 11 chances (same lineup ✓); 26 Oct vs PHX: 30 min, 3 ast from 4 potential, 3 reb from 3 chances (same lineup ✓).</li>
 </ul>
@@ -999,9 +997,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -1010,47 +1007,51 @@ details[open] > summary::before { content:"▾ "; }
 <td>6+ ast</td>
 <td>$1.89</td>
 <td>$2.10 (dabble_au)</td>
-<td>$1.43</td>
-<td>$1.88</td>
-<td><span class="ev-pos">+12%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$1.53</strong></td>
+<td><span class="ev-pos">+37%</span></td>
+<td>value (short price)</td>
+</tr>
+<tr>
+<td>7+ ast</td>
+<td>n/a</td>
+<td>$2.60 (betr_au)</td>
+<td><strong>$1.97</strong></td>
+<td><span class="ev-pos">+32%</span></td>
+<td>value (short price)</td>
 </tr>
 <tr>
 <td>8+ ast</td>
 <td>$4.25</td>
 <td>$4.25 (dabble_au)</td>
-<td>$2.35</td>
-<td>$3.89</td>
-<td><span class="ev-pos">+9%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$2.70</strong></td>
+<td><span class="ev-pos">+57%</span></td>
+<td><strong>value</strong></td>
+</tr>
+<tr>
+<td>9+ ast</td>
+<td>n/a</td>
+<td>$4.60 (neds)</td>
+<td><strong>$3.92</strong></td>
+<td><span class="ev-pos">+17%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>10+ ast</td>
 <td>$9.50</td>
 <td>$9.50 (sportsbet)</td>
-<td>$4.91</td>
-<td>$8.13</td>
-<td><span class="ev-pos">+17%</span></td>
-<td><strong>value (calibrated)</strong></td>
-</tr>
-<tr>
-<td>12+ ast</td>
-<td>$34.00</td>
-<td>$34.00 (sportsbet)</td>
-<td>$12.76</td>
-<td>$25.62</td>
-<td><span class="ev-pos">+33%</span></td>
-<td>model way off book: check news</td>
+<td><strong>$5.98</strong></td>
+<td><span class="ev-pos">+59%</span></td>
+<td><strong>value</strong></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 35p/8a fair $5.74 (legs priced independently $6.36); 30p/8a fair $3.81 (legs priced independently $4.09); 6r/8a fair $8.70 (legs priced independently $9.33); 5r/8a fair $5.50 (legs priced independently $5.79)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 35p/8a fair $7.25 (legs priced independently $8.07); 30p/8a fair $4.64 (legs priced independently $4.99); 6r/8a fair $9.96 (legs priced independently $10.78); 5r/8a fair $6.18 (legs priced independently $6.62)</li>
 </ul>
 </details><details><summary><h3>Kevin Durant (HOU)</h3></summary>
 <ul>
-<li><strong>season assist potentials</strong>: 3.4/g from 8.4 chances (converting 40% vs 56% career); luck x1.12. <em>Best single-leg signal: assist luck ≥1.10 at best AU price +3.7% (+3.8%/+3.5% by season, CI includes 0).</em></li>
-<li><strong>Predicted</strong>: 35 min (28+ min 94%); 24.7 pts / 5.7 reb / 4.5 ast. Adjustments: luck AST ×1.05, REB ×1.02; vs OKC rebounds ×1.05.</li>
+<li><strong>season assist potentials</strong>: 3.4/g from 8.4 chances (converting 40% vs 56% career); luck x1.12.</li>
+<li><strong>Predicted</strong>: 35 min (28+ min 94%); 23.5 pts / 5.7 reb / 4.3 ast. Adjustments: potentials AST ×1.05, rebound chances ×1.02; vs OKC: pace ×0.99, points ×0.95, assists ×0.96, rebounds ×1.05.</li>
 <li><strong>Tracking</strong>: this season 8.4 potential ast/g, 10.6 reb chances/g; last season 8.5 ± 3.6 potential ast, 6.9 ± 2.7 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs MIL: 31 min, 4 ast from 12 potential, 5 reb from 8 chances (lineup differed: Alperen Sengun out, Marcus Smart out); 26 Oct vs ATL: 30 min, 3 ast from 5 potential, 9 reb from 11 chances (lineup differed: Marcus Smart out).</li>
 </ul>
@@ -1060,9 +1061,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -1071,47 +1071,51 @@ details[open] > summary::before { content:"▾ "; }
 <td>4+ ast</td>
 <td>$2.26</td>
 <td>$2.40 (pointsbetau)</td>
-<td>$1.62</td>
-<td>$2.22</td>
-<td><span class="ev-pos">+8%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$1.68</strong></td>
+<td><span class="ev-pos">+43%</span></td>
+<td>value (short price)</td>
+</tr>
+<tr>
+<td>5+ ast</td>
+<td>n/a</td>
+<td>$4.00 (betr_au)</td>
+<td><strong>$2.37</strong></td>
+<td><span class="ev-pos">+69%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>6+ ast</td>
 <td>$6.00</td>
 <td>$8.00 (pointsbetau)</td>
-<td>$3.31</td>
-<td>$5.36</td>
-<td><span class="ev-pos">+49%</span></td>
-<td>model way off book: check news</td>
+<td><strong>$3.57</strong></td>
+<td><span class="ev-pos">+124%</span></td>
+<td>big gap: check news/role</td>
+</tr>
+<tr>
+<td>7+ ast</td>
+<td>n/a</td>
+<td>$7.50 (neds)</td>
+<td><strong>$5.83</strong></td>
+<td><span class="ev-pos">+29%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>8+ ast</td>
 <td>$21.00</td>
 <td>$21.00 (sportsbet)</td>
-<td>$8.76</td>
-<td>$16.57</td>
-<td><span class="ev-pos">+27%</span></td>
-<td>model way off book: check news</td>
-</tr>
-<tr>
-<td>9+ ast</td>
-<td>n/a</td>
-<td>$23.00 (neds)</td>
-<td>$15.41</td>
-<td>$18.77</td>
-<td><span class="ev-pos">+23%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$9.96</strong></td>
+<td><span class="ev-pos">+111%</span></td>
+<td>big gap: check news/role</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 30p/6a fair $11.25 (legs priced independently $12.74); 30p/5a fair $7.88 (legs priced independently $8.60); 6r/6a fair $6.19 (legs priced independently $6.60); 5r/6a fair $4.78 (legs priced independently $5.00)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 25p/6a fair $7.68 (legs priced independently $8.39); 25p/5a fair $5.23 (legs priced independently $5.57); 6r/6a fair $6.71 (legs priced independently $7.11); 5r/6a fair $5.15 (legs priced independently $5.38)</li>
 </ul>
 </details><details><summary><h3>Isaiah Hartenstein (OKC)</h3></summary>
 <ul>
-<li><strong>starting centre out</strong>: Chet Holmgren Out, ongoing absence (already in his recent role and the price). <em>Two-season blind tails −13% at Sportsbet; the model adds real information here (coef 0.24), so it's about price and SGM structure, not blind betting.</em></li>
-<li><strong>Predicted</strong>: 24 min (28+ min 23%); 9.0 pts / 8.8 reb / 3.7 ast. Adjustments: luck AST ×1.03, REB ×1.00; vs HOU rebounds ×0.90.</li>
+<li><strong>starting centre out</strong>: Chet Holmgren Out, ongoing absence (already in his recent role and the price).</li>
+<li><strong>Predicted</strong>: 24 min (28+ min 23%); 8.7 pts / 8.8 reb / 3.6 ast. Adjustments: potentials AST ×1.03, rebound chances ×1.00; vs HOU: pace ×0.99, points ×0.97, assists ×0.95, rebounds ×0.90.</li>
 <li><strong>Tracking</strong>: this season 4.8 potential ast/g, 14.8 reb chances/g; last season 5.0 ± 3.0 potential ast, 13.9 ± 6.3 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DAL: 26 min, 3 ast from 5 potential, 14 reb from 18 chances (same lineup ✓); 26 Oct vs PHX: 26 min, 3 ast from 8 potential, 13 reb from 18 chances (same lineup ✓).</li>
 </ul>
@@ -1121,121 +1125,125 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>6+ pts</td>
+<td>14+ pts</td>
 <td>n/a</td>
-<td>$1.20 (neds)</td>
-<td>$1.35</td>
-<td>$1.28</td>
-<td><span class="ev-neg">-6%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>7+ pts</td>
-<td>n/a</td>
-<td>$1.30 (neds)</td>
-<td>$1.51</td>
-<td>$1.41</td>
-<td><span class="ev-neg">-8%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>10+ pts</td>
-<td>$1.80</td>
-<td>$1.87 (betr_au)</td>
-<td>$2.40</td>
-<td>$2.03</td>
-<td><span class="ev-neg">-8%</span></td>
+<td>$3.40 (pointsbetau)</td>
+<td><strong>$6.32</strong></td>
+<td><span class="ev-neg">-46%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>15+ pts</td>
 <td>$4.60</td>
 <td>$4.60 (sportsbet)</td>
-<td>$7.63</td>
-<td>$5.23</td>
-<td><span class="ev-neg">-12%</span></td>
+<td><strong>$8.41</strong></td>
+<td><span class="ev-neg">-45%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>15+ pts+reb</td>
-<td>$1.17</td>
-<td>$1.21 (pointsbetau)</td>
-<td>$1.49</td>
-<td>$1.24</td>
-<td><span class="ev-neg">-3%</span></td>
+<td>16+ pts</td>
+<td>n/a</td>
+<td>$5.20 (neds)</td>
+<td><strong>$11.24</strong></td>
+<td><span class="ev-neg">-54%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>17+ pts</td>
+<td>n/a</td>
+<td>$6.00 (pointsbetau)</td>
+<td><strong>$15.29</strong></td>
+<td><span class="ev-neg">-61%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>18+ pts</td>
+<td>n/a</td>
+<td>$9.00 (neds)</td>
+<td><strong>$20.92</strong></td>
+<td><span class="ev-neg">-57%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>20+ pts+reb</td>
 <td>$1.72</td>
 <td>$1.80 (dabble_au)</td>
-<td>$2.63</td>
-<td>$1.94</td>
-<td><span class="ev-neg">-7%</span></td>
+<td><strong>$2.71</strong></td>
+<td><span class="ev-neg">-34%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>$3.20</td>
 <td>$3.20 (sportsbet)</td>
-<td>$6.40</td>
-<td>$3.70</td>
-<td><span class="ev-neg">-14%</span></td>
+<td><strong>$6.73</strong></td>
+<td><span class="ev-neg">-52%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>8+ reb</td>
-<td>$1.28</td>
-<td>$1.30 (dabble_au)</td>
-<td>$1.63</td>
-<td>$1.41</td>
-<td><span class="ev-neg">-8%</span></td>
+<td>30+ pts+reb</td>
+<td>$7.50</td>
+<td>$7.50 (sportsbet)</td>
+<td><strong>$23.32</strong></td>
+<td><span class="ev-neg">-68%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>$1.66</td>
 <td>$1.77 (dabble_au)</td>
-<td>$2.48</td>
-<td>$1.95</td>
-<td><span class="ev-neg">-9%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>12+ reb</td>
-<td>$2.63</td>
-<td>$2.63 (sportsbet)</td>
-<td>$4.50</td>
-<td>$3.24</td>
-<td><span class="ev-neg">-19%</span></td>
+<td><strong>$2.46</strong></td>
+<td><span class="ev-neg">-28%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>14+ reb</td>
 <td>$4.65</td>
 <td>$4.65 (sportsbet)</td>
-<td>$9.50</td>
-<td>$5.94</td>
-<td><span class="ev-neg">-22%</span></td>
+<td><strong>$9.27</strong></td>
+<td><span class="ev-neg">-50%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>15+ reb</td>
+<td>n/a</td>
+<td>$6.75 (betr_au)</td>
+<td><strong>$14.48</strong></td>
+<td><span class="ev-neg">-53%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>16+ reb</td>
+<td>$8.50</td>
+<td>$8.50 (sportsbet)</td>
+<td><strong>$23.95</strong></td>
+<td><span class="ev-neg">-65%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>18+ reb</td>
+<td>n/a</td>
+<td>$11.50 (neds)</td>
+<td><strong>$70.42</strong></td>
+<td><span class="ev-neg">-84%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 10p/10r/5a fair $12.24 (legs priced independently $18.47); 12p/10r/4a fair $12.32 (legs priced independently $18.18); 12p/10r fair $7.10 (legs priced independently $8.98); 10p/10r fair $4.94 (legs priced independently $5.96)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/10r/4a fair $13.68 (legs priced independently $20.68); 10p/10r/5a fair $14.05 (legs priced independently $21.18); 12p/10r fair $7.46 (legs priced independently $9.49); 10p/10r fair $5.07 (legs priced independently $6.19)</li>
 </ul>
 </details><details><summary><h3>Aday Mara (OKC)</h3></summary>
 <ul>
-<li><strong>starting centre out</strong>: Chet Holmgren Out, ongoing absence (already in his recent role and the price). <em>Two-season blind tails −13% at Sportsbet; the model adds real information here (coef 0.24), so it's about price and SGM structure, not blind betting.</em></li>
-<li><strong>Predicted</strong>: 19 min (28+ min 0%); 6.6 pts / 4.7 reb / 1.3 ast. Adjustments: luck AST ×1.03, REB ×1.04; vs HOU rebounds ×0.92.</li>
+<li><strong>starting centre out</strong>: Chet Holmgren Out, ongoing absence (already in his recent role and the price).</li>
+<li><strong>Predicted</strong>: 19 min (28+ min 0%); 6.4 pts / 4.7 reb / 1.2 ast. Adjustments: potentials AST ×1.03, rebound chances ×1.04; vs HOU: pace ×0.99, points ×0.97, assists ×0.95, rebounds ×0.92.</li>
 <li><strong>Tracking</strong>: this season 2.2 potential ast/g, 9.6 reb chances/g.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DAL: 21 min, 1 ast from 6 potential, 3 reb from 10 chances (same lineup ✓); 26 Oct vs PHX: 20 min, 2 ast from 1 potential, 10 reb from 14 chances (same lineup ✓).</li>
 </ul>
@@ -1245,121 +1253,125 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>5+ pts</td>
-<td>$1.20</td>
-<td>$1.25 (neds)</td>
-<td>$1.51</td>
-<td>$1.29</td>
-<td><span class="ev-neg">-3%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>6+ pts</td>
+<td>12+ pts</td>
 <td>n/a</td>
-<td>$1.38 (neds)</td>
-<td>$1.78</td>
-<td>$1.52</td>
-<td><span class="ev-neg">-9%</span></td>
+<td>$3.60 (neds)</td>
+<td><strong>$8.97</strong></td>
+<td><span class="ev-neg">-60%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>7+ pts</td>
+<td>13+ pts</td>
 <td>n/a</td>
-<td>$1.53 (neds)</td>
-<td>$2.16</td>
-<td>$1.71</td>
-<td><span class="ev-neg">-10%</span></td>
+<td>$4.50 (pointsbetau)</td>
+<td><strong>$12.48</strong></td>
+<td><span class="ev-neg">-64%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>10+ pts</td>
-<td>$2.46</td>
-<td>$2.65 (betr_au)</td>
-<td>$4.51</td>
-<td>$2.85</td>
-<td><span class="ev-neg">-7%</span></td>
+<td>14+ pts</td>
+<td>n/a</td>
+<td>$6.20 (neds)</td>
+<td><strong>$17.91</strong></td>
+<td><span class="ev-neg">-65%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>10+ pts+reb</td>
-<td>$1.25</td>
-<td>$1.25 (sportsbet)</td>
-<td>$1.66</td>
-<td>$1.35</td>
-<td><span class="ev-neg">-7%</span></td>
+<td>15+ pts</td>
+<td>$6.50</td>
+<td>$8.25 (neds)</td>
+<td><strong>$25.79</strong></td>
+<td><span class="ev-neg">-68%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>16+ pts</td>
+<td>n/a</td>
+<td>$11.50 (neds)</td>
+<td><strong>$38.20</strong></td>
+<td><span class="ev-neg">-70%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>15+ pts+reb</td>
 <td>$2.10</td>
 <td>$2.25 (pointsbetau)</td>
-<td>$4.01</td>
-<td>$2.41</td>
-<td><span class="ev-neg">-7%</span></td>
+<td><strong>$4.26</strong></td>
+<td><span class="ev-neg">-47%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>20+ pts+reb</td>
 <td>$5.00</td>
 <td>$5.00 (sportsbet)</td>
-<td>$15.33</td>
-<td>$5.78</td>
-<td><span class="ev-neg">-13%</span></td>
+<td><strong>$16.91</strong></td>
+<td><span class="ev-neg">-70%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>4+ reb</td>
-<td>$1.30</td>
-<td>$1.31 (pointsbetau)</td>
-<td>$1.52</td>
-<td>$1.42</td>
-<td><span class="ev-neg">-8%</span></td>
+<td>25+ pts+reb</td>
+<td>$13.00</td>
+<td>$13.00 (sportsbet)</td>
+<td><strong>$91.74</strong></td>
+<td><span class="ev-neg">-86%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>5+ reb</td>
 <td>n/a</td>
 <td>$1.62 (neds)</td>
-<td>$2.05</td>
-<td>$1.85</td>
-<td><span class="ev-neg">-12%</span></td>
+<td><strong>$2.06</strong></td>
+<td><span class="ev-neg">-21%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>6+ reb</td>
-<td>$2.19</td>
-<td>$2.30 (pointsbetau)</td>
-<td>$2.99</td>
-<td>$2.58</td>
-<td><span class="ev-neg">-11%</span></td>
+<td>7+ reb</td>
+<td>n/a</td>
+<td>$3.10 (betr_au)</td>
+<td><strong>$4.72</strong></td>
+<td><span class="ev-neg">-34%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>$4.60</td>
 <td>$4.75 (pointsbetau)</td>
-<td>$8.02</td>
-<td>$5.72</td>
-<td><span class="ev-neg">-17%</span></td>
+<td><strong>$8.03</strong></td>
+<td><span class="ev-neg">-41%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>9+ reb</td>
+<td>n/a</td>
+<td>$5.80 (neds)</td>
+<td><strong>$14.67</strong></td>
+<td><span class="ev-neg">-60%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>10+ reb</td>
+<td>$8.50</td>
+<td>$12.00 (pointsbetau)</td>
+<td><strong>$28.29</strong></td>
+<td><span class="ev-neg">-58%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8p/6r/2a fair $14.72 (legs priced independently $21.56); 8p/5r/2a fair $10.84 (legs priced independently $14.78); 8p/6r fair $6.63 (legs priced independently $8.05); 8p/5r fair $4.77 (legs priced independently $5.52)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8p/5r/2a fair $12.24 (legs priced independently $16.71); 5p/6r/2a fair $10.24 (legs priced independently $13.36); 8p/6r fair $7.19 (legs priced independently $8.53); 8p/5r fair $5.11 (legs priced independently $5.83)</li>
 </ul>
 </details><details><summary><h3>Ajay Mitchell (OKC)</h3></summary>
 <ul>
-<li><strong>minutes unlocked</strong>: +4.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
-<li><strong>Predicted</strong>: 29 min (28+ min 62%); 15.2 pts / 3.2 reb / 3.4 ast. Adjustments: luck AST ×0.98, REB ×1.02; vs HOU rebounds ×0.90.</li>
+<li><strong>minutes unlocked</strong>: +4.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace.</li>
+<li><strong>Predicted</strong>: 29 min (28+ min 62%); 14.8 pts / 3.2 reb / 3.2 ast. Adjustments: potentials AST ×0.98, rebound chances ×1.02; vs HOU: pace ×0.99, points ×0.97, assists ×0.95, rebounds ×0.90.</li>
 <li><strong>Tracking</strong>: this season 5.6 potential ast/g, 6.8 reb chances/g; last season 7.1 ± 2.8 potential ast, 5.3 ± 2.2 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DAL: 28 min, 3 ast from 4 potential, 4 reb from 7 chances (same lineup ✓); 26 Oct vs PHX: 25 min, 5 ast from 6 potential, 2 reb from 6 chances (same lineup ✓).</li>
 </ul>
@@ -1369,175 +1381,173 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>3+ ast</td>
-<td>n/a</td>
-<td>$1.22 (neds)</td>
-<td>$1.53</td>
-<td>$1.32</td>
-<td><span class="ev-neg">-7%</span></td>
-<td></td>
-</tr>
-<tr>
 <td>4+ ast</td>
 <td>$1.48</td>
 <td>$1.75 (tab)</td>
-<td>$2.25</td>
-<td>$1.66</td>
-<td><span class="ev-pos">+6%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$2.46</strong></td>
+<td><span class="ev-neg">-29%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>5+ ast</td>
 <td>n/a</td>
 <td>$2.10 (betr_au)</td>
-<td>$3.73</td>
-<td>$2.42</td>
-<td><span class="ev-neg">-13%</span></td>
+<td><strong>$4.26</strong></td>
+<td><span class="ev-neg">-51%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>6+ ast</td>
 <td>$3.30</td>
 <td>$4.00 (tab)</td>
-<td>$7.07</td>
-<td>$3.83</td>
-<td><span class="ev-pos">+4%</span></td>
-<td>marginal</td>
+<td><strong>$8.31</strong></td>
+<td><span class="ev-neg">-52%</span></td>
+<td></td>
 </tr>
 <tr>
-<td>12+ pts</td>
+<td>7+ ast</td>
 <td>n/a</td>
-<td>$1.14 (pointsbetau)</td>
-<td>$1.43</td>
-<td>$1.21</td>
-<td><span class="ev-neg">-6%</span></td>
+<td>$5.25 (betr_au)</td>
+<td><strong>$18.05</strong></td>
+<td><span class="ev-neg">-71%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>15+ pts</td>
-<td>$1.30</td>
-<td>$1.33 (neds)</td>
-<td>$1.94</td>
-<td>$1.43</td>
-<td><span class="ev-neg">-7%</span></td>
+<td>8+ ast</td>
+<td>$8.00</td>
+<td>$8.00 (pointsbetau)</td>
+<td><strong>$43.06</strong></td>
+<td><span class="ev-neg">-81%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>20+ pts</td>
-<td>$2.11</td>
-<td>$2.11 (sportsbet)</td>
-<td>$4.18</td>
-<td>$2.45</td>
-<td><span class="ev-neg">-14%</span></td>
+<td>24+ pts</td>
+<td>n/a</td>
+<td>$3.35 (neds)</td>
+<td><strong>$10.78</strong></td>
+<td><span class="ev-neg">-69%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>25+ pts</td>
 <td>$4.30</td>
 <td>$4.40 (betr_au)</td>
-<td>$12.16</td>
-<td>$5.07</td>
-<td><span class="ev-neg">-13%</span></td>
+<td><strong>$14.03</strong></td>
+<td><span class="ev-neg">-69%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>15+ pts+reb</td>
-<td>$1.08</td>
-<td>$1.13 (pointsbetau)</td>
-<td>$1.43</td>
-<td>$1.12</td>
-<td><span class="ev-pos">+1%</span></td>
-<td>marginal</td>
+<td>26+ pts</td>
+<td>n/a</td>
+<td>$4.60 (neds)</td>
+<td><strong>$17.88</strong></td>
+<td><span class="ev-neg">-74%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>27+ pts</td>
+<td>n/a</td>
+<td>$5.00 (pointsbetau)</td>
+<td><strong>$23.15</strong></td>
+<td><span class="ev-neg">-78%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>28+ pts</td>
+<td>n/a</td>
+<td>$6.60 (neds)</td>
+<td><strong>$31.55</strong></td>
+<td><span class="ev-neg">-79%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>20+ pts+reb</td>
 <td>$1.40</td>
 <td>$1.48 (pointsbetau)</td>
-<td>$2.40</td>
-<td>$1.55</td>
-<td><span class="ev-neg">-4%</span></td>
+<td><strong>$2.54</strong></td>
+<td><span class="ev-neg">-42%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>$2.30</td>
 <td>$2.30 (pointsbetau)</td>
-<td>$5.30</td>
-<td>$2.66</td>
-<td><span class="ev-neg">-13%</span></td>
+<td><strong>$5.73</strong></td>
+<td><span class="ev-neg">-60%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$4.50</td>
 <td>$4.50 (sportsbet)</td>
-<td>$15.04</td>
-<td>$5.22</td>
-<td><span class="ev-neg">-14%</span></td>
+<td><strong>$17.61</strong></td>
+<td><span class="ev-neg">-74%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>3+ reb</td>
-<td>n/a</td>
-<td>$1.30 (neds)</td>
-<td>$1.72</td>
-<td>$1.45</td>
-<td><span class="ev-neg">-10%</span></td>
+<td>35+ pts+reb</td>
+<td>$10.00</td>
+<td>$10.00 (sportsbet)</td>
+<td><strong>$66.12</strong></td>
+<td><span class="ev-neg">-85%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>4+ reb</td>
 <td>$1.71</td>
 <td>$1.85 (dabble_au)</td>
-<td>$2.54</td>
-<td>$2.01</td>
-<td><span class="ev-neg">-8%</span></td>
+<td><strong>$2.55</strong></td>
+<td><span class="ev-neg">-27%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>5+ reb</td>
 <td>n/a</td>
 <td>$2.45 (betr_au)</td>
-<td>$4.10</td>
-<td>$3.00</td>
-<td><span class="ev-neg">-18%</span></td>
+<td><strong>$4.05</strong></td>
+<td><span class="ev-neg">-40%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>6+ reb</td>
 <td>$4.25</td>
 <td>$4.50 (tab)</td>
-<td>$7.14</td>
-<td>$5.25</td>
-<td><span class="ev-neg">-14%</span></td>
+<td><strong>$7.13</strong></td>
+<td><span class="ev-neg">-37%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>7+ reb</td>
+<td>n/a</td>
+<td>$5.00 (neds)</td>
+<td><strong>$13.57</strong></td>
+<td><span class="ev-neg">-63%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>8+ reb</td>
+<td>$11.00</td>
+<td>$11.00 (sportsbet)</td>
+<td><strong>$26.88</strong></td>
+<td><span class="ev-neg">-59%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/4r/5a fair $13.61 (legs priced independently $18.36); 18p/4r/4a fair $12.51 (legs priced independently $16.85); 18p/5a fair $9.39 (legs priced independently $11.01); 15p/5a fair $6.38 (legs priced independently $7.23); 18p/4r fair $6.53 (legs priced independently $7.50); 15p/4r fair $4.43 (legs priced independently $4.92)</li>
-</ul>
-</details><details><summary><h3>Jaylin Williams (OKC)</h3></summary>
-<ul>
-<li><strong>minutes unlocked</strong>: +5.7 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
-<li><strong>Predicted</strong>: 22 min (28+ min 20%); 7.9 pts / 6.0 reb / 3.4 ast. Adjustments: luck AST ×1.05, REB ×1.01; vs HOU rebounds ×0.86.</li>
-<li><strong>Tracking</strong>: this season 4.0 potential ast/g, 7.2 reb chances/g; last season 3.9 ± 2.8 potential ast, 7.6 ± 3.9 reb chances per game.</li>
-<li><strong>Last 2 games</strong>: 28 Oct vs DAL: 20 min, 1 ast from 3 potential, 5 reb from 7 chances (same lineup ✓); 26 Oct vs PHX: 26 min, 3 ast from 2 potential, 6 reb from 13 chances (same lineup ✓).</li>
-<li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8p/8r/5a fair $12.42 (legs priced independently $26.52); 10p/8r/4a fair $11.50 (legs priced independently $24.39); 10p/8r fair $7.40 (legs priced independently $10.62); 8p/8r fair $5.44 (legs priced independently $7.24); 10p/5a fair $8.09 (legs priced independently $11.19); 10p/4a fair $5.48 (legs priced independently $7.02)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 18p/4r/4a fair $14.35 (legs priced independently $20.02); 18p/3r/4a fair $10.23 (legs priced independently $13.46); 18p/4a fair $6.81 (legs priced independently $7.85); 15p/4a fair $4.50 (legs priced independently $4.99); 18p/4r fair $7.06 (legs priced independently $8.13); 15p/4r fair $4.62 (legs priced independently $5.17)</li>
 </ul>
 </details><details><summary><h3>Kenrich Williams (OKC)</h3></summary>
 <ul>
-<li><strong>minutes unlocked</strong>: +5.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
-<li><strong>Predicted</strong>: 20 min (28+ min 21%); 9.2 pts / 4.2 reb / 1.6 ast. Adjustments: luck AST ×1.03, REB ×1.01; vs HOU rebounds ×0.91.</li>
+<li><strong>minutes unlocked</strong>: +5.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace.</li>
+<li><strong>Predicted</strong>: 20 min (28+ min 21%); 9.0 pts / 4.2 reb / 1.5 ast. Adjustments: potentials AST ×1.03, rebound chances ×1.01; vs HOU: pace ×0.99, points ×0.97, assists ×0.95, rebounds ×0.91.</li>
 <li><strong>Tracking</strong>: this season 0.8 potential ast/g, 5.2 reb chances/g; last season 2.3 ± 2.4 potential ast, 5.2 ± 3.5 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DAL: 17 min, 0 ast from 0 potential, 3 reb from 5 chances (same lineup ✓); 26 Oct vs PHX: 24 min, 0 ast from 3 potential, 7 reb from 12 chances (same lineup ✓).</li>
 </ul>
@@ -1547,9 +1557,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -1558,119 +1567,124 @@ details[open] > summary::before { content:"▾ "; }
 <td>10+ pts</td>
 <td>$3.16</td>
 <td>$3.40 (betr_au)</td>
-<td>$2.44</td>
-<td>$3.44</td>
-<td><span class="ev-neg">-1%</span></td>
-<td></td>
+<td><strong>$2.54</strong></td>
+<td><span class="ev-pos">+34%</span></td>
+<td><strong>value</strong></td>
+</tr>
+<tr>
+<td>12+ pts</td>
+<td>n/a</td>
+<td>$4.75 (pointsbetau)</td>
+<td><strong>$3.46</strong></td>
+<td><span class="ev-pos">+37%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>13+ pts</td>
 <td>n/a</td>
 <td>$5.75 (pointsbetau)</td>
-<td>$3.90</td>
-<td>$6.08</td>
-<td><span class="ev-neg">-5%</span></td>
-<td></td>
+<td><strong>$4.11</strong></td>
+<td><span class="ev-pos">+40%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>14+ pts</td>
 <td>n/a</td>
 <td>$7.75 (neds)</td>
-<td>$4.61</td>
-<td>$8.01</td>
-<td><span class="ev-neg">-3%</span></td>
-<td></td>
+<td><strong>$4.88</strong></td>
+<td><span class="ev-pos">+59%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>15+ pts</td>
 <td>$9.50</td>
 <td>$11.00 (neds)</td>
-<td>$5.44</td>
-<td>$9.68</td>
-<td><span class="ev-pos">+14%</span></td>
-<td>model way off book: check news</td>
+<td><strong>$5.84</strong></td>
+<td><span class="ev-pos">+89%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>10+ pts+reb</td>
 <td>$1.45</td>
 <td>$1.45 (sportsbet)</td>
-<td>$1.58</td>
-<td>$1.60</td>
-<td><span class="ev-neg">-9%</span></td>
+<td><strong>$1.61</strong></td>
+<td><span class="ev-neg">-10%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>15+ pts+reb</td>
 <td>$3.00</td>
 <td>$3.00 (pointsbetau)</td>
-<td>$2.64</td>
-<td>$3.42</td>
-<td><span class="ev-neg">-12%</span></td>
-<td></td>
+<td><strong>$2.74</strong></td>
+<td><span class="ev-pos">+9%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>20+ pts+reb</td>
 <td>$8.00</td>
 <td>$8.00 (sportsbet)</td>
-<td>$4.85</td>
-<td>$8.78</td>
-<td><span class="ev-neg">-9%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>25+ pts+reb</td>
-<td>$26.00</td>
-<td>$26.00 (sportsbet)</td>
-<td>$9.99</td>
-<td>$26.51</td>
-<td><span class="ev-neg">-2%</span></td>
-<td>model way off book: check news</td>
-</tr>
-<tr>
-<td>3+ reb</td>
-<td>n/a</td>
-<td>$1.19 (neds)</td>
-<td>$1.45</td>
-<td>$1.29</td>
-<td><span class="ev-neg">-8%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>4+ reb</td>
-<td>$1.50</td>
-<td>$1.50 (sportsbet)</td>
-<td>$1.89</td>
-<td>$1.69</td>
-<td><span class="ev-neg">-11%</span></td>
-<td></td>
+<td><strong>$5.07</strong></td>
+<td><span class="ev-pos">+58%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>6+ reb</td>
 <td>$3.03</td>
 <td>$3.03 (sportsbet)</td>
-<td>$3.61</td>
-<td>$3.52</td>
-<td><span class="ev-neg">-14%</span></td>
+<td><strong>$3.58</strong></td>
+<td><span class="ev-neg">-15%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>7+ reb</td>
+<td>n/a</td>
+<td>$4.20 (betr_au)</td>
+<td><strong>$5.23</strong></td>
+<td><span class="ev-neg">-20%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>$6.50</td>
 <td>$6.50 (pointsbetau)</td>
-<td>$7.76</td>
-<td>$7.52</td>
-<td><span class="ev-neg">-14%</span></td>
+<td><strong>$7.79</strong></td>
+<td><span class="ev-neg">-17%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>9+ reb</td>
+<td>n/a</td>
+<td>$8.50 (neds)</td>
+<td><strong>$11.97</strong></td>
+<td><span class="ev-neg">-29%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>10+ reb</td>
+<td>$12.00</td>
+<td>$12.00 (sportsbet)</td>
+<td><strong>$19.04</strong></td>
+<td><span class="ev-neg">-37%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/6r/2a fair $9.07 (legs priced independently $27.78); 10p/6r/2a fair $7.74 (legs priced independently $20.44); 12p/6r fair $6.40 (legs priced independently $11.97); 10p/6r fair $5.29 (legs priced independently $8.81); 12p/2a fair $5.45 (legs priced independently $7.70); 10p/2a fair $4.28 (legs priced independently $5.66)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/6r/2a fair $9.54 (legs priced independently $30.13); 10p/6r/2a fair $8.07 (legs priced independently $22.09); 12p/6r fair $6.58 (legs priced independently $12.42); 10p/6r fair $5.39 (legs priced independently $9.10); 12p/2a fair $5.82 (legs priced independently $8.41); 10p/2a fair $4.56 (legs priced independently $6.16)</li>
+</ul>
+</details><details><summary><h3>Jaylin Williams (OKC)</h3></summary>
+<ul>
+<li><strong>minutes unlocked</strong>: +5.7 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace.</li>
+<li><strong>Predicted</strong>: 22 min (28+ min 20%); 7.7 pts / 6.0 reb / 3.2 ast. Adjustments: potentials AST ×1.05, rebound chances ×1.01; vs HOU: pace ×0.99, points ×0.97, assists ×0.95, rebounds ×0.86.</li>
+<li><strong>Tracking</strong>: this season 4.0 potential ast/g, 7.2 reb chances/g; last season 3.9 ± 2.8 potential ast, 7.6 ± 3.9 reb chances per game.</li>
+<li><strong>Last 2 games</strong>: 28 Oct vs DAL: 20 min, 1 ast from 3 potential, 5 reb from 7 chances (same lineup ✓); 26 Oct vs PHX: 26 min, 3 ast from 2 potential, 6 reb from 13 chances (same lineup ✓).</li>
+<li>No AU ladder prices in the snapshot for this player yet.</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 10p/8r/4a fair $12.30 (legs priced independently $27.82); 8p/8r/4a fair $9.39 (legs priced independently $18.84); 10p/8r fair $7.62 (legs priced independently $11.08); 8p/8r fair $5.60 (legs priced independently $7.51); 10p/4a fair $6.11 (legs priced independently $8.02); 8p/4a fair $4.41 (legs priced independently $5.43)</li>
 </ul>
 </details><details><summary><h3>Jared McCain (OKC)</h3></summary>
 <ul>
-<li><strong>minutes unlocked</strong>: +3.0 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
-<li><strong>Predicted</strong>: 26 min (28+ min 42%); 14.0 pts / 2.6 reb / 2.2 ast. Adjustments: luck AST ×0.98, REB ×1.06; vs HOU rebounds ×0.90.</li>
+<li><strong>minutes unlocked</strong>: +3.0 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace.</li>
+<li><strong>Predicted</strong>: 26 min (28+ min 42%); 13.6 pts / 2.6 reb / 2.0 ast. Adjustments: potentials AST ×0.98, rebound chances ×1.06; vs HOU: pace ×0.99, points ×0.97, assists ×0.95, rebounds ×0.90.</li>
 <li><strong>Tracking</strong>: this season 3.0 potential ast/g, 6.6 reb chances/g; last season 2.6 ± 2.3 potential ast, 3.4 ± 1.6 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DAL: 29 min, 4 ast from 4 potential, 4 reb from 11 chances (same lineup ✓); 26 Oct vs PHX: 30 min, 4 ast from 4 potential, 3 reb from 8 chances (same lineup ✓).</li>
 </ul>
@@ -1680,9 +1694,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -1691,170 +1704,178 @@ details[open] > summary::before { content:"▾ "; }
 <td>2+ ast</td>
 <td>$1.36</td>
 <td>$1.40 (neds)</td>
-<td>$1.65</td>
-<td>$1.49</td>
-<td><span class="ev-neg">-6%</span></td>
+<td><strong>$1.71</strong></td>
+<td><span class="ev-neg">-18%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>3+ ast</td>
 <td>n/a</td>
 <td>$2.25 (betr_au)</td>
-<td>$2.70</td>
-<td>$2.51</td>
-<td><span class="ev-neg">-11%</span></td>
+<td><strong>$2.96</strong></td>
+<td><span class="ev-neg">-24%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>4+ ast</td>
 <td>$4.00</td>
 <td>$4.00 (sportsbet)</td>
-<td>$5.25</td>
-<td>$4.44</td>
-<td><span class="ev-neg">-10%</span></td>
+<td><strong>$5.92</strong></td>
+<td><span class="ev-neg">-32%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>5+ ast</td>
 <td>n/a</td>
 <td>$8.00 (betr_au)</td>
-<td>$11.72</td>
-<td>$8.63</td>
-<td><span class="ev-neg">-7%</span></td>
+<td><strong>$13.41</strong></td>
+<td><span class="ev-neg">-40%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>10+ pts</td>
-<td>$1.20</td>
-<td>$1.22 (neds)</td>
-<td>$1.45</td>
-<td>$1.25</td>
-<td><span class="ev-neg">-2%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>15+ pts</td>
-<td>$1.89</td>
-<td>$1.91 (betr_au)</td>
-<td>$2.31</td>
-<td>$1.98</td>
-<td><span class="ev-neg">-3%</span></td>
+<td>6+ ast</td>
+<td>$12.00</td>
+<td>$12.00 (pointsbetau)</td>
+<td><strong>$33.98</strong></td>
+<td><span class="ev-neg">-65%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>20+ pts</td>
 <td>$4.00</td>
 <td>$4.10 (betr_au)</td>
-<td>$4.44</td>
-<td>$3.99</td>
-<td><span class="ev-pos">+3%</span></td>
-<td>marginal</td>
+<td><strong>$4.84</strong></td>
+<td><span class="ev-neg">-15%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>22+ pts</td>
+<td>n/a</td>
+<td>$5.25 (neds)</td>
+<td><strong>$6.79</strong></td>
+<td><span class="ev-neg">-23%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>24+ pts</td>
+<td>n/a</td>
+<td>$8.25 (neds)</td>
+<td><strong>$9.65</strong></td>
+<td><span class="ev-neg">-14%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>25+ pts</td>
 <td>$8.50</td>
 <td>$10.50 (neds)</td>
-<td>$10.52</td>
-<td>$8.09</td>
-<td><span class="ev-pos">+30%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$11.69</strong></td>
+<td><span class="ev-neg">-10%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>26+ pts</td>
+<td>n/a</td>
+<td>$13.00 (neds)</td>
+<td><strong>$14.32</strong></td>
+<td><span class="ev-neg">-9%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>15+ pts+reb</td>
 <td>$1.36</td>
 <td>$1.40 (pointsbetau)</td>
-<td>$1.78</td>
-<td>$1.43</td>
-<td><span class="ev-neg">-2%</span></td>
+<td><strong>$1.84</strong></td>
+<td><span class="ev-neg">-24%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>20+ pts+reb</td>
 <td>$2.30</td>
 <td>$2.35 (pointsbetau)</td>
-<td>$2.93</td>
-<td>$2.42</td>
-<td><span class="ev-neg">-3%</span></td>
+<td><strong>$3.10</strong></td>
+<td><span class="ev-neg">-24%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>$4.50</td>
 <td>$4.75 (pointsbetau)</td>
-<td>$5.74</td>
-<td>$4.57</td>
-<td><span class="ev-pos">+4%</span></td>
-<td>marginal</td>
+<td><strong>$6.24</strong></td>
+<td><span class="ev-neg">-24%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$11.00</td>
 <td>$11.00 (sportsbet)</td>
-<td>$13.88</td>
-<td>$10.54</td>
-<td><span class="ev-pos">+4%</span></td>
-<td>marginal</td>
-</tr>
-<tr>
-<td>2+ reb</td>
-<td>n/a</td>
-<td>$1.24 (pointsbetau)</td>
-<td>$1.44</td>
-<td>$1.30</td>
-<td><span class="ev-neg">-5%</span></td>
+<td><strong>$15.41</strong></td>
+<td><span class="ev-neg">-29%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>3+ reb</td>
 <td>n/a</td>
 <td>$1.62 (neds)</td>
-<td>$2.12</td>
-<td>$1.75</td>
-<td><span class="ev-neg">-7%</span></td>
+<td><strong>$2.11</strong></td>
+<td><span class="ev-neg">-23%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>4+ reb</td>
 <td>$2.37</td>
 <td>$2.55 (pointsbetau)</td>
-<td>$3.52</td>
-<td>$2.60</td>
-<td><span class="ev-neg">-2%</span></td>
+<td><strong>$3.49</strong></td>
+<td><span class="ev-neg">-27%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>5+ reb</td>
+<td>n/a</td>
+<td>$3.80 (betr_au)</td>
+<td><strong>$6.47</strong></td>
+<td><span class="ev-neg">-41%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>6+ reb</td>
 <td>$6.50</td>
 <td>$8.00 (pointsbetau)</td>
-<td>$13.55</td>
-<td>$7.29</td>
-<td><span class="ev-pos">+10%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$13.80</strong></td>
+<td><span class="ev-neg">-42%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>8+ reb</td>
+<td>$21.00</td>
+<td>$21.00 (sportsbet)</td>
+<td><strong>$84.39</strong></td>
+<td><span class="ev-neg">-75%</span></td>
+<td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/4r/3a fair $11.52 (legs priced independently $21.95); 18p/3r/3a fair $10.47 (legs priced independently $19.13); 18p/4r fair $8.15 (legs priced independently $11.74); 15p/4r fair $5.99 (legs priced independently $8.12); 18p/3a fair $6.72 (legs priced independently $9.03); 15p/3a fair $4.83 (legs priced independently $6.24)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/4r/3a fair $12.92 (legs priced independently $25.13); 18p/3r/3a fair $11.64 (legs priced independently $22.32); 18p/4r fair $8.63 (legs priced independently $12.47); 15p/4r fair $6.23 (legs priced independently $8.50); 18p/3a fair $7.71 (legs priced independently $10.58); 15p/3a fair $5.51 (legs priced independently $7.20)</li>
 </ul>
 </details><details><summary><h3>Steven Adams (HOU)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Alperen Sengun 3.9 fouls/36 vs opponent 21.3 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>high-variance backup</strong>: minutes sd 6.6 over last 20 (avg 23). <em>High-variance backups: −16% blind tails over two seasons; the variance is mostly priced. Your SGM-ladder angle.</em></li>
-<li><strong>Predicted</strong>: 20 min (28+ min 14%); 5.8 pts / 8.1 reb / 1.5 ast. Adjustments: luck AST ×1.00, REB ×1.00; vs OKC rebounds ×1.01.</li>
+<li><strong>foul spot</strong>: Alperen Sengun 3.9 fouls/36 vs opponent 21.3 FTA/g.</li>
+<li><strong>high-variance backup</strong>: minutes sd 6.6 over last 20 (avg 23).</li>
+<li><strong>Predicted</strong>: 20 min (28+ min 14%); 5.6 pts / 8.0 reb / 1.5 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.00; vs OKC: pace ×0.99, points ×0.95, assists ×0.96, rebounds ×1.01.</li>
 <li><strong>Tracking</strong>: this season 2.0 potential ast/g, 5.0 reb chances/g; last season 2.2 ± 1.6 potential ast, 12.7 ± 4.6 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 23 Oct vs SAS: 8 min, 1 ast from 2 potential, 2 reb from 5 chances (lineup differed: Reed Sheppard out).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8p/10r/2a fair $10.73 (legs priced independently $20.84); 8p/8r/2a fair $7.82 (legs priced independently $13.72); 8p/10r fair $6.28 (legs priced independently $8.90); 8p/8r fair $4.43 (legs priced independently $5.85)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8p/10r/2a fair $11.90 (legs priced independently $23.42); 8p/8r/2a fair $8.65 (legs priced independently $15.57); 8p/10r fair $6.80 (legs priced independently $9.71); 8p/8r fair $4.84 (legs priced independently $6.45)</li>
 </ul>
 </details><details><summary><h3>Oscar Tshiebwe (HOU)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Alperen Sengun 3.9 fouls/36 vs opponent 21.3 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>high-variance backup</strong>: minutes sd 6.0 over last 20 (avg 19). <em>High-variance backups: −16% blind tails over two seasons; the variance is mostly priced. Your SGM-ladder angle.</em></li>
-<li><strong>Predicted</strong>: 19 min (28+ min 16%); 8.6 pts / 8.3 reb / 1.1 ast. Adjustments: luck AST ×1.00, REB ×1.01; vs OKC rebounds ×1.01.</li>
+<li><strong>foul spot</strong>: Alperen Sengun 3.9 fouls/36 vs opponent 21.3 FTA/g.</li>
+<li><strong>high-variance backup</strong>: minutes sd 6.0 over last 20 (avg 19).</li>
+<li><strong>Predicted</strong>: 19 min (28+ min 16%); 8.2 pts / 8.3 reb / 1.1 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.01; vs OKC: pace ×0.99, points ×0.95, assists ×0.96, rebounds ×1.01.</li>
 <li><strong>Tracking</strong>: this season 2.0 potential ast/g, 12.0 reb chances/g; last season 1.8 ± 1.4 potential ast, 10.8 ± 6.4 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs MIL: 14 min, 2 ast from 2 potential, 5 reb from 12 chances (lineup differed: Alperen Sengun out, Marcus Smart out).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/10r/2a fair $12.62 (legs priced independently $34.25); 10p/10r/2a fair $9.95 (legs priced independently $23.84); 12p/10r fair $6.19 (legs priced independently $10.31); 10p/10r fair $4.71 (legs priced independently $7.18)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 10p/10r/2a fair $10.91 (legs priced independently $27.35); 8p/10r/2a fair $8.98 (legs priced independently $19.63); 10p/10r fair $5.05 (legs priced independently $7.91); 8p/10r fair $4.01 (legs priced independently $5.68)</li>
 </ul>
 </details></section><section class="game"><h2>PHI @ CHA</h2>
 <ul>
@@ -1864,8 +1885,8 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 <details><summary><h3>Dennis Schröder (CHA)</h3></summary>
 <ul>
-<li><strong>season assist potentials</strong>: 4.8/g from 11.2 chances (converting 43% vs 57% career); luck x1.11. <em>Best single-leg signal: assist luck ≥1.10 at best AU price +3.7% (+3.8%/+3.5% by season, CI includes 0).</em></li>
-<li><strong>Predicted</strong>: 29 min (28+ min 54%); 12.2 pts / 3.2 reb / 6.1 ast. Adjustments: luck AST ×1.05, REB ×1.00; vs PHI rebounds ×1.04.</li>
+<li><strong>season assist potentials</strong>: 4.8/g from 11.2 chances (converting 43% vs 57% career); luck x1.11.</li>
+<li><strong>Predicted</strong>: 29 min (28+ min 54%); 12.0 pts / 3.2 reb / 5.9 ast. Adjustments: potentials AST ×1.05, rebound chances ×1.00; vs PHI: pace ×1.01, points ×0.98, assists ×0.98, rebounds ×1.04.</li>
 <li><strong>Tracking</strong>: this season 11.2 potential ast/g, 7.0 reb chances/g; last season 8.1 ± 3.7 potential ast, 4.5 ± 2.4 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DET: 34 min, 5 ast from 11 potential, 4 reb from 8 chances (same lineup ✓); 26 Oct vs WAS: 36 min, 5 ast from 10 potential, 2 reb from 5 chances (same lineup ✓).</li>
 </ul>
@@ -1875,9 +1896,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -1886,47 +1906,51 @@ details[open] > summary::before { content:"▾ "; }
 <td>6+ ast</td>
 <td>$1.63</td>
 <td>$1.82 (dabble_au)</td>
-<td>$1.88</td>
-<td>$1.70</td>
-<td><span class="ev-pos">+7%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$1.93</strong></td>
+<td><span class="ev-neg">-6%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>8+ ast</td>
 <td>$3.18</td>
 <td>$3.40 (dabble_au)</td>
-<td>$3.44</td>
-<td>$3.17</td>
-<td><span class="ev-pos">+7%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$3.66</strong></td>
+<td><span class="ev-neg">-7%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>9+ ast</td>
 <td>n/a</td>
 <td>$3.80 (ladbrokes_au)</td>
-<td>$5.02</td>
-<td>$3.79</td>
-<td><span class="ev-pos">+0%</span></td>
-<td>marginal</td>
+<td><strong>$5.46</strong></td>
+<td><span class="ev-neg">-30%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>10+ ast</td>
 <td>$6.00</td>
 <td>$8.50 (pointsbetau)</td>
-<td>$7.75</td>
-<td>$5.77</td>
-<td><span class="ev-pos">+47%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$8.55</strong></td>
+<td><span class="ev-neg">-1%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>12+ ast</td>
+<td>$13.00</td>
+<td>$13.00 (sportsbet)</td>
+<td><strong>$24.23</strong></td>
+<td><span class="ev-neg">-46%</span></td>
+<td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/8a fair $6.93 (legs priced independently $10.40); 12p/8a fair $5.15 (legs priced independently $6.96); 4r/8a fair $6.45 (legs priced independently $8.52); 4r/6a fair $3.84 (legs priced independently $4.65)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/8a fair $7.75 (legs priced independently $11.63); 12p/8a fair $5.58 (legs priced independently $7.67); 4r/8a fair $6.95 (legs priced independently $9.14); 3r/8a fair $5.06 (legs priced independently $6.10)</li>
 </ul>
 </details><details><summary><h3>Moussa Diabaté (CHA)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: 9.4/g from 23.2 chances (converting 41% vs 54% career); luck x1.07. <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 29 min (28+ min 56%); 9.9 pts / 10.5 reb / 1.8 ast. Adjustments: luck AST ×1.00, REB ×1.03; vs PHI rebounds ×1.05.</li>
+<li><strong>rebound chances</strong>: 9.4/g from 23.2 chances (converting 41% vs 54% career); luck x1.07.</li>
+<li><strong>Predicted</strong>: 29 min (28+ min 56%); 9.7 pts / 10.5 reb / 1.7 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.03; vs PHI: pace ×1.01, points ×0.98, assists ×0.98, rebounds ×1.05.</li>
 <li><strong>Tracking</strong>: this season 3.6 potential ast/g, 23.2 reb chances/g; last season 3.1 ± 2.1 potential ast, 15.3 ± 6.1 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DET: 35 min, 2 ast from 6 potential, 9 reb from 23 chances (same lineup ✓); 26 Oct vs WAS: 35 min, 3 ast from 3 potential, 17 reb from 28 chances (same lineup ✓).</li>
 </ul>
@@ -1936,9 +1960,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -1947,17 +1970,15 @@ details[open] > summary::before { content:"▾ "; }
 <td>20+ pts+reb</td>
 <td>n/a</td>
 <td>$1.82 (dabble_au)</td>
-<td>$1.90</td>
-<td>$2.05</td>
-<td><span class="ev-neg">-11%</span></td>
+<td><strong>$1.94</strong></td>
+<td><span class="ev-neg">-6%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>n/a</td>
 <td>$3.30 (dabble_au)</td>
-<td>$3.62</td>
-<td>$3.77</td>
+<td><strong>$3.79</strong></td>
 <td><span class="ev-neg">-13%</span></td>
 <td></td>
 </tr>
@@ -1965,65 +1986,76 @@ details[open] > summary::before { content:"▾ "; }
 <td>30+ pts+reb</td>
 <td>n/a</td>
 <td>$6.00 (dabble_au)</td>
-<td>$9.30</td>
-<td>$6.80</td>
-<td><span class="ev-neg">-12%</span></td>
+<td><strong>$9.97</strong></td>
+<td><span class="ev-neg">-40%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>9+ reb</td>
+<td>35+ pts+reb</td>
 <td>n/a</td>
-<td>$1.38 (ladbrokes_au)</td>
-<td>$1.48</td>
-<td>$1.50</td>
-<td><span class="ev-neg">-8%</span></td>
+<td>$9.00 (dabble_au)</td>
+<td><strong>$34.90</strong></td>
+<td><span class="ev-neg">-74%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>n/a</td>
 <td>$1.60 (ladbrokes_au)</td>
-<td>$1.73</td>
-<td>$1.77</td>
-<td><span class="ev-neg">-10%</span></td>
+<td><strong>$1.73</strong></td>
+<td><span class="ev-neg">-8%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>12+ reb</td>
+<td>14+ reb</td>
 <td>n/a</td>
-<td>$2.25 (ladbrokes_au)</td>
-<td>$2.60</td>
-<td>$2.58</td>
-<td><span class="ev-neg">-13%</span></td>
+<td>$3.50 (ladbrokes_au)</td>
+<td><strong>$4.57</strong></td>
+<td><span class="ev-neg">-23%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>15+ reb</td>
 <td>n/a</td>
 <td>$5.00 (betr_au)</td>
-<td>$6.28</td>
-<td>$5.86</td>
-<td><span class="ev-neg">-15%</span></td>
+<td><strong>$6.39</strong></td>
+<td><span class="ev-neg">-22%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>16+ reb</td>
+<td>n/a</td>
+<td>$6.00 (ladbrokes_au)</td>
+<td><strong>$9.32</strong></td>
+<td><span class="ev-neg">-36%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>18+ reb</td>
+<td>n/a</td>
+<td>$11.00 (ladbrokes_au)</td>
+<td><strong>$21.47</strong></td>
+<td><span class="ev-neg">-49%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/12r fair $5.96 (legs priced independently $7.54); 10p/12r fair $4.40 (legs priced independently $5.31); 12r/3a fair $8.05 (legs priced independently $9.85); 10r/3a fair $5.67 (legs priced independently $6.54)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/12r fair $6.29 (legs priced independently $7.95); 10p/12r fair $4.58 (legs priced independently $5.55); 12r/3a fair $8.45 (legs priced independently $10.30); 10r/3a fair $5.88 (legs priced independently $6.81)</li>
 </ul>
 </details><details><summary><h3>Joel Embiid (PHI)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: last 1 same-lineup game: 11 from 21 reb chances vs IND (expected 13.6, got 11). <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 35 min (28+ min 93%); 29.3 pts / 8.9 reb / 5.0 ast. Adjustments: luck AST ×1.01, REB ×1.01; vs CHA rebounds ×0.90.</li>
+<li><strong>rebound chances</strong>: last 1 same-lineup game: 11 from 21 reb chances vs IND (expected 13.6, got 11).</li>
+<li><strong>Predicted</strong>: 35 min (28+ min 93%); 28.2 pts / 8.9 reb / 4.8 ast. Adjustments: potentials AST ×1.01, rebound chances ×1.01; vs CHA: pace ×0.98, points ×0.96, assists ×0.97, rebounds ×0.90.</li>
 <li><strong>Tracking</strong>: this season 9.2 potential ast/g, 16.8 reb chances/g; last season 7.1 ± 2.9 potential ast, 9.9 ± 3.4 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs IND: 39 min, 2 ast from 6 potential, 11 reb from 21 chances (same lineup ✓); 24 Oct vs MIL: 36 min, 10 ast from 16 potential, 11 reb from 20 chances (lineup differed: LeBron James out).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 35p/10r fair $7.86 (legs priced independently $9.13); 30p/10r fair $4.80 (legs priced independently $5.34); 10r/6a fair $6.32 (legs priced independently $6.52); 10r/5a fair $4.59 (legs priced independently $4.74)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 30p/10r fair $5.31 (legs priced independently $5.90); 25p/10r fair $3.62 (legs priced independently $3.87); 10r/6a fair $6.72 (legs priced independently $6.99); 10r/5a fair $4.83 (legs priced independently $4.95)</li>
 </ul>
 </details><details><summary><h3>LeBron James (PHI)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: last 1 same-lineup game: 5 from 12 reb chances vs IND (expected 8.3, got 5). <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 32 min (28+ min 89%); 21.3 pts / 5.9 reb / 7.2 ast. Adjustments: luck AST ×1.01, REB ×1.01; vs CHA rebounds ×0.89.</li>
+<li><strong>rebound chances</strong>: last 1 same-lineup game: 5 from 12 reb chances vs IND (expected 8.3, got 5).</li>
+<li><strong>Predicted</strong>: 32 min (28+ min 89%); 20.6 pts / 5.9 reb / 7.0 ast. Adjustments: potentials AST ×1.01, rebound chances ×1.01; vs CHA: pace ×0.98, points ×0.96, assists ×0.97, rebounds ×0.89.</li>
 <li><strong>Tracking</strong>: this season 12.0 potential ast/g, 10.2 reb chances/g; last season 11.6 ± 3.7 potential ast, 8.2 ± 3.1 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs IND: 33 min, 10 ast from 17 potential, 5 reb from 12 chances (same lineup ✓); 25 Oct vs DET: 33 min, 5 ast from 5 potential, 2 reb from 9 chances (lineup differed: Joel Embiid out, VJ Edgecombe out).</li>
 </ul>
@@ -2033,9 +2065,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -2044,106 +2075,114 @@ details[open] > summary::before { content:"▾ "; }
 <td>25+ pts+reb</td>
 <td>$1.40</td>
 <td>$1.62 (dabble_au)</td>
-<td>$1.63</td>
-<td>$1.54</td>
-<td><span class="ev-pos">+5%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$1.71</strong></td>
+<td><span class="ev-neg">-5%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$2.25</td>
 <td>$2.55 (dabble_au)</td>
-<td>$2.62</td>
-<td>$2.57</td>
-<td><span class="ev-neg">-1%</span></td>
+<td><strong>$2.88</strong></td>
+<td><span class="ev-neg">-11%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>35+ pts+reb</td>
 <td>$4.20</td>
 <td>$4.50 (dabble_au)</td>
-<td>$5.23</td>
-<td>$4.80</td>
-<td><span class="ev-neg">-6%</span></td>
+<td><strong>$6.18</strong></td>
+<td><span class="ev-neg">-27%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>40+ pts+reb</td>
 <td>$8.50</td>
 <td>$8.50 (sportsbet)</td>
-<td>$12.87</td>
-<td>$9.48</td>
-<td><span class="ev-neg">-10%</span></td>
+<td><strong>$16.79</strong></td>
+<td><span class="ev-neg">-49%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>5+ reb</td>
+<td>45+ pts+reb</td>
+<td>$21.00</td>
+<td>$21.00 (sportsbet)</td>
+<td><strong>$54.05</strong></td>
+<td><span class="ev-neg">-61%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>7+ reb</td>
 <td>n/a</td>
-<td>$1.13 (ladbrokes_au)</td>
-<td>$1.52</td>
-<td>$1.22</td>
-<td><span class="ev-neg">-7%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>6+ reb</td>
-<td>$1.25</td>
-<td>$1.28 (dabble_au)</td>
-<td>$1.95</td>
-<td>$1.41</td>
-<td><span class="ev-neg">-9%</span></td>
+<td>$1.52 (ladbrokes_au)</td>
+<td><strong>$2.66</strong></td>
+<td><span class="ev-neg">-43%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>$1.88</td>
 <td>$1.98 (dabble_au)</td>
-<td>$3.79</td>
-<td>$2.33</td>
-<td><span class="ev-neg">-15%</span></td>
+<td><strong>$3.82</strong></td>
+<td><span class="ev-neg">-48%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>$2.98</td>
 <td>$3.60 (tab)</td>
-<td>$9.33</td>
-<td>$4.05</td>
-<td><span class="ev-neg">-11%</span></td>
+<td><strong>$9.15</strong></td>
+<td><span class="ev-neg">-61%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>12+ reb</td>
+<td>$6.00</td>
+<td>$7.50 (betr_au)</td>
+<td><strong>$27.05</strong></td>
+<td><span class="ev-neg">-72%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>14+ reb</td>
+<td>$12.00</td>
+<td>$12.00 (sportsbet)</td>
+<td><strong>$93.46</strong></td>
+<td><span class="ev-neg">-87%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 25p/8r fair $9.84 (legs priced independently $11.71); 20p/8r fair $5.81 (legs priced independently $6.56); 8r/8a fair $7.65 (legs priced independently $8.55); 6r/8a fair $4.05 (legs priced independently $4.39)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8r/8a fair $8.11 (legs priced independently $9.34); 6r/8a fair $4.35 (legs priced independently $4.78); 25p/8r fair $11.68 (legs priced independently $13.39); 20p/8r fair $6.35 (legs priced independently $7.06)</li>
 </ul>
 </details><details><summary><h3>Ryan Kalkbrenner (CHA)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Naz Reid 3.7 fouls/36 vs opponent 23.2 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>Predicted</strong>: 17 min (28+ min 2%); 5.7 pts / 4.6 reb / 0.7 ast. Adjustments: luck AST ×0.97, REB ×1.01; vs PHI rebounds ×1.06.</li>
+<li><strong>foul spot</strong>: Naz Reid 3.7 fouls/36 vs opponent 23.2 FTA/g.</li>
+<li><strong>Predicted</strong>: 17 min (28+ min 2%); 5.6 pts / 4.6 reb / 0.7 ast. Adjustments: potentials AST ×0.97, rebound chances ×1.01; vs PHI: pace ×1.01, points ×0.98, assists ×0.98, rebounds ×1.06.</li>
 <li><strong>Tracking</strong>: this season 1.6 potential ast/g, 9.6 reb chances/g; last season 1.6 ± 1.3 potential ast, 10.1 ± 4.7 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DET: 13 min, 1 ast from 1 potential, 1 reb from 4 chances (same lineup ✓); 26 Oct vs WAS: 13 min, 1 ast from 2 potential, 4 reb from 10 chances (same lineup ✓).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8p/6r fair $8.21 (legs priced independently $11.22); 8p/5r fair $6.13 (legs priced independently $7.77)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8p/6r fair $8.33 (legs priced independently $11.55); 8p/5r fair $6.24 (legs priced independently $7.96)</li>
 </ul>
 </details><details><summary><h3>PJ Hall (CHA)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Naz Reid 3.7 fouls/36 vs opponent 23.2 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>high-variance backup</strong>: minutes sd 7.3 over last 20 (avg 14). <em>High-variance backups: −16% blind tails over two seasons; the variance is mostly priced. Your SGM-ladder angle.</em></li>
-<li><strong>Predicted</strong>: 11 min (28+ min 0%); 3.5 pts / 3.7 reb / 0.8 ast. Adjustments: luck AST ×1.00, REB ×1.00; vs PHI rebounds ×1.06.</li>
+<li><strong>foul spot</strong>: Naz Reid 3.7 fouls/36 vs opponent 23.2 FTA/g.</li>
+<li><strong>high-variance backup</strong>: minutes sd 7.3 over last 20 (avg 14).</li>
+<li><strong>Predicted</strong>: 11 min (28+ min 0%); 3.5 pts / 3.7 reb / 0.7 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.00; vs PHI: pace ×1.01, points ×0.98, assists ×0.98, rebounds ×1.06.</li>
 <li><strong>Tracking</strong>: this season 2.0 potential ast/g, 1.0 reb chances/g; last season 1.2 ± 1.2 potential ast, 6.7 ± 2.6 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 23 Oct vs ATL: 10 min, 3 ast from 2 potential, 1 reb from 1 chances (same lineup ✓).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 5p/5r fair $5.37 (legs priced independently $8.47); 5p/4r fair $4.24 (legs priced independently $6.30)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 5p/6r fair $7.42 (legs priced independently $12.23); 5p/5r fair $5.49 (legs priced independently $8.61)</li>
 </ul>
 </details><details><summary><h3>Dean Wade (PHI)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Joel Embiid 2.5 fouls/36 vs opponent 19.1 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>Predicted</strong>: 23 min (28+ min 16%); 5.1 pts / 3.7 reb / 1.5 ast. Adjustments: luck AST ×1.06, REB ×1.02; vs CHA rebounds ×0.90.</li>
+<li><strong>foul spot</strong>: Joel Embiid 2.5 fouls/36 vs opponent 19.1 FTA/g.</li>
+<li><strong>Predicted</strong>: 23 min (28+ min 16%); 4.9 pts / 3.7 reb / 1.4 ast. Adjustments: potentials AST ×1.06, rebound chances ×1.02; vs CHA: pace ×0.98, points ×0.96, assists ×0.97, rebounds ×0.90.</li>
 <li><strong>Tracking</strong>: this season 3.7 potential ast/g, 7.0 reb chances/g; last season 2.5 ± 2.0 potential ast, 6.6 ± 2.6 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs IND: 17 min, 1 ast from 2 potential, 1 reb from 3 chances (same lineup ✓); 25 Oct vs DET: 37 min, 1 ast from 7 potential, 5 reb from 11 chances (lineup differed: Joel Embiid out, VJ Edgecombe out).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 5p/5r fair $5.49 (legs priced independently $6.29); 5p/4r fair $3.68 (legs priced independently $4.06)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 5p/5r fair $5.80 (legs priced independently $6.61); 5p/4r fair $3.88 (legs priced independently $4.26)</li>
 </ul>
 </details></section><section class="game"><h2>POR @ UTA</h2>
 <ul>
@@ -2154,26 +2193,26 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 <details><summary><h3>Brice Sensabaugh (UTA)</h3></summary>
 <ul>
-<li><strong>questionable teammate</strong>: Lauri Markkanen Questionable (Injury/Illness-RightWristSprain); if he sits: +2.4 min. <em>Questionable teammate: priced as a 53/47 mix (calibrated sit rate). If he's ruled out, the 'if he sits' column is the live price, and books may be slow to move.</em></li>
-<li><strong>Predicted</strong>: 20 min (28+ min 20%); 12.4 pts / 2.9 reb / 1.6 ast. Adjustments: luck AST ×1.06, REB ×1.00; vs POR rebounds ×1.00.</li>
+<li><strong>questionable teammate</strong>: Lauri Markkanen Questionable (Injury/Illness-RightWristSprain); if he sits: +2.4 min.</li>
+<li><strong>Predicted</strong>: 20 min (28+ min 20%); 12.4 pts / 2.9 reb / 1.6 ast. Adjustments: potentials AST ×1.06, rebound chances ×1.00; vs POR: pace ×1.01, points ×1.00, assists ×0.97, rebounds ×1.00.</li>
 <li><strong>Tracking</strong>: this season 3.2 potential ast/g, 4.8 reb chances/g; last season 3.6 ± 2.7 potential ast, 4.9 ± 2.1 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs SAS: 18 min, 1 ast from 6 potential, 3 reb from 6 chances (lineup differed: Jaren Jackson Jr. out, Lauri Markkanen out); 26 Oct vs MEM: 9 min, 0 ast from 1 potential, 2 reb from 3 chances (lineup differed: Jaxson Hayes out).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/4r/2a fair $7.65 (legs priced independently $19.23); 12p/4r/2a fair $6.41 (legs priced independently $13.84); 15p/4r fair $5.43 (legs priced independently $8.89); 12p/4r fair $4.35 (legs priced independently $6.40); 15p/2a fair $4.61 (legs priced independently $6.41); 12p/2a fair $3.57 (legs priced independently $4.61)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/4r/2a fair $7.77 (legs priced independently $19.78); 12p/4r/2a fair $6.47 (legs priced independently $14.25); 15p/4r fair $5.40 (legs priced independently $8.89); 12p/4r fair $4.32 (legs priced independently $6.41); 15p/2a fair $4.72 (legs priced independently $6.59); 12p/2a fair $3.64 (legs priced independently $4.75)</li>
 </ul>
 </details><details><summary><h3>Kyle Filipowski (UTA)</h3></summary>
 <ul>
-<li><strong>questionable teammate</strong>: Lauri Markkanen Questionable (Injury/Illness-RightWristSprain); if he sits: +2.2 min. <em>Questionable teammate: priced as a 53/47 mix (calibrated sit rate). If he's ruled out, the 'if he sits' column is the live price, and books may be slow to move.</em></li>
-<li><strong>Predicted</strong>: 12 min (28+ min 3%); 5.3 pts / 3.6 reb / 1.0 ast. Adjustments: luck AST ×1.00, REB ×1.02; vs POR rebounds ×0.98.</li>
+<li><strong>questionable teammate</strong>: Lauri Markkanen Questionable (Injury/Illness-RightWristSprain); if he sits: +2.2 min.</li>
+<li><strong>Predicted</strong>: 12 min (28+ min 3%); 5.3 pts / 3.6 reb / 1.0 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.02; vs POR: pace ×1.01, points ×1.00, assists ×0.97, rebounds ×0.98.</li>
 <li><strong>Tracking</strong>: this season 0.3 potential ast/g, 2.3 reb chances/g; last season 4.2 ± 2.6 potential ast, 9.3 ± 4.4 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 26 Oct vs MEM: 8 min, 0 ast from 0 potential, 1 reb from 4 chances (lineup differed: Jaxson Hayes out); 23 Oct vs NOP: 8 min, 0 ast from 0 potential, 1 reb from 3 chances (lineup differed: Mo Bamba out).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8p/5r/2a fair $11.39 (legs priced independently $44.07); 8p/4r/2a fair $9.89 (legs priced independently $32.42); 8p/5r fair $6.27 (legs priced independently $12.12); 8p/4r fair $5.22 (legs priced independently $8.92); 8p/2a fair $8.04 (legs priced independently $13.71); 5p/2a fair $5.25 (legs priced independently $7.59)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8p/5r/2a fair $12.14 (legs priced independently $45.76); 8p/4r/2a fair $10.46 (legs priced independently $33.55); 8p/5r fair $6.36 (legs priced independently $12.11); 8p/4r fair $5.26 (legs priced independently $8.88); 8p/2a fair $8.31 (legs priced independently $14.25); 5p/2a fair $5.49 (legs priced independently $7.91)</li>
 </ul>
 </details><details><summary><h3>Donovan Clingan (POR)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: 9.0/g from 18.5 chances (converting 49% vs 66% career); luck x1.07. <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 26 min (28+ min 34%); 10.5 pts / 10.8 reb / 1.8 ast. Adjustments: luck AST ×0.99, REB ×1.02; vs UTA rebounds ×1.01.</li>
+<li><strong>rebound chances</strong>: 9.0/g from 18.5 chances (converting 49% vs 66% career); luck x1.07.</li>
+<li><strong>Predicted</strong>: 26 min (28+ min 34%); 11.0 pts / 10.8 reb / 1.8 ast. Adjustments: potentials AST ×0.99, rebound chances ×1.02; vs UTA: pace ×1.01, points ×1.04, assists ×1.02, rebounds ×1.01.</li>
 <li><strong>Tracking</strong>: this season 2.2 potential ast/g, 18.5 reb chances/g; last season 3.1 ± 1.8 potential ast, 15.3 ± 4.9 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs MEM: 29 min, 1 ast from 3 potential, 8 reb from 20 chances (lineup differed: Ja Morant played); 27 Oct vs LAL: 26 min, 1 ast from 1 potential, 10 reb from 19 chances (lineup differed: Ja Morant played).</li>
 </ul>
@@ -2183,9 +2222,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -2194,83 +2232,92 @@ details[open] > summary::before { content:"▾ "; }
 <td>20+ pts+reb</td>
 <td>$1.40</td>
 <td>$1.40 (sportsbet)</td>
-<td>$1.71</td>
-<td>$1.54</td>
-<td><span class="ev-neg">-9%</span></td>
+<td><strong>$1.65</strong></td>
+<td><span class="ev-neg">-15%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>$2.25</td>
 <td>$2.25 (pointsbetau)</td>
-<td>$3.19</td>
-<td>$2.58</td>
-<td><span class="ev-neg">-13%</span></td>
+<td><strong>$2.98</strong></td>
+<td><span class="ev-neg">-25%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$4.50</td>
 <td>$5.00 (pointsbetau)</td>
-<td>$7.76</td>
-<td>$5.16</td>
-<td><span class="ev-neg">-3%</span></td>
+<td><strong>$7.06</strong></td>
+<td><span class="ev-neg">-29%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>10+ reb</td>
-<td>$1.34</td>
-<td>$1.35 (ladbrokes_au)</td>
-<td>$1.62</td>
-<td>$1.48</td>
-<td><span class="ev-neg">-9%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>12+ reb</td>
-<td>$1.88</td>
-<td>$1.88 (sportsbet)</td>
-<td>$2.45</td>
-<td>$2.18</td>
-<td><span class="ev-neg">-14%</span></td>
+<td>35+ pts+reb</td>
+<td>$10.00</td>
+<td>$10.00 (sportsbet)</td>
+<td><strong>$20.98</strong></td>
+<td><span class="ev-neg">-52%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>14+ reb</td>
 <td>$3.11</td>
 <td>$3.11 (sportsbet)</td>
-<td>$4.27</td>
-<td>$3.71</td>
-<td><span class="ev-neg">-16%</span></td>
+<td><strong>$4.35</strong></td>
+<td><span class="ev-neg">-28%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>15+ reb</td>
+<td>n/a</td>
+<td>$4.00 (betr_au)</td>
+<td><strong>$6.01</strong></td>
+<td><span class="ev-neg">-33%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>16+ reb</td>
 <td>$5.20</td>
 <td>$5.20 (sportsbet)</td>
-<td>$8.71</td>
-<td>$6.41</td>
-<td><span class="ev-neg">-19%</span></td>
+<td><strong>$8.73</strong></td>
+<td><span class="ev-neg">-40%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>18+ reb</td>
+<td>n/a</td>
+<td>$7.00 (ladbrokes_au)</td>
+<td><strong>$20.61</strong></td>
+<td><span class="ev-neg">-66%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>20+ reb</td>
+<td>n/a</td>
+<td>$13.00 (ladbrokes_au)</td>
+<td><strong>$58.31</strong></td>
+<td><span class="ev-neg">-78%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/12r fair $5.31 (legs priced independently $6.28); 10p/12r fair $3.99 (legs priced independently $4.55); 12r/3a fair $7.80 (legs priced independently $9.02); 12r/2a fair $4.18 (legs priced independently $4.59)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/12r fair $4.98 (legs priced independently $5.78); 10p/12r fair $3.82 (legs priced independently $4.30); 12r/3a fair $7.70 (legs priced independently $8.81); 10r/3a fair $5.34 (legs priced independently $5.82)</li>
 </ul>
 </details><details><summary><h3>Mo Bamba (UTA)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: 5.5/g from 15.5 chances (converting 35% vs 55% career); luck x1.07. <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 13 min (28+ min 0%); 4.7 pts / 4.0 reb / 0.7 ast. Adjustments: luck AST ×1.01, REB ×1.01; vs POR rebounds ×0.98.</li>
+<li><strong>rebound chances</strong>: 5.5/g from 15.5 chances (converting 35% vs 55% career); luck x1.07.</li>
+<li><strong>Predicted</strong>: 13 min (28+ min 0%); 4.7 pts / 4.0 reb / 0.7 ast. Adjustments: potentials AST ×1.01, rebound chances ×1.01; vs POR: pace ×1.01, points ×1.00, assists ×0.97, rebounds ×0.98.</li>
 <li><strong>Tracking</strong>: this season 2.5 potential ast/g, 15.5 reb chances/g.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs SAS: 16 min, 1 ast from 1 potential, 4 reb from 11 chances (lineup differed: Jaren Jackson Jr. out, Lauri Markkanen out); 26 Oct vs MEM: 29 min, 1 ast from 4 potential, 7 reb from 20 chances (lineup differed: Jaxson Hayes out).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 5p/6r fair $5.74 (legs priced independently $8.07); 5p/5r fair $4.16 (legs priced independently $5.65)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 5p/6r fair $5.75 (legs priced independently $8.07); 5p/5r fair $4.16 (legs priced independently $5.65)</li>
 </ul>
 </details><details><summary><h3>Toumani Camara (POR)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: 1.8/g from 8.5 chances (converting 21% vs 55% career); luck x1.23. <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 29 min (28+ min 54%); 12.8 pts / 4.7 reb / 2.2 ast. Adjustments: luck AST ×0.98, REB ×1.08; vs UTA rebounds ×1.03.</li>
+<li><strong>rebound chances</strong>: 1.8/g from 8.5 chances (converting 21% vs 55% career); luck x1.23.</li>
+<li><strong>Predicted</strong>: 29 min (28+ min 54%); 13.3 pts / 4.7 reb / 2.2 ast. Adjustments: potentials AST ×0.98, rebound chances ×1.08; vs UTA: pace ×1.01, points ×1.04, assists ×1.02, rebounds ×1.03.</li>
 <li><strong>Tracking</strong>: this season 1.5 potential ast/g, 8.5 reb chances/g; last season 5.0 ± 2.3 potential ast, 8.2 ± 3.7 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs MEM: 26 min, 1 ast from 0 potential, 2 reb from 11 chances (lineup differed: Ja Morant played); 27 Oct vs LAL: 24 min, 1 ast from 1 potential, 1 reb from 3 chances (lineup differed: Ja Morant played).</li>
 </ul>
@@ -2280,9 +2327,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -2291,84 +2337,93 @@ details[open] > summary::before { content:"▾ "; }
 <td>15+ pts+reb</td>
 <td>$1.40</td>
 <td>$1.40 (dabble_au)</td>
-<td>$1.56</td>
-<td>$1.47</td>
-<td><span class="ev-neg">-5%</span></td>
+<td><strong>$1.50</strong></td>
+<td><span class="ev-neg">-7%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>20+ pts+reb</td>
 <td>$2.40</td>
 <td>$2.50 (pointsbetau)</td>
-<td>$2.79</td>
-<td>$2.51</td>
-<td><span class="ev-neg">-1%</span></td>
+<td><strong>$2.59</strong></td>
+<td><span class="ev-neg">-3%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>$5.00</td>
 <td>$5.00 (sportsbet)</td>
-<td>$6.38</td>
-<td>$5.05</td>
-<td><span class="ev-neg">-1%</span></td>
+<td><strong>$5.62</strong></td>
+<td><span class="ev-neg">-11%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>30+ pts+reb</td>
+<td>$13.00</td>
+<td>$13.00 (sportsbet)</td>
+<td><strong>$15.01</strong></td>
+<td><span class="ev-neg">-13%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>4+ reb</td>
 <td>$1.35</td>
 <td>$1.55 (tab)</td>
-<td>$1.53</td>
-<td>$1.42</td>
-<td><span class="ev-pos">+9%</span></td>
-<td><strong>value (calibrated)</strong></td>
-</tr>
-<tr>
-<td>6+ reb</td>
-<td>$2.67</td>
-<td>$2.75 (dabble_au)</td>
-<td>$2.89</td>
-<td>$2.77</td>
-<td><span class="ev-neg">-1%</span></td>
-<td></td>
+<td><strong>$1.53</strong></td>
+<td><span class="ev-pos">+1%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>7+ reb</td>
 <td>n/a</td>
 <td>$4.10 (betr_au)</td>
-<td>$4.36</td>
-<td>$4.18</td>
-<td><span class="ev-neg">-2%</span></td>
+<td><strong>$4.41</strong></td>
+<td><span class="ev-neg">-7%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>$6.00</td>
 <td>$8.00 (tab)</td>
-<td>$7.11</td>
-<td>$6.14</td>
-<td><span class="ev-pos">+30%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$7.11</strong></td>
+<td><span class="ev-pos">+13%</span></td>
+<td><strong>value</strong></td>
+</tr>
+<tr>
+<td>9+ reb</td>
+<td>n/a</td>
+<td>$7.50 (ladbrokes_au)</td>
+<td><strong>$12.01</strong></td>
+<td><span class="ev-neg">-38%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>10+ reb</td>
+<td>$12.00</td>
+<td>$12.00 (ladbrokes_au)</td>
+<td><strong>$21.81</strong></td>
+<td><span class="ev-neg">-45%</span></td>
+<td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 6r/3a fair $6.86 (legs priced independently $7.92); 5r/3a fair $4.98 (legs priced independently $5.56); 15p/6r fair $7.19 (legs priced independently $8.15); 15p/5r fair $5.17 (legs priced independently $5.73)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 6r/3a fair $6.65 (legs priced independently $7.68); 5r/3a fair $4.87 (legs priced independently $5.41); 15p/6r fair $6.57 (legs priced independently $7.52); 15p/5r fair $4.78 (legs priced independently $5.30)</li>
 </ul>
 </details><details><summary><h3>Micah Potter (POR)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Donovan Clingan 3.4 fouls/36 vs opponent 24.8 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>high-variance backup</strong>: minutes sd 7.3 over last 20 (avg 19). <em>High-variance backups: −16% blind tails over two seasons; the variance is mostly priced. Your SGM-ladder angle.</em></li>
-<li><strong>Predicted</strong>: 19 min (28+ min 15%); 8.7 pts / 5.3 reb / 1.2 ast. Adjustments: luck AST ×1.00, REB ×1.01; vs UTA rebounds ×1.02.</li>
+<li><strong>foul spot</strong>: Donovan Clingan 3.4 fouls/36 vs opponent 24.8 FTA/g.</li>
+<li><strong>high-variance backup</strong>: minutes sd 7.3 over last 20 (avg 19).</li>
+<li><strong>Predicted</strong>: 19 min (28+ min 15%); 9.1 pts / 5.3 reb / 1.2 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.01; vs UTA: pace ×1.01, points ×1.04, assists ×1.02, rebounds ×1.02.</li>
 <li><strong>Tracking</strong>: this season 0.0 potential ast/g, 6.5 reb chances/g; last season 2.1 ± 1.6 potential ast, 7.7 ± 4.9 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs MEM: 9 min, 0 ast from 0 potential, 2 reb from 6 chances (lineup differed: Ja Morant played); 21 Oct vs PHX: 12 min, 0 ast from 0 potential, 3 reb from 7 chances (lineup differed: Ja Morant played).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/6r/2a fair $9.73 (legs priced independently $26.15); 10p/6r/2a fair $7.93 (legs priced independently $19.62); 12p/6r fair $4.90 (legs priced independently $8.31); 10p/6r fair $3.91 (legs priced independently $6.24)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/6r/2a fair $9.12 (legs priced independently $24.23); 10p/6r/2a fair $7.63 (legs priced independently $18.59); 12p/6r fair $4.65 (legs priced independently $7.78); 10p/6r fair $3.78 (legs priced independently $5.97)</li>
 </ul>
 </details><details><summary><h3>Robert Williams III (POR)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Donovan Clingan 3.4 fouls/36 vs opponent 24.8 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>Predicted</strong>: 19 min (28+ min 1%); 6.8 pts / 7.0 reb / 1.2 ast. Adjustments: luck AST ×1.00, REB ×1.00; vs UTA rebounds ×1.01.</li>
+<li><strong>foul spot</strong>: Donovan Clingan 3.4 fouls/36 vs opponent 24.8 FTA/g.</li>
+<li><strong>Predicted</strong>: 19 min (28+ min 1%); 7.1 pts / 7.0 reb / 1.2 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.00; vs UTA: pace ×1.01, points ×1.04, assists ×1.02, rebounds ×1.01.</li>
 <li><strong>Tracking</strong>: this season 1.3 potential ast/g, 11.3 reb chances/g; last season 1.7 ± 1.4 potential ast, 8.5 ± 3.6 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 27 Oct vs LAL: 21 min, 1 ast from 0 potential, 10 reb from 12 chances (lineup differed: Ja Morant played); 23 Oct vs SAC: 18 min, 0 ast from 2 potential, 6 reb from 10 chances (lineup differed: Ja Morant played).</li>
 </ul>
@@ -2378,9 +2433,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -2389,66 +2443,76 @@ details[open] > summary::before { content:"▾ "; }
 <td>15+ pts+reb</td>
 <td>n/a</td>
 <td>$1.46 (dabble_au)</td>
-<td>$2.35</td>
-<td>$1.62</td>
-<td><span class="ev-neg">-10%</span></td>
+<td><strong>$2.25</strong></td>
+<td><span class="ev-neg">-35%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>20+ pts+reb</td>
 <td>n/a</td>
 <td>$2.60 (dabble_au)</td>
-<td>$6.20</td>
-<td>$3.02</td>
-<td><span class="ev-neg">-14%</span></td>
+<td><strong>$5.74</strong></td>
+<td><span class="ev-neg">-55%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>6+ reb</td>
+<td>25+ pts+reb</td>
 <td>n/a</td>
-<td>$1.13 (dabble_au)</td>
-<td>$1.51</td>
-<td>$1.22</td>
-<td><span class="ev-neg">-7%</span></td>
+<td>$5.25 (tab)</td>
+<td><strong>$20.28</strong></td>
+<td><span class="ev-neg">-74%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>30+ pts+reb</td>
+<td>n/a</td>
+<td>$8.00 (dabble_au)</td>
+<td><strong>$92.17</strong></td>
+<td><span class="ev-neg">-91%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>n/a</td>
 <td>$1.46 (dabble_au)</td>
-<td>$2.44</td>
-<td>$1.71</td>
-<td><span class="ev-neg">-15%</span></td>
+<td><strong>$2.43</strong></td>
+<td><span class="ev-neg">-40%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>n/a</td>
 <td>$2.10 (dabble_au)</td>
-<td>$4.83</td>
-<td>$2.68</td>
-<td><span class="ev-neg">-22%</span></td>
+<td><strong>$4.88</strong></td>
+<td><span class="ev-neg">-57%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>12+ reb</td>
 <td>n/a</td>
 <td>$3.60 (dabble_au)</td>
-<td>$11.44</td>
-<td>$4.93</td>
-<td><span class="ev-neg">-27%</span></td>
+<td><strong>$11.58</strong></td>
+<td><span class="ev-neg">-69%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>14+ reb</td>
+<td>n/a</td>
+<td>$6.00 (tab)</td>
+<td><strong>$31.47</strong></td>
+<td><span class="ev-neg">-81%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 8p/8r fair $5.16 (legs priced independently $6.23); 8p/6r fair $3.43 (legs priced independently $3.86)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 10p/8r fair $7.30 (legs priced independently $9.18); 8p/8r fair $4.87 (legs priced independently $5.77)</li>
 </ul>
 </details><details><summary><h3>Lauri Markkanen (UTA)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Jaxson Hayes 3.2 fouls/36 vs opponent 25.4 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>high-variance backup</strong>: minutes sd 8.7 over last 20 (avg 30). <em>High-variance backups: −16% blind tails over two seasons; the variance is mostly priced. Your SGM-ladder angle.</em></li>
-<li><strong>Predicted</strong>: 27 min (28+ min 58%); 18.0 pts / 5.2 reb / 1.5 ast. Adjustments: luck AST ×0.98, REB ×1.00; vs POR rebounds ×0.98.</li>
+<li><strong>foul spot</strong>: Jaxson Hayes 3.2 fouls/36 vs opponent 25.4 FTA/g.</li>
+<li><strong>high-variance backup</strong>: minutes sd 8.7 over last 20 (avg 30).</li>
+<li><strong>Predicted</strong>: 27 min (28+ min 58%); 18.0 pts / 5.2 reb / 1.5 ast. Adjustments: potentials AST ×0.98, rebound chances ×1.00; vs POR: pace ×1.01, points ×1.00, assists ×0.97, rebounds ×0.98.</li>
 <li><strong>Tracking</strong>: this season 1.8 potential ast/g, 9.0 reb chances/g; last season 3.8 ± 1.7 potential ast, 9.4 ± 4.0 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 25 Oct vs LAL: 38 min, 1 ast from 1 potential, 7 reb from 9 chances (lineup differed: Mo Bamba out); 23 Oct vs NOP: 34 min, 3 ast from 4 potential, 6 reb from 12 chances (lineup differed: Mo Bamba out).</li>
 </ul>
@@ -2458,98 +2522,105 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>20+ pts+reb</td>
-<td>$1.11</td>
-<td>$1.11 (sportsbet)</td>
-<td>$1.49</td>
-<td>$1.16</td>
-<td><span class="ev-neg">-5%</span></td>
-<td></td>
-</tr>
-<tr>
 <td>25+ pts+reb</td>
 <td>$1.40</td>
 <td>$1.40 (sportsbet)</td>
-<td>$2.12</td>
-<td>$1.55</td>
-<td><span class="ev-neg">-9%</span></td>
+<td><strong>$2.10</strong></td>
+<td><span class="ev-neg">-33%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$2.00</td>
 <td>$2.00 (pointsbetau)</td>
-<td>$3.57</td>
-<td>$2.29</td>
-<td><span class="ev-neg">-13%</span></td>
+<td><strong>$3.50</strong></td>
+<td><span class="ev-neg">-43%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>35+ pts+reb</td>
 <td>$3.50</td>
 <td>$3.60 (pointsbetau)</td>
-<td>$7.19</td>
-<td>$4.05</td>
-<td><span class="ev-neg">-11%</span></td>
+<td><strong>$7.03</strong></td>
+<td><span class="ev-neg">-49%</span></td>
 <td></td>
 </tr>
 <tr>
-<td>4+ reb</td>
-<td>$1.14</td>
-<td>$1.14 (ladbrokes_au)</td>
-<td>$1.41</td>
-<td>$1.22</td>
-<td><span class="ev-neg">-7%</span></td>
+<td>40+ pts+reb</td>
+<td>$7.00</td>
+<td>$7.00 (sportsbet)</td>
+<td><strong>$17.29</strong></td>
+<td><span class="ev-neg">-60%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>45+ pts+reb</td>
+<td>$15.00</td>
+<td>$15.00 (sportsbet)</td>
+<td><strong>$50.13</strong></td>
+<td><span class="ev-neg">-70%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>6+ reb</td>
 <td>$1.63</td>
 <td>$1.63 (pointsbetau)</td>
-<td>$2.22</td>
-<td>$1.88</td>
-<td><span class="ev-neg">-13%</span></td>
+<td><strong>$2.22</strong></td>
+<td><span class="ev-neg">-26%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>$3.24</td>
 <td>$3.24 (sportsbet)</td>
-<td>$4.55</td>
-<td>$3.88</td>
-<td><span class="ev-neg">-16%</span></td>
+<td><strong>$4.53</strong></td>
+<td><span class="ev-neg">-28%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>9+ reb</td>
+<td>n/a</td>
+<td>$3.45 (ladbrokes_au)</td>
+<td><strong>$7.07</strong></td>
+<td><span class="ev-neg">-51%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>$6.00</td>
 <td>$7.25 (betr_au)</td>
-<td>$11.83</td>
-<td>$7.60</td>
-<td><span class="ev-neg">-5%</span></td>
+<td><strong>$11.55</strong></td>
+<td><span class="ev-neg">-37%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>12+ reb</td>
+<td>$12.00</td>
+<td>$12.00 (sportsbet)</td>
+<td><strong>$38.50</strong></td>
+<td><span class="ev-neg">-69%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 20p/6r/2a fair $6.91 (legs priced independently $11.29); 18p/6r/2a fair $5.90 (legs priced independently $9.30); 20p/6r fair $3.95 (legs priced independently $5.07); 18p/6r fair $3.33 (legs priced independently $4.18)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 20p/6r/2a fair $7.14 (legs priced independently $11.63); 18p/6r/2a fair $6.05 (legs priced independently $9.60); 20p/6r fair $3.92 (legs priced independently $5.04); 18p/6r fair $3.32 (legs priced independently $4.17)</li>
 </ul>
 </details><details><summary><h3>Jaren Jackson Jr. (UTA)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Jaxson Hayes 3.2 fouls/36 vs opponent 25.4 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>Predicted</strong>: 26 min (28+ min 50%); 18.1 pts / 4.7 reb / 1.8 ast. Adjustments: luck AST ×0.99, REB ×1.01; vs POR rebounds ×0.97.</li>
+<li><strong>foul spot</strong>: Jaxson Hayes 3.2 fouls/36 vs opponent 25.4 FTA/g.</li>
+<li><strong>Predicted</strong>: 26 min (28+ min 50%); 18.1 pts / 4.7 reb / 1.7 ast. Adjustments: potentials AST ×0.99, rebound chances ×1.01; vs POR: pace ×1.01, points ×1.00, assists ×0.97, rebounds ×0.97.</li>
 <li><strong>Tracking</strong>: this season 3.5 potential ast/g, 10.8 reb chances/g; last season 4.1 ± 2.2 potential ast, 7.8 ± 3.0 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 26 Oct vs MEM: 10 min, 2 ast from 2 potential, 3 reb from 4 chances (lineup differed: Jaxson Hayes out); 25 Oct vs LAL: 33 min, 1 ast from 3 potential, 2 reb from 9 chances (lineup differed: Mo Bamba out).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 20p/6r fair $5.13 (legs priced independently $6.46); 18p/6r fair $4.24 (legs priced independently $5.24)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 20p/6r fair $5.12 (legs priced independently $6.44); 18p/6r fair $4.25 (legs priced independently $5.23)</li>
 </ul>
 </details></section><section class="game"><h2>SAC @ MEM</h2>
 <ul>
@@ -2560,8 +2631,8 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 <details><summary><h3>Darius Acuff Jr. (SAC)</h3></summary>
 <ul>
-<li><strong>potentials volume spike</strong>: last game 22 potential assists vs NOP (29 Oct), 2.5x his 8.8 average; 14 assists vs 12.3 expected, <strong>converted: caution, books overreact to made assists (−21% in the backtest)</strong>; same lineup tonight. <em>Last game 18+ potential assists (1.5x his average), same lineup. Split by conversion at Sportsbet over two seasons: didn't convert +21% (434 rungs, +28%/+14%); DID convert −21% (363 rungs, −28%/−17%): books overreact to the assists he made.</em></li>
-<li><strong>Predicted</strong>: 37 min (28+ min 100%); 24.5 pts / 3.6 reb / 7.0 ast. Adjustments: luck AST ×0.99, REB ×1.01; vs MEM rebounds ×1.03.</li>
+<li><strong>potentials volume spike</strong>: last game 22 potential assists vs NOP (29 Oct), 2.5x his 8.8 average; 14 assists vs 12.3 expected, converted; same lineup tonight.</li>
+<li><strong>Predicted</strong>: 37 min (28+ min 100%); 24.5 pts / 3.6 reb / 7.0 ast. Adjustments: potentials AST ×0.99, rebound chances ×1.01; vs MEM: pace ×1.00, points ×1.00, assists ×0.99, rebounds ×1.03.</li>
 <li><strong>Tracking</strong>: this season 11.4 potential ast/g, 6.2 reb chances/g.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs NOP: 41 min, 14 ast from 22 potential, 6 reb from 8 chances (same lineup ✓); 27 Oct vs SAS: 33 min, 5 ast from 8 potential, 3 reb from 10 chances (same lineup ✓).</li>
 </ul>
@@ -2571,59 +2642,62 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>6+ ast</td>
-<td>$1.77</td>
-<td>$1.83 (pointsbetau)</td>
-<td>$1.70</td>
-<td>$1.93</td>
-<td><span class="ev-neg">-5%</span></td>
-<td></td>
+<td>7+ ast</td>
+<td>n/a</td>
+<td>$2.60 (betr_au)</td>
+<td><strong>$2.15</strong></td>
+<td><span class="ev-pos">+21%</span></td>
+<td>value (short price)</td>
 </tr>
 <tr>
 <td>8+ ast</td>
 <td>$3.70</td>
 <td>$3.70 (pointsbetau)</td>
-<td>$2.69</td>
-<td>$3.90</td>
-<td><span class="ev-neg">-5%</span></td>
-<td></td>
+<td><strong>$2.73</strong></td>
+<td><span class="ev-pos">+36%</span></td>
+<td><strong>value</strong></td>
+</tr>
+<tr>
+<td>9+ ast</td>
+<td>n/a</td>
+<td>$4.40 (ladbrokes_au)</td>
+<td><strong>$3.46</strong></td>
+<td><span class="ev-pos">+27%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>10+ ast</td>
 <td>$7.50</td>
 <td>$9.50 (pointsbetau)</td>
-<td>$4.36</td>
-<td>$7.48</td>
-<td><span class="ev-pos">+27%</span></td>
-<td>model way off book: check news</td>
+<td><strong>$4.38</strong></td>
+<td><span class="ev-pos">+117%</span></td>
+<td>big gap: check news/role</td>
 </tr>
 <tr>
 <td>12+ ast</td>
 <td>$15.00</td>
 <td>$15.00 (ladbrokes_au)</td>
-<td>$7.26</td>
-<td>$14.09</td>
-<td><span class="ev-pos">+6%</span></td>
-<td>model way off book: check news</td>
+<td><strong>$7.35</strong></td>
+<td><span class="ev-pos">+104%</span></td>
+<td>big gap: check news/role</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 30p/8a fair $7.80 (legs priced independently $10.71); 25p/8a fair $4.60 (legs priced independently $5.66); 5r/8a fair $7.92 (legs priced independently $9.00); 4r/8a fair $5.03 (legs priced independently $5.53)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 30p/8a fair $7.89 (legs priced independently $10.89); 25p/8a fair $4.67 (legs priced independently $5.75); 5r/8a fair $7.90 (legs priced independently $9.14); 4r/8a fair $5.09 (legs priced independently $5.62)</li>
 </ul>
 </details><details><summary><h3>Domantas Sabonis (SAC)</h3></summary>
 <ul>
-<li><strong>season assist potentials</strong>: 7.2/g from 13.6 chances (converting 53% vs 62% career); luck x1.06. <em>Best single-leg signal: assist luck ≥1.10 at best AU price +3.7% (+3.8%/+3.5% by season, CI includes 0).</em></li>
-<li><strong>rebound chances</strong>: last 2 same-lineup games: 15 from 29 reb chances vs NOP; 14 from 28 reb chances vs SAS (expected 34.3, got 29). <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 34 min (28+ min 78%); 18.1 pts / 13.8 reb / 6.1 ast. Adjustments: luck AST ×1.02, REB ×1.00; vs MEM rebounds ×1.04.</li>
+<li><strong>season assist potentials</strong>: 7.2/g from 13.6 chances (converting 53% vs 62% career); luck x1.06.</li>
+<li><strong>rebound chances</strong>: last 2 same-lineup games: 15 from 29 reb chances vs NOP; 14 from 28 reb chances vs SAS (expected 34.3, got 29).</li>
+<li><strong>Predicted</strong>: 34 min (28+ min 78%); 18.1 pts / 13.8 reb / 6.1 ast. Adjustments: potentials AST ×1.02, rebound chances ×1.00; vs MEM: pace ×1.00, points ×1.00, assists ×0.99, rebounds ×1.04.</li>
 <li><strong>Tracking</strong>: this season 13.6 potential ast/g, 26.2 reb chances/g; last season 7.0 ± 2.8 potential ast, 17.8 ± 8.5 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs NOP: 40 min, 7 ast from 9 potential, 15 reb from 29 chances (same lineup ✓); 27 Oct vs SAS: 37 min, 8 ast from 16 potential, 14 reb from 28 chances (same lineup ✓).</li>
 </ul>
@@ -2633,100 +2707,89 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>5+ ast</td>
-<td>n/a</td>
-<td>$1.26 (ladbrokes_au)</td>
-<td>$1.47</td>
-<td>$1.36</td>
-<td><span class="ev-neg">-7%</span></td>
-<td></td>
-</tr>
-<tr>
 <td>6+ ast</td>
 <td>$1.49</td>
 <td>$1.69 (pointsbetau)</td>
-<td>$1.82</td>
-<td>$1.64</td>
-<td><span class="ev-pos">+3%</span></td>
-<td>marginal</td>
+<td><strong>$1.84</strong></td>
+<td><span class="ev-neg">-8%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>8+ ast</td>
 <td>$2.75</td>
 <td>$3.10 (pointsbetau)</td>
-<td>$3.30</td>
-<td>$3.07</td>
-<td><span class="ev-pos">+1%</span></td>
-<td>marginal</td>
+<td><strong>$3.36</strong></td>
+<td><span class="ev-neg">-8%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>9+ ast</td>
+<td>n/a</td>
+<td>$3.30 (ladbrokes_au)</td>
+<td><strong>$4.94</strong></td>
+<td><span class="ev-neg">-33%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>10+ ast</td>
 <td>$5.00</td>
 <td>$7.00 (pointsbetau)</td>
-<td>$7.45</td>
-<td>$5.55</td>
-<td><span class="ev-pos">+26%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$7.55</strong></td>
+<td><span class="ev-neg">-7%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>12+ ast</td>
+<td>$11.00</td>
+<td>$11.00 (sportsbet)</td>
+<td><strong>$20.83</strong></td>
+<td><span class="ev-neg">-47%</span></td>
+<td></td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$1.62</td>
 <td>$1.69 (pointsbetau)</td>
-<td>$1.69</td>
-<td>$1.81</td>
-<td><span class="ev-neg">-7%</span></td>
+<td><strong>$1.70</strong></td>
+<td><span class="ev-neg">-0%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>35+ pts+reb</td>
 <td>$2.63</td>
 <td>$2.63 (sportsbet)</td>
-<td>$2.54</td>
-<td>$3.00</td>
-<td><span class="ev-neg">-12%</span></td>
-<td></td>
+<td><strong>$2.54</strong></td>
+<td><span class="ev-pos">+3%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>40+ pts+reb</td>
 <td>$4.50</td>
 <td>$4.50 (pointsbetau)</td>
-<td>$4.51</td>
-<td>$5.11</td>
-<td><span class="ev-neg">-12%</span></td>
+<td><strong>$4.50</strong></td>
+<td><span class="ev-neg">-0%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>45+ pts+reb</td>
 <td>$10.00</td>
 <td>$10.00 (sportsbet)</td>
-<td>$9.70</td>
-<td>$10.97</td>
-<td><span class="ev-neg">-9%</span></td>
-<td></td>
-</tr>
-<tr>
-<td>12+ reb</td>
-<td>$1.30</td>
-<td>$1.36 (pointsbetau)</td>
-<td>$1.48</td>
-<td>$1.42</td>
-<td><span class="ev-neg">-4%</span></td>
-<td></td>
+<td><strong>$9.69</strong></td>
+<td><span class="ev-pos">+3%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>14+ reb</td>
 <td>$1.73</td>
 <td>$1.74 (pointsbetau)</td>
-<td>$1.96</td>
-<td>$1.95</td>
+<td><strong>$1.96</strong></td>
 <td><span class="ev-neg">-11%</span></td>
 <td></td>
 </tr>
@@ -2734,39 +2797,53 @@ details[open] > summary::before { content:"▾ "; }
 <td>15+ reb</td>
 <td>n/a</td>
 <td>$2.05 (betr_au)</td>
-<td>$2.34</td>
-<td>$2.34</td>
-<td><span class="ev-neg">-12%</span></td>
+<td><strong>$2.34</strong></td>
+<td><span class="ev-neg">-13%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>16+ reb</td>
 <td>$2.60</td>
 <td>$2.60 (sportsbet)</td>
-<td>$2.86</td>
-<td>$2.97</td>
-<td><span class="ev-neg">-12%</span></td>
+<td><strong>$2.86</strong></td>
+<td><span class="ev-neg">-9%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>18+ reb</td>
+<td>n/a</td>
+<td>$4.20 (betr_au)</td>
+<td><strong>$4.68</strong></td>
+<td><span class="ev-neg">-10%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>20+ reb</td>
+<td>n/a</td>
+<td>$7.50 (betr_au)</td>
+<td><strong>$8.69</strong></td>
+<td><span class="ev-neg">-14%</span></td>
 <td></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15r/8a fair $5.91 (legs priced independently $7.73); 15r/6a fair $3.54 (legs priced independently $4.27); 20p/15r fair $4.51 (legs priced independently $5.80); 18p/15r fair $3.71 (legs priced independently $4.61); 20p/8a fair $6.45 (legs priced independently $8.17); 18p/8a fair $5.28 (legs priced independently $6.49)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15r/8a fair $6.03 (legs priced independently $7.87); 15r/6a fair $3.57 (legs priced independently $4.30); 20p/15r fair $4.51 (legs priced independently $5.80); 18p/15r fair $3.71 (legs priced independently $4.61); 20p/8a fair $6.48 (legs priced independently $8.32); 18p/8a fair $5.32 (legs priced independently $6.61)</li>
 </ul>
 </details><details><summary><h3>Isaiah Stewart (MEM)</h3></summary>
 <ul>
-<li><strong>foul spot</strong>: Zach Edey 4.7 fouls/36 vs opponent 22.4 FTA/g. <em>Faded on two seasons (−21% blind tails); a weak signal on its own.</em></li>
-<li><strong>rebound chances</strong>: last 2 same-lineup games: 3 from 15 reb chances vs POR; 4 from 15 reb chances vs UTA (expected 16.7, got 7). <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 18 min (28+ min 4%); 7.5 pts / 4.5 reb / 1.0 ast. Adjustments: luck AST ×1.01, REB ×1.05; vs SAC rebounds ×1.03.</li>
+<li><strong>foul spot</strong>: Zach Edey 4.7 fouls/36 vs opponent 22.4 FTA/g.</li>
+<li><strong>rebound chances</strong>: last 2 same-lineup games: 3 from 15 reb chances vs POR; 4 from 15 reb chances vs UTA (expected 16.7, got 7).</li>
+<li><strong>Predicted</strong>: 18 min (28+ min 4%); 7.8 pts / 4.5 reb / 1.1 ast. Adjustments: potentials AST ×1.01, rebound chances ×1.05; vs SAC: pace ×1.01, points ×1.05, assists ×1.06, rebounds ×1.03.</li>
 <li><strong>Tracking</strong>: this season 1.2 potential ast/g, 12.0 reb chances/g; last season 2.2 ± 1.8 potential ast, 8.5 ± 3.6 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs POR: 16 min, 0 ast from 0 potential, 3 reb from 15 chances (same lineup ✓); 26 Oct vs UTA: 15 min, 0 ast from 0 potential, 4 reb from 15 chances (same lineup ✓).</li>
 <li>No AU ladder prices in the snapshot for this player yet.</li>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 6r/2a fair $8.63 (legs priced independently $11.95); 5r/2a fair $6.39 (legs priced independently $8.22); 10p/6r fair $8.64 (legs priced independently $10.88); 8p/6r fair $6.06 (legs priced independently $7.36)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 6r/2a fair $8.05 (legs priced independently $11.03); 5r/2a fair $5.91 (legs priced independently $7.63); 10p/6r fair $7.90 (legs priced independently $10.04); 10p/5r fair $5.76 (legs priced independently $6.94)</li>
 </ul>
 </details><details><summary><h3>Precious Achiuwa (SAC)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: 6.2/g from 15.4 chances (converting 40% vs 60% career); luck x1.09. <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 30 min (28+ min 61%); 12.2 pts / 9.0 reb / 1.7 ast. Adjustments: luck AST ×1.04, REB ×1.04; vs MEM rebounds ×1.07.</li>
+<li><strong>rebound chances</strong>: 6.2/g from 15.4 chances (converting 40% vs 60% career); luck x1.09.</li>
+<li><strong>Predicted</strong>: 30 min (28+ min 61%); 12.2 pts / 9.0 reb / 1.7 ast. Adjustments: potentials AST ×1.04, rebound chances ×1.04; vs MEM: pace ×1.00, points ×1.00, assists ×0.99, rebounds ×1.07.</li>
 <li><strong>Tracking</strong>: this season 2.6 potential ast/g, 15.4 reb chances/g; last season 2.1 ± 1.7 potential ast, 9.5 ± 4.9 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs NOP: 41 min, 2 ast from 5 potential, 9 reb from 18 chances (same lineup ✓); 27 Oct vs SAS: 14 min, 0 ast from 1 potential, 1 reb from 5 chances (same lineup ✓).</li>
 </ul>
@@ -2776,94 +2853,93 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>15+ pts+reb</td>
-<td>$1.17</td>
-<td>$1.17 (sportsbet)</td>
-<td>$1.36</td>
-<td>$1.24</td>
-<td><span class="ev-neg">-6%</span></td>
+<td>20+ pts+reb</td>
+<td>$1.67</td>
+<td>$1.67 (pointsbetau)</td>
+<td><strong>$1.82</strong></td>
+<td><span class="ev-neg">-8%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>$2.88</td>
 <td>$3.00 (pointsbetau)</td>
-<td>$2.78</td>
-<td>$3.29</td>
-<td><span class="ev-neg">-9%</span></td>
-<td></td>
+<td><strong>$2.78</strong></td>
+<td><span class="ev-pos">+8%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$6.00</td>
 <td>$6.00 (sportsbet)</td>
-<td>$5.01</td>
-<td>$6.71</td>
-<td><span class="ev-neg">-11%</span></td>
-<td></td>
+<td><strong>$5.01</strong></td>
+<td><span class="ev-pos">+20%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>35+ pts+reb</td>
 <td>$14.00</td>
 <td>$14.00 (sportsbet)</td>
-<td>$11.00</td>
-<td>$15.01</td>
-<td><span class="ev-neg">-7%</span></td>
-<td></td>
+<td><strong>$11.00</strong></td>
+<td><span class="ev-pos">+27%</span></td>
+<td><strong>value</strong></td>
+</tr>
+<tr>
+<td>8+ reb</td>
+<td>$1.91</td>
+<td>$1.91 (sportsbet)</td>
+<td><strong>$1.61</strong></td>
+<td><span class="ev-pos">+18%</span></td>
+<td>value (short price)</td>
+</tr>
+<tr>
+<td>9+ reb</td>
+<td>n/a</td>
+<td>$2.25 (ladbrokes_au)</td>
+<td><strong>$1.89</strong></td>
+<td><span class="ev-pos">+19%</span></td>
+<td>value (short price)</td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>$3.14</td>
 <td>$3.40 (betr_au)</td>
-<td>$2.31</td>
-<td>$3.32</td>
-<td><span class="ev-pos">+2%</span></td>
-<td>marginal</td>
+<td><strong>$2.31</strong></td>
+<td><span class="ev-pos">+47%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>12+ reb</td>
 <td>$6.00</td>
 <td>$7.50 (betr_au)</td>
-<td>$3.71</td>
-<td>$6.13</td>
-<td><span class="ev-pos">+22%</span></td>
-<td>model way off book: check news</td>
+<td><strong>$3.71</strong></td>
+<td><span class="ev-pos">+102%</span></td>
+<td>big gap: check news/role</td>
 </tr>
 <tr>
 <td>14+ reb</td>
 <td>$12.00</td>
 <td>$12.00 (sportsbet)</td>
-<td>$6.82</td>
-<td>$11.90</td>
-<td><span class="ev-pos">+1%</span></td>
-<td>marginal</td>
-</tr>
-<tr>
-<td>16+ reb</td>
-<td>$34.00</td>
-<td>$34.00 (sportsbet)</td>
-<td>$14.70</td>
-<td>$31.01</td>
-<td><span class="ev-pos">+10%</span></td>
-<td>model way off book: check news</td>
+<td><strong>$6.82</strong></td>
+<td><span class="ev-pos">+76%</span></td>
+<td><strong>value</strong></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/12r fair $6.81 (legs priced independently $10.76); 15p/10r fair $4.57 (legs priced independently $6.69); 12r/2a fair $6.07 (legs priced independently $7.68); 10r/2a fair $3.87 (legs priced independently $4.78)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 15p/12r fair $6.81 (legs priced independently $10.76); 15p/10r fair $4.57 (legs priced independently $6.69); 12r/2a fair $6.15 (legs priced independently $7.70); 10r/2a fair $3.95 (legs priced independently $4.79)</li>
 </ul>
 </details><details><summary><h3>Cedric Coward (MEM)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: last 2 same-lineup games: 7 from 18 reb chances vs POR; 11 from 16 reb chances vs UTA (expected 22.3, got 18). <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 27 min (28+ min 42%); 15.0 pts / 6.6 reb / 2.9 ast. Adjustments: luck AST ×1.00, REB ×1.01; vs SAC rebounds ×1.01.</li>
+<li><strong>rebound chances</strong>: last 2 same-lineup games: 7 from 18 reb chances vs POR; 11 from 16 reb chances vs UTA (expected 22.3, got 18).</li>
+<li><strong>Predicted</strong>: 27 min (28+ min 42%); 15.7 pts / 6.6 reb / 3.1 ast. Adjustments: potentials AST ×1.00, rebound chances ×1.01; vs SAC: pace ×1.01, points ×1.05, assists ×1.06, rebounds ×1.01.</li>
 <li><strong>Tracking</strong>: this season 4.5 potential ast/g, 17.0 reb chances/g; last season 4.7 ± 2.3 potential ast, 9.2 ± 3.3 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs POR: 27 min, 4 ast from 7 potential, 7 reb from 18 chances (same lineup ✓); 26 Oct vs UTA: 31 min, 3 ast from 4 potential, 11 reb from 16 chances (same lineup ✓).</li>
 </ul>
@@ -2873,9 +2949,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -2884,83 +2959,91 @@ details[open] > summary::before { content:"▾ "; }
 <td>20+ pts+reb</td>
 <td>$1.53</td>
 <td>$1.53 (sportsbet)</td>
-<td>$1.75</td>
-<td>$1.70</td>
-<td><span class="ev-neg">-10%</span></td>
+<td><strong>$1.64</strong></td>
+<td><span class="ev-neg">-7%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>$2.75</td>
 <td>$2.75 (sportsbet)</td>
-<td>$3.00</td>
-<td>$3.15</td>
-<td><span class="ev-neg">-13%</span></td>
-<td></td>
+<td><strong>$2.73</strong></td>
+<td><span class="ev-pos">+1%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$6.00</td>
 <td>$6.00 (sportsbet)</td>
-<td>$6.31</td>
-<td>$6.75</td>
-<td><span class="ev-neg">-11%</span></td>
-<td></td>
+<td><strong>$5.44</strong></td>
+<td><span class="ev-pos">+10%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>35+ pts+reb</td>
 <td>$14.00</td>
 <td>$14.00 (sportsbet)</td>
-<td>$16.47</td>
-<td>$15.14</td>
-<td><span class="ev-neg">-8%</span></td>
+<td><strong>$13.41</strong></td>
+<td><span class="ev-pos">+4%</span></td>
+<td>marginal</td>
+</tr>
+<tr>
+<td>40+ pts+reb</td>
+<td>n/a</td>
+<td>$9.00 (dabble_au)</td>
+<td><strong>$40.44</strong></td>
+<td><span class="ev-neg">-78%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>6+ reb</td>
 <td>$1.64</td>
 <td>$1.64 (sportsbet)</td>
-<td>$1.77</td>
-<td>$1.82</td>
-<td><span class="ev-neg">-10%</span></td>
+<td><strong>$1.77</strong></td>
+<td><span class="ev-neg">-7%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>8+ reb</td>
 <td>$3.28</td>
 <td>$3.28 (sportsbet)</td>
-<td>$2.74</td>
-<td>$3.57</td>
-<td><span class="ev-neg">-8%</span></td>
+<td><strong>$2.75</strong></td>
+<td><span class="ev-pos">+19%</span></td>
+<td><strong>value</strong></td>
+</tr>
+<tr>
+<td>9+ reb</td>
+<td>n/a</td>
+<td>$3.35 (ladbrokes_au)</td>
+<td><strong>$3.60</strong></td>
+<td><span class="ev-neg">-7%</span></td>
 <td></td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>$6.00</td>
 <td>$6.25 (betr_au)</td>
-<td>$4.83</td>
-<td>$6.46</td>
-<td><span class="ev-neg">-3%</span></td>
-<td></td>
+<td><strong>$4.83</strong></td>
+<td><span class="ev-pos">+29%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>12+ reb</td>
 <td>$12.00</td>
 <td>$12.00 (sportsbet)</td>
-<td>$9.28</td>
-<td>$12.62</td>
-<td><span class="ev-neg">-5%</span></td>
-<td></td>
+<td><strong>$9.57</strong></td>
+<td><span class="ev-pos">+25%</span></td>
+<td><strong>value</strong></td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 18p/8r fair $6.96 (legs priced independently $8.48); 15p/8r fair $4.75 (legs priced independently $5.50); 8r/4a fair $7.02 (legs priced independently $8.20); 8r/3a fair $4.53 (legs priced independently $5.01)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 20p/8r fair $8.23 (legs priced independently $10.38); 18p/8r fair $6.23 (legs priced independently $7.57); 8r/4a fair $6.43 (legs priced independently $7.41); 6r/4a fair $4.36 (legs priced independently $4.77)</li>
 </ul>
 </details><details><summary><h3>Zach Edey (MEM)</h3></summary>
 <ul>
-<li><strong>rebound chances</strong>: last 2 same-lineup games: 7 from 19 reb chances vs POR; 3 from 14 reb chances vs UTA (expected 18.7, got 10). <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>
-<li><strong>Predicted</strong>: 23 min (28+ min 23%); 10.3 pts / 9.2 reb / 1.1 ast. Adjustments: luck AST ×0.99, REB ×1.01; vs SAC rebounds ×1.02.</li>
+<li><strong>rebound chances</strong>: last 2 same-lineup games: 7 from 19 reb chances vs POR; 3 from 14 reb chances vs UTA (expected 18.7, got 10).</li>
+<li><strong>Predicted</strong>: 23 min (28+ min 23%); 10.8 pts / 9.2 reb / 1.2 ast. Adjustments: potentials AST ×0.99, rebound chances ×1.01; vs SAC: pace ×1.01, points ×1.05, assists ×1.06, rebounds ×1.02.</li>
 <li><strong>Tracking</strong>: this season 1.2 potential ast/g, 15.8 reb chances/g; last season 2.0 ± 1.5 potential ast, 16.4 ± 9.1 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 29 Oct vs POR: 19 min, 0 ast from 0 potential, 7 reb from 19 chances (same lineup ✓); 26 Oct vs UTA: 21 min, 2 ast from 2 potential, 3 reb from 14 chances (same lineup ✓).</li>
 </ul>
@@ -2970,9 +3053,8 @@ details[open] > summary::before { content:"▾ "; }
 <th>Rung</th>
 <th>Sportsbet</th>
 <th>Best AU</th>
-<th>Model fair</th>
-<th><strong>Calibrated fair</strong></th>
-<th>EV @ best (cal.)</th>
+<th><strong>Model fair</strong></th>
+<th>EV @ best</th>
 <th>Note</th>
 </tr>
 </thead>
@@ -2981,76 +3063,76 @@ details[open] > summary::before { content:"▾ "; }
 <td>15+ pts+reb</td>
 <td>$1.33</td>
 <td>$1.40 (pointsbetau)</td>
-<td>$1.35</td>
-<td>$1.45</td>
-<td><span class="ev-neg">-3%</span></td>
-<td></td>
+<td><strong>$1.31</strong></td>
+<td><span class="ev-pos">+7%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>20+ pts+reb</td>
 <td>$2.25</td>
 <td>$2.90 (pointsbetau)</td>
-<td>$2.10</td>
-<td>$2.56</td>
-<td><span class="ev-pos">+13%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$1.98</strong></td>
+<td><span class="ev-pos">+47%</span></td>
+<td>value (short price)</td>
 </tr>
 <tr>
 <td>25+ pts+reb</td>
 <td>$4.50</td>
 <td>$4.50 (sportsbet)</td>
-<td>$4.09</td>
-<td>$5.09</td>
-<td><span class="ev-neg">-12%</span></td>
-<td></td>
+<td><strong>$3.71</strong></td>
+<td><span class="ev-pos">+21%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>30+ pts+reb</td>
 <td>$12.00</td>
 <td>$12.00 (sportsbet)</td>
-<td>$10.24</td>
-<td>$13.00</td>
-<td><span class="ev-neg">-8%</span></td>
-<td></td>
+<td><strong>$8.62</strong></td>
+<td><span class="ev-pos">+39%</span></td>
+<td><strong>value</strong></td>
+</tr>
+<tr>
+<td>9+ reb</td>
+<td>n/a</td>
+<td>$1.96 (ladbrokes_au)</td>
+<td><strong>$1.84</strong></td>
+<td><span class="ev-pos">+7%</span></td>
+<td>marginal</td>
 </tr>
 <tr>
 <td>10+ reb</td>
 <td>$2.22</td>
 <td>$2.60 (pointsbetau)</td>
-<td>$2.27</td>
-<td>$2.49</td>
-<td><span class="ev-pos">+5%</span></td>
-<td>marginal</td>
+<td><strong>$2.26</strong></td>
+<td><span class="ev-pos">+15%</span></td>
+<td>value (short price)</td>
 </tr>
 <tr>
 <td>12+ reb</td>
 <td>$4.00</td>
 <td>$5.25 (pointsbetau)</td>
-<td>$3.79</td>
-<td>$4.46</td>
-<td><span class="ev-pos">+18%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$3.77</strong></td>
+<td><span class="ev-pos">+39%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>14+ reb</td>
 <td>$7.00</td>
 <td>$12.00 (pointsbetau)</td>
-<td>$7.24</td>
-<td>$7.88</td>
-<td><span class="ev-pos">+52%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$7.03</strong></td>
+<td><span class="ev-pos">+71%</span></td>
+<td><strong>value</strong></td>
 </tr>
 <tr>
 <td>16+ reb</td>
 <td>$12.00</td>
 <td>$15.00 (ladbrokes_au)</td>
-<td>$15.46</td>
-<td>$13.86</td>
-<td><span class="ev-pos">+8%</span></td>
-<td><strong>value (calibrated)</strong></td>
+<td><strong>$14.84</strong></td>
+<td><span class="ev-pos">+1%</span></td>
+<td>marginal</td>
 </tr>
 </tbody>
 </table></div>
 <ul>
-<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/12r fair $7.32 (legs priced independently $9.92); 10p/12r fair $5.67 (legs priced independently $7.20); 12r/2a fair $10.67 (legs priced independently $12.36); 10r/2a fair $6.59 (legs priced independently $7.40)</li>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 12p/12r fair $6.66 (legs priced independently $8.95); 10p/12r fair $5.35 (legs priced independently $6.68); 12r/2a fair $10.03 (legs priced independently $11.56); 10r/2a fair $6.17 (legs priced independently $6.93)</li>
 </ul></details></section></main></body></html>

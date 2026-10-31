@@ -23,6 +23,7 @@ COLUMNS = {
     "FG3A": "fg3a",
     "FTM": "ftm",
     "FTA": "fta",
+    "TOV": "tov",
     "PF": "pf",
     "PLUS_MINUS": "plus_minus",
 }

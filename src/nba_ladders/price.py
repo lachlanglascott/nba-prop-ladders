@@ -53,6 +53,13 @@ def player_history(name: str, as_of: date | None = None) -> tuple[pl.DataFrame, 
     return hist.sort("game_date").tail(HISTORY_GAMES), "games (all roles)"
 
 
+def _today_et() -> date:
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    return datetime.now(ZoneInfo("America/New_York")).date()
+
+
 def simulate_player(name: str, *, starter_out: bool = False, opponent: str | None = None,
                     as_of: date | None = None, luck: bool = True, n: int = 50_000,
                     verbose: bool = True, extra_minutes: float = 0.0,
@@ -73,7 +80,8 @@ def simulate_player(name: str, *, starter_out: bool = False, opponent: str | Non
     pid = int(hist["player_id"][0])
     info = {"player_id": pid, "games": hist.height, "kind": kind,
             "from": hist["game_date"].min(), "to": hist["game_date"].max(),
-            "luck_ast": 1.0, "luck_reb": 1.0, "opp_reb": 1.0}
+            "luck_ast": 1.0, "luck_reb": 1.0, "opp_reb": 1.0,
+            "opp_pace": 1.0, "opp_pts": 1.0, "opp_ast": 1.0}
     if luck:
         from nba_ladders.luck import effective_luck, live_luck
 
@@ -99,6 +107,13 @@ def simulate_player(name: str, *, starter_out: bool = False, opponent: str | Non
         info["opp_reb"] = live_rebound_multiplier(pg_all, positions(), pid, opponent,
                                                   _reb_table(as_of))
         fit.reb_rate = fit.reb_rate * info["opp_reb"]
+        # pace and defence: points and assists per minute vs this opponent
+        from nba_ladders.matchup import multipliers
+
+        mm = multipliers(opponent, as_of or _today_et())
+        info.update(opp_pace=mm["pace"], opp_pts=mm["pts"], opp_ast=mm["ast"])
+        fit.pts_rate = fit.pts_rate * mm["pts"]
+        fit.ast_rate = fit.ast_rate * mm["ast"]
     if extra_minutes:  # e.g. minutes unlocked by tonight's absences (absences.context_effects)
         fit.role_shift += extra_minutes
     for s, m in (rate_mult or {}).items():
@@ -109,7 +124,8 @@ def simulate_player(name: str, *, starter_out: bool = False, opponent: str | Non
         print(f"{name}: {hist.height} {kind} ({info['from']} to {info['to']}), {n_out} with starter out")
         if hist.height < 20:
             print(f"WARNING: only {hist.height} games; prices rest on a tiny sample")
-        opp = f", vs {opponent} rebounds x{info['opp_reb']:.3f}" if opponent else ""
+        opp = (f", vs {opponent} rebounds x{info['opp_reb']:.3f}, pace x{info['opp_pace']:.3f}, "
+               f"points x{info['opp_pts']:.3f}, assists x{info['opp_ast']:.3f}") if opponent else ""
         print(f"adjustments: luck AST x{info['luck_ast']:.3f} REB x{info['luck_reb']:.3f}{opp}")
         m = stats["minutes"]
         print(f"scenario: starter {'OUT' if starter_out else 'plays'}; "

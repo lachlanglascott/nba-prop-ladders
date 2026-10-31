@@ -3,9 +3,10 @@
     uv run python -m nba_ladders.candidates                 # today's ET slate
     uv run python -m nba_ladders.candidates --date 2026-10-30
 
-Angles (all kept by choice; each carries what the two-season Sportsbet backtest found):
-starter out (backup bigs), minutes unlocked (absences), potentials luck (AST / REB),
-foul spot (backup big vs foul-prone starter + high-FTA opponent), high-variance backup bigs.
+Angles find the candidates (the user's edges): potentials (last-game misses, volume spikes,
+season luck), starter out (backup bigs), minutes unlocked, Questionable teammates, rebound
+chances, foul spot, high-variance backups. Bets are then the model's projection vs the market:
+fair = 1 / model probability, EV at the best AU price, focus on rungs priced $3-$15.
 
 Per candidate: reasons, prediction (minutes, means, tracking volume and per-game variance),
 ladder prices (Sportsbet, best AU, fair, EV), and SGM combos with fair prices for comparing
@@ -32,7 +33,7 @@ from nba_ladders.combos import best_combos
 from nba_ladders.context_adjust import adjust_history, history_adjustment
 from nba_ladders.luck import load as load_tracking
 from nba_ladders.luck import scan
-from nba_ladders.market import TEAM_ABBR, cushion, latest, model_p
+from nba_ladders.market import TEAM_ABBR, latest, model_p
 from nba_ladders.price import _frame, simulate_player
 from nba_ladders.scenarios import positions
 from nba_ladders.screens import parse_player_index
@@ -44,27 +45,19 @@ from nba_ladders.sources.odds_api import AU_BASE, AU_REFERENCE, load_cached
 AU_BOOKS = [AU_BASE, *AU_REFERENCE]
 UNLOCK_MIN = 3.0
 Q_WATCH_MIN = 2.0  # a Questionable teammate's absence worth flagging (effects are shrunk/scaled)
-FOUL_Q = 0.667  # top third of starter fouls/36 x opponent FTA, as in the backtest
-HI_VAR_MIN_SD = 5.8  # top tercile of minutes sd (backtest)
+FOUL_Q = 0.667  # top third of starter fouls/36 x opponent FTA (last season)
+HI_VAR_MIN_SD = 5.8  # top tercile of minutes sd
 
-EVIDENCE = {
-    "pot_volume_ast": "Last game 18+ potential assists (1.5x his average), same lineup. Split by "
-                      "conversion at Sportsbet over two seasons: didn't convert +21% (434 rungs, +28%/+14%); "
-                      "DID convert −21% (363 rungs, −28%/−17%): books overreact to the assists he made.",
-    "pot_miss_ast": "Last game 12+ potential assists and 4+ short of his conversion, same lineup: "
-                    "+12% blind at Sportsbet over two seasons (+6%/+17%, 400 rungs, CI −5% to +29%) vs "
-                    "−8% for all assist rungs. The calibrated EV below doesn't know this angle.",
-    "starter_out": "Two-season blind tails −13% at Sportsbet; the model adds real information "
-                   "here (coef 0.24), so it's about price and SGM structure, not blind betting.",
-    "unlocked": "More minutes from absences is mostly priced in (−15% blind tails).",
-    "luck_ast": "Best single-leg signal: assist luck ≥1.10 at best AU price +3.7% (+3.8%/+3.5% by "
-                "season, CI includes 0).",
-    "luck_reb": "Rebound luck: thin and mixed in the backtest; treat as a lead.",
-    "foul_spot": "Faded on two seasons (−21% blind tails); a weak signal on its own.",
-    "hi_var_backup": "High-variance backups: −16% blind tails over two seasons; the variance "
-                     "is mostly priced. Your SGM-ladder angle.",
-    "q_watch": "Questionable teammate: priced as a 53/47 mix (calibrated sit rate). If he's ruled "
-               "out, the 'if he sits' column is the live price, and books may be slow to move.",
+EVIDENCE = {  # what each angle means (no backtest numbers: bets are model vs market)
+    "pot_volume_ast": "A potentials spike last game with tonight's lineup: his role may be bigger than his average.",
+    "pot_miss_ast": "Monster potentials last game that didn't convert, with tonight's lineup.",
+    "starter_out": "Starting centre out: backup big's minutes and rebound role jump.",
+    "unlocked": "Minutes freed by tonight's absences.",
+    "luck_ast": "Season potentials ahead of his assists: conversion should come back toward his norm.",
+    "luck_reb": "Rebound chances ahead of his rebounds.",
+    "foul_spot": "Foul-prone starter vs a high-FTA opponent: extra backup minutes if he gets in trouble.",
+    "hi_var_backup": "High-variance backup minutes: tails are where ladders pay.",
+    "q_watch": "Questionable teammate: priced as a sits/plays mix; if he's ruled out, use the 'if he sits' column.",
 }
 FOCUS = {"pot_miss_ast": ["ast"], "pot_volume_ast": ["ast"], "starter_out": ["reb", "pts+reb", "pts"], "unlocked": ["pts", "reb", "pts+reb", "ast"],
          "luck_ast": ["ast"], "luck_reb": ["reb", "pts+reb"], "foul_spot": ["reb", "pts+reb"],
@@ -297,7 +290,7 @@ def _career_conv(player_id: int, stat: str) -> float:
     return float((me[stat].sum() + K_CONV[stat] * lg[stat]) / (me[c].sum() + K_CONV[stat]))
 
 
-POT_MISS_MIN, POT_MISS_SHORT = 12, 4.0  # backtested: last game 12+ potentials, 4+ assists short
+POT_MISS_MIN, POT_MISS_SHORT = 12, 4.0  # last game 12+ potentials, 4+ assists short
 
 
 def pot_miss(g: dict, player_id: int) -> dict | None:
@@ -312,7 +305,7 @@ def pot_miss(g: dict, player_id: int) -> dict | None:
                                       f"({g['game_date']:%d %b}), {g['ast']} assists vs {exp:.1f} expected; same lineup tonight"}
 
 
-POT_VOL_MIN, POT_VOL_SPIKE = 18, 1.5  # backtested: last game 18+ potentials, 1.5x his average
+POT_VOL_MIN, POT_VOL_SPIKE = 18, 1.5  # last game 18+ potentials, 1.5x his average
 
 
 def pot_baseline(player_id: int, before) -> float | None:
@@ -337,8 +330,7 @@ def pot_volume(g: dict, player_id: int) -> dict | None:
         return None
     exp = g["potential_ast"] * _career_conv(player_id, "ast")
     short = exp - g["ast"]
-    side = ("**didn't convert: the backable side**" if short > 0 else
-            "**converted: caution, books overreact to made assists (−21% in the backtest)**")
+    side = "didn't convert" if short > 0 else "converted"
     return {"short": short, "detail": f"last game {g['potential_ast']} potential assists vs {g['opponent']} "
                                       f"({g['game_date']:%d %b}), {g['potential_ast'] / base:.1f}x his {base:.1f} "
                                       f"average; {g['ast']} assists vs {exp:.1f} expected, {side}; same lineup tonight"}
@@ -411,11 +403,12 @@ def tracking_profile(player_id: int) -> dict:
     return out
 
 
-CAL_CUSHION = 0.05  # calibrated EV needed to shortlist (the blend already discounts the model)
+PRICE_RANGE = (3.0, 15.0)  # where the bets live
+VALUE_EV = 0.10  # model EV at the best AU price to call a rung value
 
 
-def ladder(odds: pl.DataFrame, name: str, stats: dict, focus: list[str], luck_raw: dict | None = None,
-           starter_out: bool = False) -> pl.DataFrame:
+def ladder(odds: pl.DataFrame, name: str, stats: dict, focus: list[str]) -> pl.DataFrame:
+    """AU rungs for the focus stats: best AU price, Sportsbet, model fair and EV at the best price."""
     k = player_key(name)
     o = odds.filter(pl.col("side") == "Over", pl.col("threshold").is_not_null(), pl.col("stat").is_in(focus),
                     pl.col("player").map_elements(player_key, return_dtype=pl.String) == k)
@@ -428,34 +421,22 @@ def ladder(odds: pl.DataFrame, name: str, stats: dict, focus: list[str], luck_ra
     rows = best.join(sb, on=["stat", "threshold"], how="left")
     rows = rows.with_columns(pl.struct("stat", "threshold").map_elements(
         lambda s: model_p(stats, s["stat"], s["threshold"]), return_dtype=pl.Float64).alias("p"))
-    rows = rows.filter(pl.col("p").is_between(0.06, 0.75)).with_columns(
-        (1 / pl.col("p")).alias("fair"), (pl.col("best_au") * pl.col("p") - 1).alias("ev_best"))
-    if rows.height:
-        from nba_ladders.blend import predict
-
-        luck_raw = luck_raw or {}
-        book = rows.select(pl.coalesce("sportsbet", "best_au")).to_series().to_numpy()
-        stat = rows["stat"].to_numpy()
-        luck_hi = np.array([luck_raw.get("ast" if s == "ast" else "reb", 1.0) >= 1.10 for s in stat])
-        p_cal = predict(1 / book, rows["p"].to_numpy(), stat, luck_hi, np.full(len(stat), starter_out))
-        rows = rows.with_columns(pl.Series("p_cal", p_cal)).with_columns(
-            (1 / pl.col("p_cal")).alias("fair_cal"), (pl.col("best_au") * pl.col("p_cal") - 1).alias("ev_cal"))
-    rows = rows.with_columns(pl.col("p").map_elements(cushion, return_dtype=pl.Float64).alias("cush"))
+    rows = rows.filter(pl.col("p") > 0.01, pl.col("best_au").is_between(1.4, PRICE_RANGE[1] * 1.5)).with_columns(
+        (1 / pl.col("p")).alias("fair"), (pl.col("best_au") * pl.col("p") - 1).alias("ev"),
+        pl.col("best_au").is_between(*PRICE_RANGE).alias("in_range"))
     rows = rows.with_columns(
-        pl.when(pl.col("ev_best") >= 1.0).then(pl.lit("model way off book: check news"))
-        .when(pl.col("ev_cal") >= CAL_CUSHION).then(pl.lit("**value (calibrated)**"))
-        .when(pl.col("ev_cal") >= 0).then(pl.lit("marginal")).otherwise(pl.lit("")).alias("note"))
-    # keep it readable: Sportsbet's rungs first, then the best calibrated-EV rungs; max 4 per stat
-    rows = rows.with_columns(pl.col("sportsbet").is_not_null().alias("sb")).sort(
-        ["stat", "sb", "ev_cal"], descending=[False, True, True])
-    return rows.group_by("stat", maintain_order=True).head(4).sort("stat", "threshold").drop("sb")
+        pl.when(pl.col("ev") >= 1.0).then(pl.lit("big gap: check news/role"))
+        .when(pl.col("in_range") & (pl.col("ev") >= VALUE_EV)).then(pl.lit("**value**"))
+        .when(pl.col("ev") >= VALUE_EV).then(pl.lit("value (short price)"))
+        .when(pl.col("ev") >= 0).then(pl.lit("marginal")).otherwise(pl.lit("")).alias("note"))
+    # readable: in-range rungs first, then by EV; max 5 per stat
+    return (rows.sort(["stat", "in_range", "ev"], descending=[False, True, True])
+            .group_by("stat", maintain_order=True).head(5).sort("stat", "threshold"))
 
 
 ANGLE_LABEL = {"pot_miss_ast": "monster potentials, missed", "pot_volume_ast": "potentials volume spike", "luck_ast": "season assist potentials", "starter_out": "starting centre out",
                "q_watch": "questionable teammate", "unlocked": "minutes unlocked",
                "luck_reb": "rebound chances", "foul_spot": "foul spot", "hi_var_backup": "high-variance backup"}
-BASELINE_PRICE = (1.5, 5.0)  # the first rung sits in a realistic range; the ladder climbs from there
-LADDER_MAX, LADDER_RUNGS = 15.0, 3  # rungs shown above the baseline
 STAR_PTS = 20.0  # last season's ppg (20+ games): established stars stay in the game sections
 
 
@@ -470,28 +451,6 @@ def _is_star(player_id: int | None) -> bool:
     return player_id in CONTEXT["stars"]
 
 
-def spot_score(c: dict) -> float:
-    """How strongly the angles fire (not EV). Ranks picks within each angle group."""
-    st, out = c.get("strength", {}), []
-    for a in c["reasons"]:
-        v = st.get(a, 0.0)
-        if a == "pot_miss_ast":
-            out.append(2.5 + 0.3 * (v - POT_MISS_SHORT))
-        elif a == "pot_volume_ast":  # v = shortfall: missed is the +21% side, converted the -21% side
-            out.append(2.5 + 0.2 * v if v > 0 else 0.2)
-        elif a == "luck_ast":
-            out.append(2.0 + 10 * (v - 1.05))
-        elif a == "starter_out":
-            out.append(1.0 + 2.5 * v if "p_out" in c["scenario"] else 0.3)  # ongoing absence: weak
-        elif a == "q_watch":
-            out.append(1.5 + 0.3 * v)
-        elif a == "unlocked":
-            out.append(1.2 + 0.2 * (v - 3))
-        elif a == "luck_reb":
-            out.append(1.0 + 5 * (v - 1.05))
-        else:
-            out.append(0.5 if a == "foul_spot" else 0.4)
-    return max(out) + 0.2 * (len(out) - 1)
 ORDER = list(ANGLE_LABEL)
 
 
@@ -527,7 +486,7 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
     """Markdown for one candidate and its value rungs (for the shortlist)."""
     lines = [f"### {name} ({c['team']})"]
     for a, detail in c["reasons"].items():
-        lines.append(f"- **{ANGLE_LABEL[a]}**: {detail}. _{EVIDENCE[a]}_")
+        lines.append(f"- **{ANGLE_LABEL[a]}**: {detail}.")
     stats, info, by_variant = _simulate(name, c)
     if stats is None:
         return lines + ["- Too little history to price."], []
@@ -541,25 +500,22 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
                    f"{L['reb_ch_pg']:.1f} ± {L['reb_ch_sd']:.1f} reb chances per game")
     lines.append(f"- **Predicted**: {stats['minutes'].mean():.0f} min (28+ min {np.mean(stats['minutes'] >= 28):.0%}); "
                  f"{stats['pts'].mean():.1f} pts / {stats['reb'].mean():.1f} reb / {stats['ast'].mean():.1f} ast. "
-                 f"Adjustments: luck AST ×{info['luck_ast']:.2f}, REB ×{info['luck_reb']:.2f}; "
-                 f"vs {c['opp']} rebounds ×{info['opp_reb']:.2f}.")
+                 f"Adjustments: potentials AST ×{info['luck_ast']:.2f}, rebound chances ×{info['luck_reb']:.2f}; "
+                 f"vs {c['opp']}: pace ×{info['opp_pace']:.2f}, points ×{info['opp_pts']:.2f}, "
+                 f"assists ×{info['opp_ast']:.2f}, rebounds ×{info['opp_reb']:.2f}.")
     if trk:
         lines.append(f"- **Tracking**: {'; '.join(trk)}.")
     rl = recent_line(name)
     if rl:
         lines.append(f"- **Last {RECENT_N} games**: {rl}.")
     focus = sorted({f for a in c["reasons"] for f in FOCUS[a]})
-    from nba_ladders.luck import live_luck
-
-    lr = live_luck().filter(pl.col("player_id") == info["player_id"])
-    luck_raw = {"ast": lr["luck_ast"][0], "reb": lr["luck_reb"][0]} if lr.height else {}
-    lad = ladder(odds, name, stats, focus, luck_raw, "p_out" in c["scenario"])
+    lad = ladder(odds, name, stats, focus)
     both = len(by_variant) == 2
     value = []
     if lad.height:
         extra_h = " | Model if he sits | Model if he plays" if both else ""
-        lines += ["", f"| Rung | Sportsbet | Best AU | Model fair | **Calibrated fair** | EV @ best (cal.) | Note{extra_h} |",
-                  "|---|---|---|---|---|---|---|" + ("---|---|" if both else "")]
+        lines += ["", f"| Rung | Sportsbet | Best AU | **Model fair** | EV @ best | Note{extra_h} |",
+                  "|---|---|---|---|---|---|" + ("---|---|" if both else "")]
         for r in lad.iter_rows(named=True):
             sbp = f"${r['sportsbet']:.2f}" if r["sportsbet"] else "n/a"
             tail = ""
@@ -568,13 +524,13 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
                 pp = model_p(by_variant["plays"], r["stat"], r["threshold"])
                 tail = f" | ${1 / ps:.2f} | ${1 / pp:.2f}" if ps and pp else " | | "
             lines.append(f"| {r['threshold']}+ {r['stat']} | {sbp} | ${r['best_au']:.2f} ({r['best_book']}) | "
-                         f"${r['fair']:.2f} | ${r['fair_cal']:.2f} | {r['ev_cal']:+.0%} | {r['note']}{tail} |")
-            if r["note"] == "**value (calibrated)**":
+                         f"**${r['fair']:.2f}** | {r['ev']:+.0%} | {r['note']}{tail} |")
+            if r["in_range"] and r["ev"] >= VALUE_EV:
                 first = next(iter(c["reasons"]))
                 value.append({"player": name, "team": c["team"], "opp": c["opp"],
                               "rung": f"{r['threshold']}+ {r['stat']}",
-                              "price": r["best_au"], "book": r["best_book"], "fair": r["fair_cal"],
-                              "model_fair": r["fair"], "ev": r["ev_cal"], "angles": list(c["reasons"]),
+                              "price": r["best_au"], "book": r["best_book"], "fair": r["fair"],
+                              "ev": r["ev"], "angles": list(c["reasons"]),
                               "pred": (f"{stats['minutes'].mean():.0f} min · {stats['pts'].mean():.1f} pts / "
                                        f"{stats['reb'].mean():.1f} reb / {stats['ast'].mean():.1f} ast"),
                               "why": c["reasons"][first]})
@@ -593,24 +549,20 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
 
 
 def _pick(name: str, c: dict, stats: dict, lad: pl.DataFrame, combos: pl.DataFrame) -> dict | None:
-    """Baseline bet for the spot: the primary angle's main stat at a realistic price."""
+    """The bet: the best-EV rung priced $3-$15 in his angles' stats, plus that stat's ladder."""
     primary = min(c["reasons"], key=ORDER.index)
-    main_stat = FOCUS[primary][0]
-    base, ladder_up = None, []
+    best, rungs = None, []
     if lad.height:
-        rows = lad.filter(pl.col("stat") == main_stat).sort("threshold")
-        ok = rows.filter(pl.col("best_au").is_between(*BASELINE_PRICE))
-        if ok.height:
-            # the rung closest to a ~$2.50 price, preferring the better calibrated EV
-            base = ok.with_columns(((pl.col("best_au") - 2.5).abs() - 2 * pl.col("ev_cal")).alias("k")) \
-                .sort("k").row(0, named=True)
-            up = rows.filter(pl.col("threshold") > base["threshold"], pl.col("best_au") <= LADDER_MAX)
-            ladder_up = up.head(LADDER_RUNGS).to_dicts()
-    sgm = combos.filter(pl.col("shape") == SHAPES[primary][0]) if combos.height else combos
+        rng = lad.filter(pl.col("in_range")).sort("ev", descending=True)
+        if rng.height:
+            best = rng.row(0, named=True)
+            rungs = lad.filter(pl.col("in_range"), pl.col("stat") == best["stat"]).sort("threshold").to_dicts()
+    shape = "r/a" if best and best["stat"] in ("reb",) else None
+    sgm = combos.filter(pl.col("shape") == (shape or SHAPES[primary][0])) if combos.height else combos
+    main_stat = best["stat"] if best else FOCUS[primary][0]
     return {"player": name, "team": c["team"], "opp": c["opp"], "primary": primary,
-            "angles": sorted(c["reasons"], key=ORDER.index), "score": spot_score(c),
-            "why": c["reasons"][primary], "base": base, "up": ladder_up,
-            "sgm": sgm.row(0, named=True) if sgm.height else None,
+            "angles": sorted(c["reasons"], key=ORDER.index), "why": c["reasons"][primary],
+            "best": best, "rungs": rungs, "sgm": sgm.row(0, named=True) if sgm.height else None,
             "star": _is_star(c.get("player_id")), "recent": recent_line(name, "reb" if "reb" in main_stat else "ast"),
             "pred": (f"{stats['minutes'].mean():.0f} min · {stats['pts'].mean():.1f} pts / "
                      f"{stats['reb'].mean():.1f} reb / {stats['ast'].mean():.1f} ast")}
@@ -645,58 +597,45 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
               "Betr, Neds, Ladbrokes, PointsBet; US books for reference).")]
     if not_filed:
         lines.append(f"\n**Not yet submitted:** {', '.join(sorted(not_filed))}. Re-run closer to tip.")
-    lines += ["", ("**How to read this**: *Model fair* = the simulator alone. *Calibrated fair* = Sportsbet's price "
-                   "and the model blended with weights learned on two seasons of results (out of season it beats "
-                   "Sportsbet's own price: log loss 0.5602 vs 0.5667). EV uses the calibrated fair at the best AU price. "
-                   "Raw model-vs-book gaps lose money historically, so trust the calibrated column. SGM combos are "
-                   "model-only (no SGM prices to calibrate against): compare them with the builder.")]
-    picks = [c["pick"] for c in cands.values() if c.get("pick") and c["pick"]["base"]]
-    for p in picks:  # value only nudges the ranking; a clearly bad price drops the spot
-        ev = p["base"]["ev_cal"]
-        p["rank"] = p["score"] + (min(ev, 0.3) if ev > 0 else (-1.0 if ev < -0.05 else 0.0))
-
-    def rung(r, bold=False):
-        s = f"{r['threshold']}+ ${r['best_au']:.2f}"
-        return (f"**{s}**" if bold else s) + f" (fair ${r['fair_cal']:.2f}, {r['best_book']})"
-
-    def pick_rows(group):
-        out = []
-        for i, s in enumerate(sorted(group, key=lambda s: -s["rank"]), 1):
-            b, g = s["base"], s["sgm"]
-            ladder = " → ".join([rung(b, bold=True)] + [rung(u) for u in s["up"]])
-            sgm = f"{g['combo']} fair ${g['fair']:.2f}" if g else "n/a"
-            why = s["why"] + (f"<br><small>{s['recent']}</small>" if s["recent"] else "")
-            out.append(f"| {i} | **{s['player']}** ({s['team']} vs {s['opp']}) | {why} | {b['stat']}: {ladder} | "
-                       f"{b['ev_cal']:+.0%} | {sgm} | {s['pred']} |")
-        return out
-
-    head = [("| # | Player | The spot (last 2 games: potentials, lineup) | Ladder (best AU, calibrated fair) | "
-             "EV 1st rung | SGM idea | Predicted |"), "|---|---|---|---|---|---|---|"]
+    lines += ["", ("**How to read this**: *Model fair* = the projection alone: minutes as a scenario mix, per-minute "
+                   "rates lined up with tonight's lineup (absences in and out), opponent pace and defence (points, "
+                   "assists), opponent rebounding, and potentials / rebound chances. EV = best AU price × model "
+                   f"probability − 1; **value** = EV ≥ {VALUE_EV:.0%} on a rung priced ${PRICE_RANGE[0]:.0f}–"
+                   f"${PRICE_RANGE[1]:.0f}. No backtest adjustments. SGM fair prices are model-only: compare with the builder.")]
+    picks = [c["pick"] for c in cands.values() if c.get("pick") and c["pick"]["best"]]
     stars = sorted(p["player"] for p in picks if p["star"])
-    picks = [p for p in picks if not p["star"]]
-    lines += ["", "## Picks: the spots", "",
-              (f"Second-tier players only (stars = {STAR_PTS:.0f}+ ppg last season), chosen by angle strength, not EV. "
-               f"Each ladder starts at a $1.50–$5.00 rung and climbs up to ${LADDER_MAX:.0f}. "
-               "Potentials only count from recent games where the rotation matched tonight's. "
+    picks = sorted((p for p in picks if not p["star"]), key=lambda p: -p["best"]["ev"])
+
+    def rung(r):
+        return f"{r['threshold']}+ ${r['best_au']:.2f} (fair ${r['fair']:.2f})"
+
+    lines += ["", f"## Bets: model vs market, ${PRICE_RANGE[0]:.0f}–${PRICE_RANGE[1]:.0f}", "",
+              ("Second-tier players (stars = 20+ ppg last season), ranked by EV of their best rung in range. "
+               "The ladder is every in-range rung of that stat. "
                + (f"Stars with live angles are in the game sections: {', '.join(stars)}." if stars else ""))]
-    miss = [p for p in picks if p["primary"] == "pot_miss_ast"]
-    vol = [p for p in picks if p["primary"] == "pot_volume_ast"]
-    ast = [p for p in picks if p["primary"] == "luck_ast"]
-    rest = [p for p in picks if p["primary"] not in ("pot_miss_ast", "pot_volume_ast", "luck_ast")]
-    lines += ["", "### Monster potentials last game, missed", "",
-              f"_{EVIDENCE['pot_miss_ast']}_", ""] + (head + pick_rows(miss)[:6] if miss else ["None tonight."])
-    lines += ["", "### Potentials volume spike", "", f"_{EVIDENCE['pot_volume_ast']}_", ""] + (
-        head + pick_rows(vol)[:6] if vol else ["None tonight."])
-    lines += ["", "### Season assist potentials", ""] + (head + pick_rows(ast)[:6] if ast else ["None tonight."])
-    lines += ["", "### Other angles", ""] + (head + pick_rows(rest)[:8] if rest else ["None tonight."])
-    lines += ["", f"## Shortlist: calibrated EV ≥ {CAL_CUSHION:.0%} at the best AU price", ""]
+    if picks:
+        lines += ["", "| # | Player | Angle | Bet (best AU) | Model fair | EV | Ladder in range | SGM idea | Predicted |",
+                  "|---|---|---|---|---|---|---|---|---|"]
+        for i, s in enumerate([p for p in picks if p["best"]["ev"] > 0][:15], 1):
+            b, g = s["best"], s["sgm"]
+            ang = ", ".join(ANGLE_LABEL[a] for a in s["angles"])
+            why = f"{ang}<br><small>{s['why']}" + (f"; {s['recent']}" if s["recent"] else "") + "</small>"
+            tag = " **value**" if b["ev"] >= VALUE_EV else ""
+            lines.append(f"| {i} | **{s['player']}** ({s['team']} vs {s['opp']}) | {why} | "
+                         f"**{b['threshold']}+ {b['stat']} ${b['best_au']:.2f}** ({b['best_book']}){tag} | "
+                         f"${b['fair']:.2f} | {b['ev']:+.0%} | {' → '.join(rung(r) for r in s['rungs'])} | "
+                         f"{(g['combo'] + ' fair $' + format(g['fair'], '.2f')) if g else 'n/a'} | {s['pred']} |")
+        neg = [p["player"] for p in picks if p["best"]["ev"] <= 0]
+        if neg:
+            lines.append(f"\nNo positive in-range rung: {', '.join(neg)}.")
+    else:
+        lines.append("\nNo in-range prices for tonight's candidates yet.")
+    lines += ["", f"## Every value rung (EV ≥ {VALUE_EV:.0%}, ${PRICE_RANGE[0]:.0f}–${PRICE_RANGE[1]:.0f}), stars included", ""]
     if shortlist:
-        lines += ["| Player | Rung | Best AU | Calibrated fair | Model fair | Cal. EV | Angles |",
-                  "|---|---|---|---|---|---|---|"]
-        for s in sorted(shortlist, key=lambda s: -s["ev"])[:15]:
+        lines += ["| Player | Rung | Best AU | Model fair | EV | Angles |", "|---|---|---|---|---|---|"]
+        for s in sorted(shortlist, key=lambda s: -s["ev"])[:20]:
             lines.append(f"| {s['player']} ({s['team']}) | {s['rung']} | ${s['price']:.2f} ({s['book']}) | "
-                         f"${s['fair']:.2f} | ${s['model_fair']:.2f} | {s['ev']:+.0%} | "
-                         f"{', '.join(ANGLE_LABEL[a] for a in s['angles'])} |")
+                         f"${s['fair']:.2f} | {s['ev']:+.0%} | {', '.join(ANGLE_LABEL[a] for a in s['angles'])} |")
     else:
         lines.append("None at current prices.")
     for g in games:

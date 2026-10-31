@@ -60,7 +60,7 @@ def test_pot_volume(monkeypatch):
     monkeypatch.setattr(C, "pot_baseline", lambda pid, before: 9.0)
     g = {"same": True, "potential_ast": 22, "ast": 14, "opponent": "NOP", "game_date": date(2026, 10, 29)}
     conv = C.pot_volume(g, 1)
-    assert conv["short"] < 0 and "caution" in conv["detail"]  # the Acuff case
+    assert conv["short"] < 0 and "converted" in conv["detail"]  # the Acuff case
     assert C.pot_volume({**g, "ast": 6}, 1)["short"] > 0
     assert C.pot_volume({**g, "potential_ast": 17}, 1) is None
     assert C.pot_volume({**g, "same": False}, 1) is None
