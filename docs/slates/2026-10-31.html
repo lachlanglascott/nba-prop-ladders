@@ -35,10 +35,45 @@ details[open] > summary::before { content:"▾ "; }
 <p><strong>Not yet submitted:</strong> CHA, HOU, MIN, PHI. Re-run closer to tip.</p>
 <p><strong>How to read this</strong>: <em>Model fair</em> = the simulator alone. <em>Calibrated fair</em> = Sportsbet's price and the model blended with weights learned on two seasons of results (out of season it beats Sportsbet's own price: log loss 0.5602 vs 0.5667). EV uses the calibrated fair at the best AU price. Raw model-vs-book gaps lose money historically, so trust the calibrated column. SGM combos are model-only (no SGM prices to calibrate against): compare them with the builder.</p>
 <section class="top5"><h2>Picks: the spots</h2>
-<p>Second-tier players only (projected under 20 pts), chosen by angle strength, not EV. Each ladder starts at a $1.50–$5.00 rung and climbs up to $15. Potentials only count from recent games where the rotation matched tonight's. Stars with live angles are in the game sections: James Harden, Kevin Durant, LeBron James, Shai Gilgeous-Alexander, Victor Wembanyama.</p>
+<p>Second-tier players only (stars = 20+ ppg last season), chosen by angle strength, not EV. Each ladder starts at a $1.50–$5.00 rung and climbs up to $15. Potentials only count from recent games where the rotation matched tonight's. Stars with live angles are in the game sections: James Harden, Kevin Durant, Lauri Markkanen, LeBron James, Shai Gilgeous-Alexander, Victor Wembanyama.</p>
 <h3>Monster potentials last game, missed</h3>
 <p><em>Last game 12+ potential assists and 4+ short of his conversion, same lineup: +12% blind at Sportsbet over two seasons (+6%/+17%, 400 rungs, CI −5% to +29%) vs −8% for all assist rungs. The calibrated EV below doesn't know this angle.</em></p>
 <p>None tonight.</p>
+<h3>Potentials volume spike</h3>
+<p><em>Last game 18+ potential assists (1.5x his average), same lineup. Split by conversion at Sportsbet over two seasons: didn't convert +21% (434 rungs, +28%/+14%); DID convert −21% (363 rungs, −28%/−17%): books overreact to the assists he made.</em></p>
+<div class="wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Player</th>
+<th>The spot (last 2 games: potentials, lineup)</th>
+<th>Ladder (best AU, calibrated fair)</th>
+<th>EV 1st rung</th>
+<th>SGM idea</th>
+<th>Predicted</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Stephon Castle</strong> (SAS vs MIN)</td>
+<td>last game 18 potential assists vs UTA (28 Oct), 1.6x his 11.5 average; 8 assists vs 10.0 expected, <strong>didn't convert: the backable side</strong>; same lineup tonight<br><small>28 Oct vs UTA: 38 min, 8 ast from 18 potential (same lineup ✓); 27 Oct vs SAC: 27 min, 5 ast from 9 potential (same lineup ✓)</small></td>
+<td>ast: <strong>6+ $1.72</strong> (fair $1.74, sportsbet) → 8+ $3.70 (fair $3.46, sportsbet) → 10+ $9.00 (fair $6.57, pointsbetau) → 12+ $15.00 (fair $12.52, sportsbet)</td>
+<td><span class="ev-neg">-1%</span></td>
+<td>20p/8a fair $5.10</td>
+<td>31 min · 18.2 pts / 5.9 reb / 7.3 ast</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Darius Acuff Jr.</strong> (SAC vs MEM)</td>
+<td>last game 22 potential assists vs NOP (29 Oct), 2.5x his 8.8 average; 14 assists vs 12.3 expected, <strong>converted: caution, books overreact to made assists (−21% in the backtest)</strong>; same lineup tonight<br><small>29 Oct vs NOP: 41 min, 14 ast from 22 potential (same lineup ✓); 27 Oct vs SAS: 33 min, 5 ast from 8 potential (same lineup ✓)</small></td>
+<td>ast: <strong>6+ $1.83</strong> (fair $1.93, pointsbetau) → 8+ $3.70 (fair $3.90, pointsbetau) → 10+ $9.50 (fair $7.48, pointsbetau) → 12+ $15.00 (fair $14.09, ladbrokes_au)</td>
+<td><span class="ev-neg">-5%</span></td>
+<td>30p/8a fair $7.80</td>
+<td>37 min · 24.5 pts / 3.6 reb / 7.0 ast</td>
+</tr>
+</tbody>
+</table></div>
 <h3>Season assist potentials</h3>
 <div class="wrap"><table>
 <thead>
@@ -64,15 +99,6 @@ details[open] > summary::before { content:"▾ "; }
 </tr>
 <tr>
 <td>2</td>
-<td><strong>Stephon Castle</strong> (SAS vs MIN)</td>
-<td>5.4/g from 12.8 chances (converting 42% vs 56% career); luck x1.11<br><small>28 Oct vs UTA: 38 min, 8 ast from 18 potential (same lineup ✓); 27 Oct vs SAC: 27 min, 5 ast from 9 potential (same lineup ✓)</small></td>
-<td>ast: <strong>6+ $1.72</strong> (fair $1.74, sportsbet) → 8+ $3.70 (fair $3.46, sportsbet) → 10+ $9.00 (fair $6.57, pointsbetau) → 12+ $15.00 (fair $12.52, sportsbet)</td>
-<td><span class="ev-neg">-1%</span></td>
-<td>20p/8a fair $5.10</td>
-<td>31 min · 18.2 pts / 5.9 reb / 7.3 ast</td>
-</tr>
-<tr>
-<td>3</td>
 <td><strong>Domantas Sabonis</strong> (SAC vs MEM)</td>
 <td>7.2/g from 13.6 chances (converting 53% vs 62% career); luck x1.06<br><small>29 Oct vs NOP: 40 min, 7 ast from 9 potential (same lineup ✓); 27 Oct vs SAS: 37 min, 8 ast from 16 potential (same lineup ✓)</small></td>
 <td>ast: <strong>8+ $3.10</strong> (fair $3.07, pointsbetau) → 10+ $7.00 (fair $5.55, pointsbetau)</td>
@@ -117,7 +143,7 @@ details[open] > summary::before { content:"▾ "; }
 <tr>
 <td>3</td>
 <td><strong>Kenrich Williams</strong> (OKC vs HOU)</td>
-<td>+5.6 min; out: Alex Caruso, Chet Holmgren, Jalen Williams, Cason Wallace<br><small>28 Oct vs DAL: 17 min, 0 ast from 0 potential (same lineup ✓); 26 Oct vs PHX: 24 min, 0 ast from 3 potential (same lineup ✓)</small></td>
+<td>+5.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace<br><small>28 Oct vs DAL: 17 min, 0 ast from 0 potential (same lineup ✓); 26 Oct vs PHX: 24 min, 0 ast from 3 potential (same lineup ✓)</small></td>
 <td>pts: <strong>10+ $3.40</strong> (fair $3.44, betr_au) → 13+ $5.75 (fair $6.08, pointsbetau) → 14+ $7.75 (fair $8.01, neds) → 15+ $11.00 (fair $9.68, neds)</td>
 <td><span class="ev-neg">-1%</span></td>
 <td>12p/6r fair $6.40</td>
@@ -135,7 +161,7 @@ details[open] > summary::before { content:"▾ "; }
 <tr>
 <td>5</td>
 <td><strong>Jared McCain</strong> (OKC vs HOU)</td>
-<td>+3.0 min; out: Alex Caruso, Chet Holmgren, Jalen Williams, Cason Wallace<br><small>28 Oct vs DAL: 29 min, 4 ast from 4 potential (same lineup ✓); 26 Oct vs PHX: 30 min, 4 ast from 4 potential (same lineup ✓)</small></td>
+<td>+3.0 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace<br><small>28 Oct vs DAL: 29 min, 4 ast from 4 potential (same lineup ✓); 26 Oct vs PHX: 30 min, 4 ast from 4 potential (same lineup ✓)</small></td>
 <td>pts: <strong>15+ $1.91</strong> (fair $1.98, betr_au) → 20+ $4.10 (fair $3.99, betr_au) → 25+ $10.50 (fair $8.09, neds)</td>
 <td><span class="ev-neg">-3%</span></td>
 <td>18p/4r fair $8.15</td>
@@ -153,7 +179,7 @@ details[open] > summary::before { content:"▾ "; }
 <tr>
 <td>7</td>
 <td><strong>Ajay Mitchell</strong> (OKC vs HOU)</td>
-<td>+4.6 min; out: Alex Caruso, Chet Holmgren, Jalen Williams, Cason Wallace<br><small>28 Oct vs DAL: 28 min, 3 ast from 4 potential (same lineup ✓); 26 Oct vs PHX: 25 min, 5 ast from 6 potential (same lineup ✓)</small></td>
+<td>+4.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace<br><small>28 Oct vs DAL: 28 min, 3 ast from 4 potential (same lineup ✓); 26 Oct vs PHX: 25 min, 5 ast from 6 potential (same lineup ✓)</small></td>
 <td>pts: <strong>20+ $2.11</strong> (fair $2.45, sportsbet) → 25+ $4.40 (fair $5.07, betr_au)</td>
 <td><span class="ev-neg">-14%</span></td>
 <td>18p/4r fair $6.53</td>
@@ -245,7 +271,7 @@ details[open] > summary::before { content:"▾ "; }
 <td>$12.52</td>
 <td>$8.80</td>
 <td><span class="ev-pos">+20%</span></td>
-<td>season assist potentials</td>
+<td>season assist potentials, potentials volume spike</td>
 </tr>
 <tr>
 <td>Zach Edey (MEM)</td>
@@ -779,11 +805,12 @@ details[open] > summary::before { content:"▾ "; }
 <ul>
 <li><strong>MIN</strong>: nobody significant listed</li>
 <li><strong>SAS</strong>: Harris,Tobias Out; Quaintance,Jayden Out</li>
-<li><strong>Angles live</strong>: season assist potentials, rebound chances, foul spot (4 candidates).</li>
+<li><strong>Angles live</strong>: potentials volume spike, season assist potentials, rebound chances, foul spot (4 candidates).</li>
 </ul>
 <details><summary><h3>Stephon Castle (SAS)</h3></summary>
 <ul>
 <li><strong>season assist potentials</strong>: 5.4/g from 12.8 chances (converting 42% vs 56% career); luck x1.11. <em>Best single-leg signal: assist luck ≥1.10 at best AU price +3.7% (+3.8%/+3.5% by season, CI includes 0).</em></li>
+<li><strong>potentials volume spike</strong>: last game 18 potential assists vs UTA (28 Oct), 1.6x his 11.5 average; 8 assists vs 10.0 expected, <strong>didn't convert: the backable side</strong>; same lineup tonight. <em>Last game 18+ potential assists (1.5x his average), same lineup. Split by conversion at Sportsbet over two seasons: didn't convert +21% (434 rungs, +28%/+14%); DID convert −21% (363 rungs, −28%/−17%): books overreact to the assists he made.</em></li>
 <li><strong>Predicted</strong>: 31 min (28+ min 75%); 18.2 pts / 5.9 reb / 7.3 ast. Adjustments: luck AST ×1.05, REB ×1.01; vs MIN rebounds ×1.01.</li>
 <li><strong>Tracking</strong>: this season 12.8 potential ast/g, 10.2 reb chances/g; last season 12.6 ± 4.1 potential ast, 7.6 ± 3.8 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs UTA: 38 min, 8 ast from 18 potential, 6 reb from 10 chances (same lineup ✓); 27 Oct vs SAC: 27 min, 5 ast from 9 potential, 5 reb from 10 chances (same lineup ✓).</li>
@@ -1331,7 +1358,7 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 </details><details><summary><h3>Ajay Mitchell (OKC)</h3></summary>
 <ul>
-<li><strong>minutes unlocked</strong>: +4.6 min; out: Alex Caruso, Chet Holmgren, Jalen Williams, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
+<li><strong>minutes unlocked</strong>: +4.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
 <li><strong>Predicted</strong>: 29 min (28+ min 62%); 15.2 pts / 3.2 reb / 3.4 ast. Adjustments: luck AST ×0.98, REB ×1.02; vs HOU rebounds ×0.90.</li>
 <li><strong>Tracking</strong>: this season 5.6 potential ast/g, 6.8 reb chances/g; last season 7.1 ± 2.8 potential ast, 5.3 ± 2.2 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DAL: 28 min, 3 ast from 4 potential, 4 reb from 7 chances (same lineup ✓); 26 Oct vs PHX: 25 min, 5 ast from 6 potential, 2 reb from 6 chances (same lineup ✓).</li>
@@ -1500,7 +1527,7 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 </details><details><summary><h3>Jaylin Williams (OKC)</h3></summary>
 <ul>
-<li><strong>minutes unlocked</strong>: +5.7 min; out: Alex Caruso, Chet Holmgren, Jalen Williams, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
+<li><strong>minutes unlocked</strong>: +5.7 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
 <li><strong>Predicted</strong>: 22 min (28+ min 20%); 7.9 pts / 6.0 reb / 3.4 ast. Adjustments: luck AST ×1.05, REB ×1.01; vs HOU rebounds ×0.86.</li>
 <li><strong>Tracking</strong>: this season 4.0 potential ast/g, 7.2 reb chances/g; last season 3.9 ± 2.8 potential ast, 7.6 ± 3.9 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DAL: 20 min, 1 ast from 3 potential, 5 reb from 7 chances (same lineup ✓); 26 Oct vs PHX: 26 min, 3 ast from 2 potential, 6 reb from 13 chances (same lineup ✓).</li>
@@ -1509,7 +1536,7 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 </details><details><summary><h3>Kenrich Williams (OKC)</h3></summary>
 <ul>
-<li><strong>minutes unlocked</strong>: +5.6 min; out: Alex Caruso, Chet Holmgren, Jalen Williams, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
+<li><strong>minutes unlocked</strong>: +5.6 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
 <li><strong>Predicted</strong>: 20 min (28+ min 21%); 9.2 pts / 4.2 reb / 1.6 ast. Adjustments: luck AST ×1.03, REB ×1.01; vs HOU rebounds ×0.91.</li>
 <li><strong>Tracking</strong>: this season 0.8 potential ast/g, 5.2 reb chances/g; last season 2.3 ± 2.4 potential ast, 5.2 ± 3.5 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DAL: 17 min, 0 ast from 0 potential, 3 reb from 5 chances (same lineup ✓); 26 Oct vs PHX: 24 min, 0 ast from 3 potential, 7 reb from 12 chances (same lineup ✓).</li>
@@ -1642,7 +1669,7 @@ details[open] > summary::before { content:"▾ "; }
 </ul>
 </details><details><summary><h3>Jared McCain (OKC)</h3></summary>
 <ul>
-<li><strong>minutes unlocked</strong>: +3.0 min; out: Alex Caruso, Chet Holmgren, Jalen Williams, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
+<li><strong>minutes unlocked</strong>: +3.0 min; out: Alex Caruso, Jalen Williams, Chet Holmgren, Cason Wallace. <em>More minutes from absences is mostly priced in (−15% blind tails).</em></li>
 <li><strong>Predicted</strong>: 26 min (28+ min 42%); 14.0 pts / 2.6 reb / 2.2 ast. Adjustments: luck AST ×0.98, REB ×1.06; vs HOU rebounds ×0.90.</li>
 <li><strong>Tracking</strong>: this season 3.0 potential ast/g, 6.6 reb chances/g; last season 2.6 ± 2.3 potential ast, 3.4 ± 1.6 reb chances per game.</li>
 <li><strong>Last 2 games</strong>: 28 Oct vs DAL: 29 min, 4 ast from 4 potential, 4 reb from 11 chances (same lineup ✓); 26 Oct vs PHX: 30 min, 4 ast from 4 potential, 3 reb from 8 chances (same lineup ✓).</li>
@@ -2529,9 +2556,70 @@ details[open] > summary::before { content:"▾ "; }
 <li><strong>SAC</strong>: Cardwell,Dylan Out; Murray,Keegan Out; Raynaud,Maxime Out; Simmons,Ben Out</li>
 <li><strong>MEM</strong>: Jerome,Ty Questionable; PippenJr.,Scotty Questionable; Post,Quinten Doubtful</li>
 <li><strong>Questionable watch (MEM)</strong>: Ty Jerome Questionable (Injury/Illness-UpperBackSoreness, 25 min/g): if he sits, Olivier-Maxence Prosper +1.0 min, Cedric Coward +0.5 min, Scotty Pippen Jr. +0.4 min. <em>Model gains are shrunk; historically a starting centre sitting gives his backup ~+5 min.</em></li>
-<li><strong>Angles live</strong>: season assist potentials, rebound chances, foul spot (5 candidates).</li>
+<li><strong>Angles live</strong>: potentials volume spike, season assist potentials, rebound chances, foul spot (6 candidates).</li>
 </ul>
-<details><summary><h3>Domantas Sabonis (SAC)</h3></summary>
+<details><summary><h3>Darius Acuff Jr. (SAC)</h3></summary>
+<ul>
+<li><strong>potentials volume spike</strong>: last game 22 potential assists vs NOP (29 Oct), 2.5x his 8.8 average; 14 assists vs 12.3 expected, <strong>converted: caution, books overreact to made assists (−21% in the backtest)</strong>; same lineup tonight. <em>Last game 18+ potential assists (1.5x his average), same lineup. Split by conversion at Sportsbet over two seasons: didn't convert +21% (434 rungs, +28%/+14%); DID convert −21% (363 rungs, −28%/−17%): books overreact to the assists he made.</em></li>
+<li><strong>Predicted</strong>: 37 min (28+ min 100%); 24.5 pts / 3.6 reb / 7.0 ast. Adjustments: luck AST ×0.99, REB ×1.01; vs MEM rebounds ×1.03.</li>
+<li><strong>Tracking</strong>: this season 11.4 potential ast/g, 6.2 reb chances/g.</li>
+<li><strong>Last 2 games</strong>: 29 Oct vs NOP: 41 min, 14 ast from 22 potential, 6 reb from 8 chances (same lineup ✓); 27 Oct vs SAS: 33 min, 5 ast from 8 potential, 3 reb from 10 chances (same lineup ✓).</li>
+</ul>
+<div class="wrap"><table>
+<thead>
+<tr>
+<th>Rung</th>
+<th>Sportsbet</th>
+<th>Best AU</th>
+<th>Model fair</th>
+<th><strong>Calibrated fair</strong></th>
+<th>EV @ best (cal.)</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6+ ast</td>
+<td>$1.77</td>
+<td>$1.83 (pointsbetau)</td>
+<td>$1.70</td>
+<td>$1.93</td>
+<td><span class="ev-neg">-5%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>8+ ast</td>
+<td>$3.70</td>
+<td>$3.70 (pointsbetau)</td>
+<td>$2.69</td>
+<td>$3.90</td>
+<td><span class="ev-neg">-5%</span></td>
+<td></td>
+</tr>
+<tr>
+<td>10+ ast</td>
+<td>$7.50</td>
+<td>$9.50 (pointsbetau)</td>
+<td>$4.36</td>
+<td>$7.48</td>
+<td><span class="ev-pos">+27%</span></td>
+<td>model way off book: check news</td>
+</tr>
+<tr>
+<td>12+ ast</td>
+<td>$15.00</td>
+<td>$15.00 (ladbrokes_au)</td>
+<td>$7.26</td>
+<td>$14.09</td>
+<td><span class="ev-pos">+6%</span></td>
+<td>model way off book: check news</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>SGM combos</strong> (worth it if the SGM builder pays at least fair): 30p/8a fair $7.80 (legs priced independently $10.71); 25p/8a fair $4.60 (legs priced independently $5.66); 5r/8a fair $7.92 (legs priced independently $9.00); 4r/8a fair $5.03 (legs priced independently $5.53)</li>
+</ul>
+</details><details><summary><h3>Domantas Sabonis (SAC)</h3></summary>
 <ul>
 <li><strong>season assist potentials</strong>: 7.2/g from 13.6 chances (converting 53% vs 62% career); luck x1.06. <em>Best single-leg signal: assist luck ≥1.10 at best AU price +3.7% (+3.8%/+3.5% by season, CI includes 0).</em></li>
 <li><strong>rebound chances</strong>: last 2 same-lineup games: 15 from 29 reb chances vs NOP; 14 from 28 reb chances vs SAS (expected 34.3, got 29). <em>Rebound luck: thin and mixed in the backtest; treat as a lead.</em></li>

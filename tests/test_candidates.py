@@ -49,3 +49,20 @@ def test_pot_miss(monkeypatch):
     assert C.pot_miss({**g, "potential_ast": 11}, 1) is None
     assert C.pot_miss({**g, "ast": 6}, 1) is None  # 8.8 expected, only 2.8 short
     assert set(C.ANGLE_LABEL) == set(C.FOCUS) == set(C.SHAPES) == set(C.EVIDENCE)
+
+
+def test_pot_volume(monkeypatch):
+    from datetime import date
+
+    from nba_ladders import candidates as C
+
+    monkeypatch.setattr(C, "_career_conv", lambda pid, stat: 0.55)
+    monkeypatch.setattr(C, "pot_baseline", lambda pid, before: 9.0)
+    g = {"same": True, "potential_ast": 22, "ast": 14, "opponent": "NOP", "game_date": date(2026, 10, 29)}
+    conv = C.pot_volume(g, 1)
+    assert conv["short"] < 0 and "caution" in conv["detail"]  # the Acuff case
+    assert C.pot_volume({**g, "ast": 6}, 1)["short"] > 0
+    assert C.pot_volume({**g, "potential_ast": 17}, 1) is None
+    assert C.pot_volume({**g, "same": False}, 1) is None
+    monkeypatch.setattr(C, "pot_baseline", lambda pid, before: 16.0)
+    assert C.pot_volume(g, 1) is None  # 22 is not a spike for a 16-a-game passer

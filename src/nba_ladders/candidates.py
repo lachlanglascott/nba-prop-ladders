@@ -48,6 +48,9 @@ FOUL_Q = 0.667  # top third of starter fouls/36 x opponent FTA, as in the backte
 HI_VAR_MIN_SD = 5.8  # top tercile of minutes sd (backtest)
 
 EVIDENCE = {
+    "pot_volume_ast": "Last game 18+ potential assists (1.5x his average), same lineup. Split by "
+                      "conversion at Sportsbet over two seasons: didn't convert +21% (434 rungs, +28%/+14%); "
+                      "DID convert −21% (363 rungs, −28%/−17%): books overreact to the assists he made.",
     "pot_miss_ast": "Last game 12+ potential assists and 4+ short of his conversion, same lineup: "
                     "+12% blind at Sportsbet over two seasons (+6%/+17%, 400 rungs, CI −5% to +29%) vs "
                     "−8% for all assist rungs. The calibrated EV below doesn't know this angle.",
@@ -63,10 +66,10 @@ EVIDENCE = {
     "q_watch": "Questionable teammate: priced as a 53/47 mix (calibrated sit rate). If he's ruled "
                "out, the 'if he sits' column is the live price, and books may be slow to move.",
 }
-FOCUS = {"pot_miss_ast": ["ast"], "starter_out": ["reb", "pts+reb", "pts"], "unlocked": ["pts", "reb", "pts+reb", "ast"],
+FOCUS = {"pot_miss_ast": ["ast"], "pot_volume_ast": ["ast"], "starter_out": ["reb", "pts+reb", "pts"], "unlocked": ["pts", "reb", "pts+reb", "ast"],
          "luck_ast": ["ast"], "luck_reb": ["reb", "pts+reb"], "foul_spot": ["reb", "pts+reb"],
          "hi_var_backup": ["reb", "pts+reb"], "q_watch": ["pts", "reb", "pts+reb", "ast"]}
-SHAPES = {"pot_miss_ast": ["p/a", "r/a"], "starter_out": ["p/r", "p/r/a"], "unlocked": ["p/r", "p/a", "p/r/a"],
+SHAPES = {"pot_miss_ast": ["p/a", "r/a"], "pot_volume_ast": ["p/a", "r/a"], "starter_out": ["p/r", "p/r/a"], "unlocked": ["p/r", "p/a", "p/r/a"],
           "luck_ast": ["p/a", "r/a"], "luck_reb": ["p/r", "r/a"], "foul_spot": ["p/r"],
           "hi_var_backup": ["p/r", "p/r/a"], "q_watch": ["p/r", "p/a", "p/r/a"]}
 
@@ -222,6 +225,9 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
         if not games:
             continue
         RECENT[r["player_name"]] = games
+        vol = pot_volume(games[0], r["player_id"])
+        if vol:
+            add(r["player_name"], r["team_id"], "pot_volume_ast", vol["detail"], strength=vol["short"])
         miss = pot_miss(games[0], r["player_id"])
         if miss:
             add(r["player_name"], r["team_id"], "pot_miss_ast", miss["detail"], strength=miss["short"])
@@ -304,6 +310,38 @@ def pot_miss(g: dict, player_id: int) -> dict | None:
         return None
     return {"short": short, "detail": f"last game {g['potential_ast']} potential assists vs {g['opponent']} "
                                       f"({g['game_date']:%d %b}), {g['ast']} assists vs {exp:.1f} expected; same lineup tonight"}
+
+
+POT_VOL_MIN, POT_VOL_SPIKE = 18, 1.5  # backtested: last game 18+ potentials, 1.5x his average
+
+
+def pot_baseline(player_id: int, before) -> float | None:
+    """Potential assists per game before `before`: this season's last 10 (3+ games), else last season's."""
+    cur = _tracking_now().filter(pl.col("player_id") == player_id, pl.col("game_date") < before) \
+        .drop_nulls("potential_ast").sort("game_date").tail(10)
+    if cur.height >= 3:
+        return float(cur["potential_ast"].mean())
+    if "trk_hist" not in CONTEXT:
+        _career_conv(player_id, "ast")
+    last = CONTEXT["trk_hist"][0].filter(pl.col("player_id") == player_id, pl.col("season_id") == "22025") \
+        .sort("game_date").tail(10)
+    return float(last["potential_ast"].mean()) if last.height >= 5 else None
+
+
+def pot_volume(g: dict, player_id: int) -> dict | None:
+    """Last game: a potentials spike with tonight's lineup, labelled by whether he converted."""
+    if not g["same"] or g["potential_ast"] < POT_VOL_MIN:
+        return None
+    base = pot_baseline(player_id, g["game_date"])
+    if base is None or g["potential_ast"] < POT_VOL_SPIKE * base:
+        return None
+    exp = g["potential_ast"] * _career_conv(player_id, "ast")
+    short = exp - g["ast"]
+    side = ("**didn't convert: the backable side**" if short > 0 else
+            "**converted: caution, books overreact to made assists (−21% in the backtest)**")
+    return {"short": short, "detail": f"last game {g['potential_ast']} potential assists vs {g['opponent']} "
+                                      f"({g['game_date']:%d %b}), {g['potential_ast'] / base:.1f}x his {base:.1f} "
+                                      f"average; {g['ast']} assists vs {exp:.1f} expected, {side}; same lineup tonight"}
 
 
 def recent_signal(games: list[dict], stat: str, player_id: int) -> dict | None:
@@ -413,12 +451,23 @@ def ladder(odds: pl.DataFrame, name: str, stats: dict, focus: list[str], luck_ra
     return rows.group_by("stat", maintain_order=True).head(4).sort("stat", "threshold").drop("sb")
 
 
-ANGLE_LABEL = {"pot_miss_ast": "monster potentials, missed", "luck_ast": "season assist potentials", "starter_out": "starting centre out",
+ANGLE_LABEL = {"pot_miss_ast": "monster potentials, missed", "pot_volume_ast": "potentials volume spike", "luck_ast": "season assist potentials", "starter_out": "starting centre out",
                "q_watch": "questionable teammate", "unlocked": "minutes unlocked",
                "luck_reb": "rebound chances", "foul_spot": "foul spot", "hi_var_backup": "high-variance backup"}
 BASELINE_PRICE = (1.5, 5.0)  # the first rung sits in a realistic range; the ladder climbs from there
 LADDER_MAX, LADDER_RUNGS = 15.0, 3  # rungs shown above the baseline
-STAR_PTS = 20.0  # projected points: stars stay in the game sections, picks are the second tier
+STAR_PTS = 20.0  # last season's ppg (20+ games): established stars stay in the game sections
+
+
+def _is_star(player_id: int | None) -> bool:
+    """Established star = 20+ ppg last season. Rookies and breakouts count as second tier."""
+    if player_id is None:
+        return False
+    if "stars" not in CONTEXT:
+        last = _frame("player_games").filter(pl.col("season_id") == "22025").group_by("player_id").agg(
+            pl.col("pts").mean().alias("ppg"), pl.len().alias("gp"))
+        CONTEXT["stars"] = set(last.filter(pl.col("ppg") >= STAR_PTS, pl.col("gp") >= 20)["player_id"])
+    return player_id in CONTEXT["stars"]
 
 
 def spot_score(c: dict) -> float:
@@ -428,6 +477,8 @@ def spot_score(c: dict) -> float:
         v = st.get(a, 0.0)
         if a == "pot_miss_ast":
             out.append(2.5 + 0.3 * (v - POT_MISS_SHORT))
+        elif a == "pot_volume_ast":  # v = shortfall: missed is the +21% side, converted the -21% side
+            out.append(2.5 + 0.2 * v if v > 0 else 0.2)
         elif a == "luck_ast":
             out.append(2.0 + 10 * (v - 1.05))
         elif a == "starter_out":
@@ -536,6 +587,7 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
         lines.append("- **SGM combos** (worth it if the SGM builder pays at least fair): " + "; ".join(
             f"{r['combo']} fair ${r['fair']:.2f} (legs priced independently ${r['fair_indep']:.2f})"
             for r in combos.iter_rows(named=True)))
+    c["player_id"] = info["player_id"]
     c["pick"] = _pick(name, c, stats, lad, combos)
     return lines, value
 
@@ -559,7 +611,7 @@ def _pick(name: str, c: dict, stats: dict, lad: pl.DataFrame, combos: pl.DataFra
             "angles": sorted(c["reasons"], key=ORDER.index), "score": spot_score(c),
             "why": c["reasons"][primary], "base": base, "up": ladder_up,
             "sgm": sgm.row(0, named=True) if sgm.height else None,
-            "star": float(stats["pts"].mean()) >= STAR_PTS, "recent": recent_line(name, "reb" if "reb" in main_stat else "ast"),
+            "star": _is_star(c.get("player_id")), "recent": recent_line(name, "reb" if "reb" in main_stat else "ast"),
             "pred": (f"{stats['minutes'].mean():.0f} min · {stats['pts'].mean():.1f} pts / "
                      f"{stats['reb'].mean():.1f} reb / {stats['ast'].mean():.1f} ast")}
 
@@ -623,15 +675,18 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
     stars = sorted(p["player"] for p in picks if p["star"])
     picks = [p for p in picks if not p["star"]]
     lines += ["", "## Picks: the spots", "",
-              (f"Second-tier players only (projected under {STAR_PTS:.0f} pts), chosen by angle strength, not EV. "
+              (f"Second-tier players only (stars = {STAR_PTS:.0f}+ ppg last season), chosen by angle strength, not EV. "
                f"Each ladder starts at a $1.50–$5.00 rung and climbs up to ${LADDER_MAX:.0f}. "
                "Potentials only count from recent games where the rotation matched tonight's. "
                + (f"Stars with live angles are in the game sections: {', '.join(stars)}." if stars else ""))]
     miss = [p for p in picks if p["primary"] == "pot_miss_ast"]
+    vol = [p for p in picks if p["primary"] == "pot_volume_ast"]
     ast = [p for p in picks if p["primary"] == "luck_ast"]
-    rest = [p for p in picks if p["primary"] not in ("pot_miss_ast", "luck_ast")]
+    rest = [p for p in picks if p["primary"] not in ("pot_miss_ast", "pot_volume_ast", "luck_ast")]
     lines += ["", "### Monster potentials last game, missed", "",
               f"_{EVIDENCE['pot_miss_ast']}_", ""] + (head + pick_rows(miss)[:6] if miss else ["None tonight."])
+    lines += ["", "### Potentials volume spike", "", f"_{EVIDENCE['pot_volume_ast']}_", ""] + (
+        head + pick_rows(vol)[:6] if vol else ["None tonight."])
     lines += ["", "### Season assist potentials", ""] + (head + pick_rows(ast)[:6] if ast else ["None tonight."])
     lines += ["", "### Other angles", ""] + (head + pick_rows(rest)[:8] if rest else ["None tonight."])
     lines += ["", f"## Shortlist: calibrated EV ≥ {CAL_CUSHION:.0%} at the best AU price", ""]
