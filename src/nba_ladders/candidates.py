@@ -103,6 +103,7 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
         pl.col("team_name").replace_strict({k.replace(" ", ""): v for k, v in TEAM_ABBR.items()},
                                            default=None).alias("team"))
     pg = _frame("player_games")
+    report = add_b2b_rest(report, pg, day)
     pos = positions()
     roster = parse_player_index(get_player_index("2026-27"))
     dc = depth_chart(pg, roster, pos)
@@ -248,6 +249,33 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
                for r in ctx.iter_rows(named=True)}
     CONTEXT.update(pg=pg, eff=eff, pri=pri, pos=pos, roster=roster, tonight=tonight)
     return cands, report, qwatch
+
+
+def add_b2b_rest(report: pl.DataFrame, pg: pl.DataFrame, day: date) -> pl.DataFrame:
+    """Second night of a back-to-back: players who usually rest it and aren't on the report
+    become report rows (Out if they almost always sit, Questionable if it's a real risk)."""
+    from nba_ladders.rest import SIT_OUT, tonight
+
+    teams = report["team"].drop_nulls().unique().to_list()
+    r = tonight(pg, day, teams)
+    if r.is_empty():
+        return report
+    listed = set(report["player_key"].drop_nulls())
+    games = dict(report.select("team", "matchup").unique().drop_nulls().iter_rows())
+    meta = report.select("team", "team_name", "report_time", "game_date", "game_time").unique("team")
+    rows = []
+    for x in r.iter_rows(named=True):
+        key = player_key(x["player_name"])
+        if key in listed or x["team"] not in games:
+            continue
+        rows.append({"team": x["team"], "matchup": games[x["team"]], "player": x["player_name"], "player_key": key,
+                     "status": "Out" if x["p_sit_b2b"] >= SIT_OUT else "Questionable",
+                     "reason": f"B2B rest (not on report): sat {x['b2b_sat']} of {x['b2b_games']} second nights, "
+                               f"P(sits) {x['p_sit_b2b']:.0%}"})
+    if not rows:
+        return report
+    add = pl.DataFrame(rows).join(meta, on="team", how="left")
+    return pl.concat([report, add.select(report.columns)], how="vertical_relaxed")
 
 
 CONTEXT: dict = {}  # set by gather(): data needed to line history up with tonight's roster
@@ -400,7 +428,7 @@ def tracking_profile(player_id: int) -> dict:
     cur = season_totals("2026-27").filter(pl.col("player_id") == player_id)
     if cur.height:
         r = cur.row(0, named=True)
-        out["now"] = {"pot_ast_pg": r["potential_ast"] / r["gp"], "reb_ch_pg": r["reb_chances"] / r["gp"]}
+        out["now"] = {"pot_ast_pg": (r["potential_ast"] or 0) / r["gp"], "reb_ch_pg": (r["reb_chances"] or 0) / r["gp"]}
     trk = load_tracking().filter(pl.col("player_id") == player_id, pl.col("season_id") == "22025")
     if trk.height >= 10:
         out["last"] = {"pot_ast_pg": trk["potential_ast"].mean(), "pot_ast_sd": trk["potential_ast"].std(),
@@ -580,7 +608,8 @@ def _injuries(report: pl.DataFrame, team: str) -> str:
                       ~pl.col("reason").str.contains("(?i)g ?league|two-way"))
     if r.is_empty():
         return "nobody significant listed"
-    return "; ".join(f"{x['player']} {x['status']}" for x in r.iter_rows(named=True))
+    return "; ".join(f"{x['player']} {x['status']}" + (f" ({x['reason']})" if x["reason"].startswith("B2B") else "")
+                     for x in r.iter_rows(named=True))
 
 
 def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = None) -> str:

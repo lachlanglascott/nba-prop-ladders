@@ -66,3 +66,25 @@ def test_pot_volume(monkeypatch):
     assert C.pot_volume({**g, "same": False}, 1) is None
     monkeypatch.setattr(C, "pot_baseline", lambda pid, before: 16.0)
     assert C.pot_volume(g, 1) is None  # 22 is not a spike for a 16-a-game passer
+
+
+def test_b2b_rest_rates():
+    from datetime import date, timedelta
+
+    import polars as pl
+
+    from nba_ladders.rest import rest_rates
+
+    # team plays day pairs (B2B) 10 times; player A sits every second night, B never does
+    rows, d0 = [], date(2025, 11, 1)
+    for i in range(10):
+        d1 = d0 + timedelta(days=4 * i)
+        for gid, d in ((f"g{i}a", d1), (f"g{i}b", d1 + timedelta(days=1))):
+            for pid in (1, 2):
+                if pid == 1 and gid.endswith("b"):
+                    continue
+                rows.append({"season_id": "22025", "player_id": pid, "player_name": f"P{pid}", "team": "AAA",
+                             "game_id": gid, "game_date": d, "minutes": 30})
+    r = rest_rates(pl.DataFrame(rows), date(2026, 1, 1), "22025")
+    p = dict(r.select("player_id", "p_sit_b2b").iter_rows())
+    assert p[1] > 0.8 and p[2] < 0.2

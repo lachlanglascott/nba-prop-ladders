@@ -46,6 +46,7 @@ not a normal distribution.
 - Market vs model: `uv run python -m nba_ladders.market [--player X] [--all]` (needs a snapshot; flags are leads, not bets, until backtested)
 - **Game-day write-up / candidates**: `uv run python -m nba_ladders.candidates [--date YYYY-MM-DD]` → `docs/slates/<date>.md` + `.html` (model vs market, $3-$10 bets table, game cards; no backtest adjustments; take an odds snapshot first)
 - Calibrated blend (book + model, fit on the market backtest): `uv run python -m nba_ladders.blend fit`
+- B2B rest (who sits second nights; tonight's risks): `uv run python -m nba_ladders.rest [--date YYYY-MM-DD]` (candidates adds unlisted resters as Out/Questionable)
 - Price a ladder: `uv run python -m nba_ladders.price "Player Name" [--starter-out] [--opponent MEM] [--combos 10p/10r,12r]` (see `docs/simulator.md`)
 - Install: `uv sync`
 - Test: `uv run pytest -q`
