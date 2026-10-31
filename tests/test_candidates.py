@@ -29,3 +29,9 @@ def test_adjust_history_backs_out_absence_minutes_and_rates():
     assert out["minutes"].to_list() == [20, 24]                  # game b: 34 - 10
     assert abs(out["ast"][1] - 8 / 2 * 24 / 34) < 1e-9           # per-minute rate halved
     assert out["ast"][0] == 2                                     # untouched game
+
+
+def test_every_angle_has_focus_shapes_evidence_and_label():
+    from nba_ladders.candidates import ANGLE_LABEL, EVIDENCE, FOCUS, SHAPES
+
+    assert set(ANGLE_LABEL) == set(EVIDENCE) == set(FOCUS) == set(SHAPES)
