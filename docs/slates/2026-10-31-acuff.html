@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acuff Assists Deep Dive</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --ink: #1d1f23; --muted: #626872; --line: #e3e4e8;
+    --accent: #2f5bd3; --good: #1f7a4a; --good-bg: #e6f4ec; --warn: #9a5b00; --warn-bg: #fdf1df;
+    --bad: #b3261e; --q-bg: #eef2fc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #15171b; --card: #1e2127; --ink: #e8e9ec; --muted: #9aa0aa; --line: #30343c;
+      --accent: #8aa8ff; --good: #6fd19c; --good-bg: #183026; --warn: #f0b45c; --warn-bg: #33281a;
+      --bad: #ff8a80; --q-bg: #1f2638; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 28px 16px 48px; }
+  header h1 { font-size: 24px; margin: 0 0 4px; }
+  header p { margin: 0; color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin-top: 22px; }
+  .q { background: var(--q-bg); border-left: 4px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 0 0 16px; }
+  .q b { color: var(--accent); }
+  h2 { font-size: 19px; margin: 0 0 12px; }
+  h3 { font-size: 15px; margin: 20px 0 8px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .verdict { border-radius: 8px; padding: 10px 14px; font-weight: 600; margin: 4px 0 14px; }
+  .verdict.no { background: var(--warn-bg); color: var(--warn); }
+  .verdict.yes { background: var(--good-bg); color: var(--good); }
+  .scroll { overflow-x: auto; margin: 8px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 6px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+  td.hl { font-weight: 700; color: var(--good); }
+  ul { padding-left: 20px; margin: 6px 0; }
+  li { margin: 3px 0; }
+  .note { color: var(--muted); font-size: 13px; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.good { background: var(--good-bg); color: var(--good); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Darius Acuff Jr.: assists deep dive</h1>
+  <p>SAC @ MEM · 31 Oct 2026 (ET) · prices from the 21:54 AEDT snapshot, so check they're still up</p>
+</header>
+
+<section class="card">
+  <div class="q"><b>Q1.</b> Give me a full deep dive into Acuff's projections. Would you bet it?</div>
+  <div class="verdict no">Short answer: not his assists at tonight's prices. The one Acuff price I'd consider is points.</div>
+
+  <h3>Situation</h3>
+  <ul>
+    <li><b>Minutes:</b> 33–41 in every game, including 35 in a 23-point loss. SAC are 0-5 and losing by about 15 a game.</li>
+    <li><b>Lineup:</b> Simmons has been out all season and Murray for the last 3 games, so tonight's lineup is the one he's been playing with.</li>
+    <li><b>Competition for the ball:</b> LaVine (26 points a game) and Sabonis (13.6 potential assists a game, the main passer).</li>
+    <li><b>Matchup:</b> MEM sit about mid-pack for potential assists allowed. Against MEM on 25 Oct he had 9 potentials and 7 assists.</li>
+  </ul>
+
+  <h3>His 5 games</h3>
+  <div class="scroll"><table>
+    <tr><th>Opponent</th><th>Min</th><th>Pts</th><th>FGA</th><th>Ast</th><th>Potential ast</th><th>Conversion</th></tr>
+    <tr><td>LAC</td><td>35</td><td>12</td><td>24</td><td>3</td><td>5</td><td>60%</td></tr>
+    <tr><td>POR</td><td>37</td><td>33</td><td>26</td><td>4</td><td>13</td><td>31%</td></tr>
+    <tr><td>MEM</td><td>36</td><td>22</td><td>23</td><td>7</td><td>9</td><td>78%</td></tr>
+    <tr><td>SAS</td><td>33</td><td>19</td><td>20</td><td>5</td><td>8</td><td>63%</td></tr>
+    <tr><td>NOP</td><td>41</td><td>34</td><td>26</td><td><b>14</b></td><td><b>22</b></td><td>64%</td></tr>
+  </table></div>
+  <ul>
+    <li>He takes 20–26 shots every game, so he has real scoring volume.</li>
+    <li>The NOP game is the outlier: SAC had 31 assists as a team that night, against 20–28 in the other four.</li>
+    <li>He's converted 58% of his potential assists. High-volume passers sit around 55.6% (most fall between 50% and 60%), so expect a little regression.</li>
+  </ul>
+  <p><b>Central estimate: about 6.2 assists.</b> His potentials, shrunk back toward normal because 5 games is a small sample, come out around 10.5–11 a game. At 55–56% conversion that's about 6.2 assists. The simulator says 7.0, but it leans heavily on the 14-assist game.</p>
+
+  <h3>Assists: five ways to price the ladder</h3>
+  <div class="scroll"><table>
+    <tr><th>Rung</th><th>Best AU</th><th>Similar players¹</th><th>Count model²</th><th>Calibrated blend</th><th>US books³</th><th>After a converted spike⁴</th></tr>
+    <tr><td>6+</td><td>$1.83 PB</td><td>$1.82</td><td>$1.78</td><td>$1.93</td><td>$1.78–1.85</td><td>fair</td></tr>
+    <tr><td>8+</td><td>$3.70 PB/SB</td><td>$3.09</td><td>$3.37</td><td>$3.90</td><td>$3.69–3.80</td><td>too short at SB</td></tr>
+    <tr><td>10+</td><td><b>$9.50 PB</b></td><td>$7.74</td><td>$7.97</td><td>$7.48</td><td>$8.50–9.10</td><td>≈ $9.50 fair</td></tr>
+    <tr><td>12+</td><td>$15</td><td>$22</td><td>$22.85</td><td>$14.09</td><td>$19–22</td><td>avoid</td></tr>
+  </table></div>
+  <p class="note">¹ Two seasons of players with a 5-game average of 6–7.2 assists, 10–13 potentials and 33+ minutes (689 games); they averaged 6.17 assists next game.
+    ² A model of assist counts with variance 1.3× the mean, at a mean of 6.2. ³ DraftKings and FanDuel, with their margin still in.
+    ⁴ Backtest: after a big-potentials game that he converted, Sportsbet assist rungs returned about −21%.</p>
+  <ul>
+    <li><b>10+ at $9.50:</b> the models and the similar-player history put fair at $7.50–8.00 (+20–25%). The US books (real fair about $10 once their margin is removed) and the backtest (which puts $9.50 right on fair) say fair. Blended, that's about +0–10%, which is within noise for a 5-game rookie.</li>
+    <li><b>8+ at $3.70:</b> the similar-player history says value, the backtest and US books say fair. Pass.</li>
+    <li><b>6+:</b> fair. <b>12+ at $15:</b> bad; similar players put fair at $22.</li>
+  </ul>
+
+  <h3>The better Acuff price: points</h3>
+  <p><b>35+ points at $10.50 (Ladbrokes / Neds)</b>, against DraftKings $8.20, Sportsbet and PointsBet $8.50, and FanDuel $9.30. The calibrated fair is $9.14, so about +15%. He's on 20–26 shots a game, with 11 threes in two of them, and scored 33 and 34 in two of five games.
+    <span class="note">This is one bookmaker group being longer than everyone else, not a backtested angle.</span></p>
+
+  <h3>Verdict</h3>
+  <ul>
+    <li><b>Assists:</b> no. He's on the converted side of the volume angle, and the best price, 10+ at $9.50, is about fair once you account for that.</li>
+    <li><b>If you want one Acuff bet:</b> 35+ points at $10.50 at Ladbrokes or Neds, small stake.</li>
+    <li><b>SGM 30 points + 8 assists:</b> the model's fair is $7.80, but that relies on its tails from the 5 games. Skip unless the builder pays $10 or more.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <div class="q"><b>Q2.</b> Ignore the backtesting and look purely at projections, factoring in the huge volume game last time. Is it a bet?</div>
+  <div class="verdict yes">Yes. On projections alone it's a bet, even if the 22-potential game gets no extra weight.</div>
+
+  <p>Method: weight the NOP game as shown, multiply potentials by 57% conversion, scale to 37 minutes, and give assists the same spread they show historically.</p>
+  <div class="scroll"><table>
+    <tr><th>Weight on the NOP game</th><th>Potentials</th><th>Proj. ast</th><th>6+ fair</th><th>8+ fair</th><th>10+ fair</th><th>12+ fair</th></tr>
+    <tr><td>20% (just his 5-game average)</td><td>11.4</td><td>6.7</td><td>$1.63</td><td>$2.80</td><td>$5.85</td><td>$14.46</td></tr>
+    <tr><td>30%</td><td>12.7</td><td>7.4</td><td>$1.42</td><td>$2.20</td><td>$4.11</td><td>$9.07</td></tr>
+    <tr><td>40%</td><td>14.1</td><td>8.2</td><td>$1.28</td><td>$1.82</td><td>$3.09</td><td>$6.14</td></tr>
+    <tr><td>Simulator (recency-weighted)</td><td>–</td><td>7.0</td><td>$1.70</td><td>$2.69</td><td>$4.36</td><td>$7.26</td></tr>
+  </table></div>
+
+  <h3>Against the best prices</h3>
+  <div class="scroll"><table>
+    <tr><th>Rung</th><th>Best price</th><th>Fair (low to high)</th><th>Edge</th></tr>
+    <tr><td>8+</td><td>$3.70 (PointsBet / Sportsbet)</td><td>$1.82–2.80</td><td class="hl">+30% or more</td></tr>
+    <tr><td><b>10+</b></td><td><b>$9.50 (PointsBet)</b></td><td>$3.09–5.85</td><td class="hl">+60% to +200%</td></tr>
+    <tr><td>12+</td><td>$15</td><td>$6.14–14.46</td><td>small to big</td></tr>
+    <tr><td>6+</td><td>$1.83</td><td>$1.28–1.70</td><td>positive, but the price is short</td></tr>
+  </table></div>
+
+  <h3>The ladder</h3>
+  <ul>
+    <li><span class="pill good">base</span> <b>8+ at $3.70</b></li>
+    <li><span class="pill good">main</span> <b>10+ at $9.50 at PointsBet</b></li>
+    <li><span class="pill warn">small</span> <b>12+ at $15</b></li>
+  </ul>
+  <p>The NOP game only adds to this. With it weighted at 30%, 10+ comes out around $4 fair against $9.50.</p>
+
+  <h3>What would make it a pass</h3>
+  <ul>
+    <li>A projection below his season average: potentials falling back to about 10.5 and conversion sliding to about 55%, which gives about 6.2 assists (the Q1 central estimate).</li>
+    <li>So the bet is that his role is real: 37 minutes as the lead handler with Simmons out. It isn't a bet on luck.</li>
+    <li>The market (Sportsbet's 6.5 line, US books at $8.50–9.10 for 10+) is pricing him at the low end of this range. That's the disagreement you're taking on.</li>
+    <li>With only 5 games of evidence, keep the stakes ladder-sized.</li>
+  </ul>
+</section>
+</main>
+</body>
+</html>
