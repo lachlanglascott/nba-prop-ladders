@@ -172,8 +172,7 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
     ctx = context_effects(playing, absent.drop("mate"), eff, pri, pos).join(playing.drop("game_id"), on="player_id")
     for r in ctx.filter(pl.col("shift_min") >= UNLOCK_MIN).iter_rows(named=True):
         who = absent.filter(pl.col("team_id") == r["team_id"])["mate"].to_list()
-        add(r["player_name"], r["team_id"], "unlocked", f"+{r['shift_min']:.1f} min; out: {', '.join(who)}",
-            extra_minutes=r["shift_min"], rate_mult={s: r[f"mult_{s}"] for s in RATES})
+        add(r["player_name"], r["team_id"], "unlocked", f"+{r['shift_min']:.1f} min; out: {', '.join(who)}")
 
     # Questionable watch: who gains if a Questionable rotation player sits (hypothetical absence)
     q = (report.filter(pl.col("status") == "Questionable", ~pl.col("reason").str.contains("(?i)g ?league|two-way"))
@@ -206,7 +205,11 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
                 add(r["player_name"], r["team_now"], angle,
                     f"{r[f'{stat}_pg']}/g from {r['chances_pg']} chances (converting {r['conv_now']:.0%} vs "
                     f"{r['conv_career']:.0%} career); luck x{r[f'luck_{stat}']:.2f}")
-    CONTEXT.update(pg=pg, eff=eff, pri=pri, pos=pos, roster=roster)
+    # tonight's absences (current teammates Out/Doubtful) for EVERY player: the history
+    # adjustment backs out past absences of current teammates, so this adds tonight's back
+    tonight = {r["player_name"]: (r["shift_min"], {s: r[f"mult_{s}"] for s in RATES})
+               for r in ctx.iter_rows(named=True)}
+    CONTEXT.update(pg=pg, eff=eff, pri=pri, pos=pos, roster=roster, tonight=tonight)
     return cands, report, qwatch
 
 
@@ -290,7 +293,7 @@ ORDER = list(ANGLE_LABEL)
 
 def _simulate(name: str, c: dict):
     sc = c["scenario"]
-    base_min, base_mult = sc.get("extra_minutes", 0.0), sc.get("rate_mult") or {}
+    base_min, base_mult = CONTEXT.get("tonight", {}).get(name, (0.0, {}))
     if "p_out" in sc:  # NEW starting-centre absence
         variants = [({"starter_out": True}, sc["p_out"]), ({"starter_out": False}, 1 - sc["p_out"])]
     elif "q_minutes" in sc:  # a Questionable teammate: sits (53%) or plays
