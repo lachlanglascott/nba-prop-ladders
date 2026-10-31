@@ -211,7 +211,7 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
     # last 1-2 games of potentials, counted only when the lineup matched tonight's
     season_min = (pg.filter(pl.col("season_id") == "22026").group_by("player_id")
                   .agg(pl.col("minutes").mean().alias("mpg_now")))
-    rot = people.join(season_min, on="player_id").filter(  # rotation = 15+ mpg this season
+    rot = people.join(season_min, on="player_id").filter(  # rotation = ROTATION_MPG+ this season
         pl.col("team_now").is_in(list(matchups)), pl.col("mpg_now") >= ROTATION_MPG)
     RECENT.clear()
     for r in playing.iter_rows(named=True):
@@ -240,7 +240,7 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
 
 
 CONTEXT: dict = {}  # set by gather(): data needed to line history up with tonight's roster
-ROTATION_MPG = 15.0  # teammates whose absence counts as a different lineup
+ROTATION_MPG = 20.0  # teammates whose absence counts as a different lineup (15 caught bench wings)
 LUCK_MIN_CHANCES_PG = {"ast": 6.0, "reb": 8.0}  # volume needed before conversion luck means much
 RECENT: dict = {}  # player name -> last games with potentials and a same-lineup flag
 RECENT_N = 2
