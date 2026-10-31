@@ -409,7 +409,7 @@ def tracking_profile(player_id: int) -> dict:
     return out
 
 
-PRICE_RANGE = (3.0, 15.0)  # where the bets live
+PRICE_RANGE = (3.0, 10.0)  # where the bets live
 VALUE_EV = 0.10  # model EV at the best AU price to call a rung value
 
 

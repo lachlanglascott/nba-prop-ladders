@@ -44,7 +44,7 @@ not a normal distribution.
 - Potentials scan: `uv run python -m nba_ladders.luck --scan [YYYY-MM-DD]`
 - Odds (The Odds API, key in `.env` as ODDS_API_KEY): `uv run python -m nba_ladders.sources.odds_api coverage|snapshot|historical` (hard credit budget per run; never print the key)
 - Market vs model: `uv run python -m nba_ladders.market [--player X] [--all]` (needs a snapshot; flags are leads, not bets, until backtested)
-- **Game-day write-up / candidates**: `uv run python -m nba_ladders.candidates [--date YYYY-MM-DD]` → `docs/slates/<date>.md` + `.html` (model vs market, $3-$15 bets table, game cards; no backtest adjustments; take an odds snapshot first)
+- **Game-day write-up / candidates**: `uv run python -m nba_ladders.candidates [--date YYYY-MM-DD]` → `docs/slates/<date>.md` + `.html` (model vs market, $3-$10 bets table, game cards; no backtest adjustments; take an odds snapshot first)
 - Calibrated blend (book + model, fit on the market backtest): `uv run python -m nba_ladders.blend fit`
 - Price a ladder: `uv run python -m nba_ladders.price "Player Name" [--starter-out] [--opponent MEM] [--combos 10p/10r,12r]` (see `docs/simulator.md`)
 - Install: `uv sync`
