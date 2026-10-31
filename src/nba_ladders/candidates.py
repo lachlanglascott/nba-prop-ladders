@@ -57,12 +57,13 @@ EVIDENCE = {  # what each angle means (no backtest numbers: bets are model vs ma
     "luck_reb": "Rebound chances ahead of his rebounds.",
     "foul_spot": "Foul-prone starter vs a high-FTA opponent: extra backup minutes if he gets in trouble.",
     "hi_var_backup": "High-variance backup minutes: tails are where ladders pay.",
+    "model_scan": "No angle: in the slate because the model's price beats the market.",
     "q_watch": "Questionable teammate: priced as a sits/plays mix; if he's ruled out, use the 'if he sits' column.",
 }
-FOCUS = {"pot_miss_ast": ["ast"], "pot_volume_ast": ["ast"], "starter_out": ["reb", "pts+reb", "pts"], "unlocked": ["pts", "reb", "pts+reb", "ast"],
+FOCUS = {"model_scan": ["pts", "reb", "ast", "pts+reb", "pts+ast", "reb+ast"], "pot_miss_ast": ["ast"], "pot_volume_ast": ["ast"], "starter_out": ["reb", "pts+reb", "pts"], "unlocked": ["pts", "reb", "pts+reb", "ast"],
          "luck_ast": ["ast"], "luck_reb": ["reb", "pts+reb"], "foul_spot": ["reb", "pts+reb"],
          "hi_var_backup": ["reb", "pts+reb"], "q_watch": ["pts", "reb", "pts+reb", "ast"]}
-SHAPES = {"pot_miss_ast": ["p/a", "r/a"], "pot_volume_ast": ["p/a", "r/a"], "starter_out": ["p/r", "p/r/a"], "unlocked": ["p/r", "p/a", "p/r/a"],
+SHAPES = {"model_scan": ["p/r", "p/a", "r/a"], "pot_miss_ast": ["p/a", "r/a"], "pot_volume_ast": ["p/a", "r/a"], "starter_out": ["p/r", "p/r/a"], "unlocked": ["p/r", "p/a", "p/r/a"],
           "luck_ast": ["p/a", "r/a"], "luck_reb": ["p/r", "r/a"], "foul_spot": ["p/r"],
           "hi_var_backup": ["p/r", "p/r/a"], "q_watch": ["p/r", "p/a", "p/r/a"]}
 
@@ -235,6 +236,11 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
                 c["strength"][angle] = max(c["strength"][angle], sig["luck"])
             else:
                 add(r["player_name"], r["team_id"], angle, note, strength=sig["luck"])
+
+    # model scan: every other 20+ mpg rotation player tonight gets priced (shown only if value)
+    for r in rot.filter(~pl.col("player_key").is_in(list(out_keys))).iter_rows(named=True):
+        if r["player_name"] not in cands:
+            add(r["player_name"], r["team_now"], "model_scan", "no angle fired; priced because he's in the rotation")
 
     # tonight's absences (current teammates Out/Doubtful) for EVERY player: the history
     # adjustment backs out past absences of current teammates, so this adds tonight's back
@@ -436,7 +442,8 @@ def ladder(odds: pl.DataFrame, name: str, stats: dict, focus: list[str]) -> pl.D
 
 ANGLE_LABEL = {"pot_miss_ast": "monster potentials, missed", "pot_volume_ast": "potentials volume spike", "luck_ast": "season assist potentials", "starter_out": "starting centre out",
                "q_watch": "questionable teammate", "unlocked": "minutes unlocked",
-               "luck_reb": "rebound chances", "foul_spot": "foul spot", "hi_var_backup": "high-variance backup"}
+               "luck_reb": "rebound chances", "foul_spot": "foul spot", "hi_var_backup": "high-variance backup",
+               "model_scan": "model vs market"}
 STAR_PTS = 20.0  # last season's ppg (20+ games): established stars stay in the game sections
 
 
@@ -589,6 +596,9 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
     blocks, shortlist = {}, []
     for name, c in sorted(cands.items(), key=lambda kv: min(ORDER.index(a) for a in kv[1]["reasons"])):
         b, v = candidate_block(name, c, odds)
+        if set(c["reasons"]) == {"model_scan"} and not v:  # scanned, no value: leave it out
+            c.pop("pick", None)
+            continue
         game = next(g for g in games if c["team"] in g.split("@"))
         blocks.setdefault(game, []).append((c, b))
         shortlist += v
@@ -605,6 +615,7 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
     picks = [c["pick"] for c in cands.values() if c.get("pick") and c["pick"]["best"]]
     stars = sorted(p["player"] for p in picks if p["star"])
     picks = sorted((p for p in picks if not p["star"]), key=lambda p: -p["best"]["ev"])
+    picks = [p for p in picks if p["angles"] != ["model_scan"] or p["best"]["ev"] >= VALUE_EV]
 
     def rung(r):
         return f"{r['threshold']}+ ${r['best_au']:.2f} (fair ${r['fair']:.2f})"
