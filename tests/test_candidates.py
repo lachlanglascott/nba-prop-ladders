@@ -35,3 +35,17 @@ def test_every_angle_has_focus_shapes_evidence_and_label():
     from nba_ladders.candidates import ANGLE_LABEL, EVIDENCE, FOCUS, SHAPES
 
     assert set(ANGLE_LABEL) == set(EVIDENCE) == set(FOCUS) == set(SHAPES)
+
+
+def test_pot_miss(monkeypatch):
+    from datetime import date
+
+    from nba_ladders import candidates as C
+
+    monkeypatch.setattr(C, "_career_conv", lambda pid, stat: 0.55)
+    g = {"same": True, "potential_ast": 16, "ast": 4, "opponent": "BOS", "game_date": date(2026, 10, 29)}
+    assert C.pot_miss(g, 1)["short"] == 16 * 0.55 - 4
+    assert C.pot_miss({**g, "same": False}, 1) is None
+    assert C.pot_miss({**g, "potential_ast": 11}, 1) is None
+    assert C.pot_miss({**g, "ast": 6}, 1) is None  # 8.8 expected, only 2.8 short
+    assert set(C.ANGLE_LABEL) == set(C.FOCUS) == set(C.SHAPES) == set(C.EVIDENCE)

@@ -48,6 +48,9 @@ FOUL_Q = 0.667  # top third of starter fouls/36 x opponent FTA, as in the backte
 HI_VAR_MIN_SD = 5.8  # top tercile of minutes sd (backtest)
 
 EVIDENCE = {
+    "pot_miss_ast": "Last game 12+ potential assists and 4+ short of his conversion, same lineup: "
+                    "+12% blind at Sportsbet over two seasons (+6%/+17%, 400 rungs, CI −5% to +29%) vs "
+                    "−8% for all assist rungs. The calibrated EV below doesn't know this angle.",
     "starter_out": "Two-season blind tails −13% at Sportsbet; the model adds real information "
                    "here (coef 0.24), so it's about price and SGM structure, not blind betting.",
     "unlocked": "More minutes from absences is mostly priced in (−15% blind tails).",
@@ -60,10 +63,10 @@ EVIDENCE = {
     "q_watch": "Questionable teammate: priced as a 53/47 mix (calibrated sit rate). If he's ruled "
                "out, the 'if he sits' column is the live price, and books may be slow to move.",
 }
-FOCUS = {"starter_out": ["reb", "pts+reb", "pts"], "unlocked": ["pts", "reb", "pts+reb", "ast"],
+FOCUS = {"pot_miss_ast": ["ast"], "starter_out": ["reb", "pts+reb", "pts"], "unlocked": ["pts", "reb", "pts+reb", "ast"],
          "luck_ast": ["ast"], "luck_reb": ["reb", "pts+reb"], "foul_spot": ["reb", "pts+reb"],
          "hi_var_backup": ["reb", "pts+reb"], "q_watch": ["pts", "reb", "pts+reb", "ast"]}
-SHAPES = {"starter_out": ["p/r", "p/r/a"], "unlocked": ["p/r", "p/a", "p/r/a"],
+SHAPES = {"pot_miss_ast": ["p/a", "r/a"], "starter_out": ["p/r", "p/r/a"], "unlocked": ["p/r", "p/a", "p/r/a"],
           "luck_ast": ["p/a", "r/a"], "luck_reb": ["p/r", "r/a"], "foul_spot": ["p/r"],
           "hi_var_backup": ["p/r", "p/r/a"], "q_watch": ["p/r", "p/a", "p/r/a"]}
 
@@ -219,7 +222,10 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
         if not games:
             continue
         RECENT[r["player_name"]] = games
-        for stat, angle in (("ast", "luck_ast"), ("reb", "luck_reb")):
+        miss = pot_miss(games[0], r["player_id"])
+        if miss:
+            add(r["player_name"], r["team_id"], "pot_miss_ast", miss["detail"], strength=miss["short"])
+        for stat, angle in (("reb", "luck_reb"),):
             sig = recent_signal(games, stat, r["player_id"])
             if sig is None:
                 continue
@@ -283,6 +289,21 @@ def _career_conv(player_id: int, stat: str) -> float:
     me = h.filter(pl.col("player_id") == player_id)
     c = CHANCES[stat]
     return float((me[stat].sum() + K_CONV[stat] * lg[stat]) / (me[c].sum() + K_CONV[stat]))
+
+
+POT_MISS_MIN, POT_MISS_SHORT = 12, 4.0  # backtested: last game 12+ potentials, 4+ assists short
+
+
+def pot_miss(g: dict, player_id: int) -> dict | None:
+    """Last game: monster potential assists that didn't convert, with tonight's lineup."""
+    if not g["same"] or g["potential_ast"] < POT_MISS_MIN:
+        return None
+    exp = g["potential_ast"] * _career_conv(player_id, "ast")
+    short = exp - g["ast"]
+    if short < POT_MISS_SHORT:
+        return None
+    return {"short": short, "detail": f"last game {g['potential_ast']} potential assists vs {g['opponent']} "
+                                      f"({g['game_date']:%d %b}), {g['ast']} assists vs {exp:.1f} expected; same lineup tonight"}
 
 
 def recent_signal(games: list[dict], stat: str, player_id: int) -> dict | None:
@@ -392,7 +413,7 @@ def ladder(odds: pl.DataFrame, name: str, stats: dict, focus: list[str], luck_ra
     return rows.group_by("stat", maintain_order=True).head(4).sort("stat", "threshold").drop("sb")
 
 
-ANGLE_LABEL = {"luck_ast": "assist potentials", "starter_out": "starting centre out",
+ANGLE_LABEL = {"pot_miss_ast": "monster potentials, missed", "luck_ast": "season assist potentials", "starter_out": "starting centre out",
                "q_watch": "questionable teammate", "unlocked": "minutes unlocked",
                "luck_reb": "rebound chances", "foul_spot": "foul spot", "hi_var_backup": "high-variance backup"}
 BASELINE_PRICE = (1.5, 5.0)  # the first rung sits in a realistic range; the ladder climbs from there
@@ -405,7 +426,9 @@ def spot_score(c: dict) -> float:
     st, out = c.get("strength", {}), []
     for a in c["reasons"]:
         v = st.get(a, 0.0)
-        if a == "luck_ast":
+        if a == "pot_miss_ast":
+            out.append(2.5 + 0.3 * (v - POT_MISS_SHORT))
+        elif a == "luck_ast":
             out.append(2.0 + 10 * (v - 1.05))
         elif a == "starter_out":
             out.append(1.0 + 2.5 * v if "p_out" in c["scenario"] else 0.3)  # ongoing absence: weak
@@ -604,9 +627,12 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
                f"Each ladder starts at a $1.50–$5.00 rung and climbs up to ${LADDER_MAX:.0f}. "
                "Potentials only count from recent games where the rotation matched tonight's. "
                + (f"Stars with live angles are in the game sections: {', '.join(stars)}." if stars else ""))]
+    miss = [p for p in picks if p["primary"] == "pot_miss_ast"]
     ast = [p for p in picks if p["primary"] == "luck_ast"]
-    rest = [p for p in picks if p["primary"] != "luck_ast"]
-    lines += ["", "### Assist potentials", ""] + (head + pick_rows(ast)[:6] if ast else ["None tonight."])
+    rest = [p for p in picks if p["primary"] not in ("pot_miss_ast", "luck_ast")]
+    lines += ["", "### Monster potentials last game, missed", "",
+              f"_{EVIDENCE['pot_miss_ast']}_", ""] + (head + pick_rows(miss)[:6] if miss else ["None tonight."])
+    lines += ["", "### Season assist potentials", ""] + (head + pick_rows(ast)[:6] if ast else ["None tonight."])
     lines += ["", "### Other angles", ""] + (head + pick_rows(rest)[:8] if rest else ["None tonight."])
     lines += ["", f"## Shortlist: calibrated EV ≥ {CAL_CUSHION:.0%} at the best AU price", ""]
     if shortlist:
