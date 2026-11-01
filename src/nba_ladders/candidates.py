@@ -247,7 +247,12 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
     # adjustment backs out past absences of current teammates, so this adds tonight's back
     tonight = {r["player_name"]: (r["shift_min"], {s: r[f"mult_{s}"] for s in RATES})
                for r in ctx.iter_rows(named=True)}
-    CONTEXT.update(pg=pg, eff=eff, pri=pri, pos=pos, roster=roster, tonight=tonight)
+    from nba_ladders.sources.odds_api import latest_spreads
+
+    abbr = {k: v for k, v in TEAM_ABBR.items()}
+    spreads = {abbr.get(r["team_name"]): r["spread"] for r in latest_spreads().iter_rows(named=True)}
+    min20 = dict(people.select("player_name", "min20").iter_rows())
+    CONTEXT.update(pg=pg, eff=eff, pri=pri, pos=pos, roster=roster, tonight=tonight, spreads=spreads, min20=min20)
     return cands, report, qwatch
 
 
@@ -514,7 +519,31 @@ def _simulate(name: str, c: dict):
         return None, None, by_variant
     n = 40_000
     stats = {k: np.concatenate([s[0][k][: int(n * w)] for s, w in sims]) for k in sims[0][0][0]}
+    stats = apply_blowout(stats, CONTEXT.get("spreads", {}).get(c["team"]), CONTEXT.get("min20", {}).get(name))
     return stats, sims[0][0][1], by_variant
+
+
+def apply_blowout(stats: dict, spread: float | None, min20: float | None, seed: int = 7) -> dict:
+    """Draw a final margin per simulated game; move minutes by the blowout curve for his role
+    (relative to a typical game) and scale counts with them (thinning, or extra at his rate)."""
+    from nba_ladders.blowout import CURVE, MID, SD_MARGIN, TYPICAL_SPREAD, role
+
+    if spread is None or min20 is None:
+        return stats
+    rng = np.random.default_rng(seed)
+    n = len(stats["minutes"])
+    curve = CURVE[role(min20)]
+    base = np.interp(np.abs(rng.normal(TYPICAL_SPREAD, SD_MARGIN, 20_000)), MID, curve).mean()
+    delta = np.interp(np.abs(rng.normal(abs(spread), SD_MARGIN, n)), MID, curve) - base
+    m = np.clip(stats["minutes"], 1, None)
+    f = np.clip((m + delta) / m, 0, None)
+    out = {"minutes": np.clip(stats["minutes"] + delta, 0, None)}
+    for s in ("pts", "reb", "ast"):
+        x = stats[s]
+        down = rng.binomial(x, np.minimum(f, 1.0))
+        up = rng.poisson(x / m * np.clip(delta, 0, None))
+        out[s] = np.where(f < 1, down, x + up)
+    return out
 
 
 def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], list[dict]]:
@@ -578,9 +607,59 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
         lines.append("- **SGM combos** (worth it if the SGM builder pays at least fair): " + "; ".join(
             f"{r['combo']} fair ${r['fair']:.2f} (legs priced independently ${r['fair_indep']:.2f})"
             for r in combos.iter_rows(named=True)))
+    ideas = sgm_ideas(stats, leg_prices(odds, name))
+    if ideas:
+        lines.append(f"- **SGM ideas** (builder est. = {SGM_FACTOR}× product of median AU legs): " + "; ".join(
+            f"{r['combo']} fair ${r['fair']:.2f} vs est ${r['est']:.2f} ({r['ev']:+.0%}; legs {r['legs']})" for r in ideas))
     c["player_id"] = info["player_id"]
     c["pick"] = _pick(name, c, stats, lad, combos)
+    c["sgm_ideas"] = ideas
     return lines, value
+
+
+SGM_FACTOR = 0.9  # builder price ≈ this x product of median AU leg prices (user's slips: 0.87-1.2x)
+SGM_RANGE = (4.0, 15.0)
+LEG_MIN_P = 0.40  # each leg should be live on its own (the user's shape: low rungs, combined)
+
+
+def leg_prices(odds: pl.DataFrame, name: str) -> dict:
+    """(stat, threshold) -> median AU Over price for single-stat rungs."""
+    k = player_key(name)
+    o = odds.filter(pl.col("side") == "Over", pl.col("threshold").is_not_null(), pl.col("stat").is_in(["pts", "reb", "ast"]),
+                    pl.col("bookmaker").is_in(AU_BOOKS),
+                    pl.col("player").map_elements(player_key, return_dtype=pl.String) == k)
+    return {(r[0], r[1]): r[2] for r in o.group_by("stat", "threshold").agg(pl.col("price").median()).iter_rows()}
+
+
+def sgm_ideas(stats: dict, prices: dict, top: int = 3) -> list[dict]:
+    """2-3 leg P/R/A combos of live single rungs whose model fair beats the estimated builder price."""
+    from itertools import combinations, product
+
+    legs = {s: [k for (st, k) in prices if st == s and LEG_MIN_P <= float(np.mean(stats[s] >= k)) <= 0.85]
+            for s in ("pts", "reb", "ast")}
+    out = []
+    for n_legs in (2, 3):
+        for ss in combinations(("pts", "reb", "ast"), n_legs):
+            for ks in product(*(legs[s] for s in ss)):
+                hit = np.ones(len(stats["pts"]), dtype=bool)
+                for s, k in zip(ss, ks):
+                    hit &= stats[s] >= k
+                p = float(hit.mean())
+                if p <= 0:
+                    continue
+                fair = 1 / p
+                est = SGM_FACTOR * float(np.prod([prices[(s, k)] for s, k in zip(ss, ks)]))
+                if SGM_RANGE[0] <= est <= SGM_RANGE[1]:
+                    out.append({"combo": "/".join(f"{k}{s[0]}" for s, k in zip(ss, ks)), "fair": fair, "est": est,
+                                "ev": est * p - 1, "legs": " × ".join(f"${prices[(s, k)]:.2f}" for s, k in zip(ss, ks))})
+    out.sort(key=lambda r: -r["ev"])
+    seen, best = set(), []
+    for r in out:  # one per shape
+        shape = "".join(ch for ch in r["combo"] if ch.isalpha())
+        if shape not in seen:
+            seen.add(shape)
+            best.append(r)
+    return best[:top]
 
 
 def _pick(name: str, c: dict, stats: dict, lad: pl.DataFrame, combos: pl.DataFrame) -> dict | None:
@@ -649,6 +728,19 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
     def rung(r):
         return f"{r['threshold']}+ ${r['best_au']:.2f} (fair ${r['fair']:.2f})"
 
+    sg = [(c, r) for c in cands.values() if not (c.get("pick") or {}).get("star", True) for r in c.get("sgm_ideas", [])]
+    sg = sorted(sg, key=lambda cr: -cr[1]["ev"])
+    lines += ["", "## SGM ladders: low rungs combined", "",
+              (f"Each leg live on its own (model {LEG_MIN_P:.0%}+), combined into ${SGM_RANGE[0]:.0f}–${SGM_RANGE[1]:.0f}. "
+               f"Builder price estimated at {SGM_FACTOR}× the product of median AU single prices (your three winning "
+               "slips paid 0.87–1.2×): check the builder. Second-tier players only.")]
+    if sg:
+        lines += ["", "| Player | Combo | Model fair | Builder est. | EV | Legs (median AU) |", "|---|---|---|---|---|---|"]
+        for c, r in [x for x in sg if x[1]["ev"] > 0][:12]:
+            lines.append(f"| **{c['pick']['player']}** ({c['team']} vs {c['opp']}) | **{r['combo']}** | ${r['fair']:.2f} | "
+                         f"${r['est']:.2f} | {r['ev']:+.0%} | {r['legs']} |")
+    else:
+        lines.append("\nNone priced yet.")
     lines += ["", f"## Bets: model vs market, ${PRICE_RANGE[0]:.0f}–${PRICE_RANGE[1]:.0f}", "",
               ("Second-tier players (stars = 20+ ppg last season), ranked by EV of their best rung in range. "
                "The ladder is every in-range rung of that stat. "

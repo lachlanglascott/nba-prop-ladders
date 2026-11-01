@@ -141,6 +141,36 @@ def events(budget: Budget, session=requests) -> list[dict]:
     return _get(f"/sports/{SPORT}/events", {}, budget, 0, "events", session)
 
 
+def game_spreads(budget: Budget, bookmakers: str = AU_BASE, session=requests) -> pl.DataFrame:
+    """Point spreads for upcoming games (featured odds endpoint, ~1 credit). Cached under spreads/."""
+    from datetime import datetime
+
+    data = _get(f"/sports/{SPORT}/odds", {"bookmakers": bookmakers, "markets": "spreads", "oddsFormat": "decimal"},
+                budget, 1, "spreads", session)
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    out = RAW_DIR / "spreads" / f"{stamp}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(data))
+    return parse_spreads(data)
+
+
+def parse_spreads(data: list) -> pl.DataFrame:
+    rows = []
+    for e in data:
+        for bk in e.get("bookmakers", []):
+            for m in bk.get("markets", []):
+                for o in m.get("outcomes", []):
+                    rows.append({"event_id": e["id"], "commence_time": e["commence_time"], "team_name": o["name"],
+                                 "spread": float(o["point"])})
+    return pl.DataFrame(rows, schema={"event_id": pl.String, "commence_time": pl.String, "team_name": pl.String,
+                                      "spread": pl.Float64}).unique(["event_id", "team_name"])
+
+
+def latest_spreads() -> pl.DataFrame:
+    files = sorted((RAW_DIR / "spreads").glob("*.json"))
+    return parse_spreads(json.loads(files[-1].read_text())) if files else parse_spreads([])
+
+
 def event_markets(event_id: str, regions: str, budget: Budget, session=requests) -> dict:
     """Which markets each bookmaker currently offers for one event (costs ~1)."""
     out = _get(f"/sports/{SPORT}/events/{event_id}/markets", {"regions": regions}, budget, 1,
@@ -272,6 +302,7 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("coverage", help="which books offer which NBA markets (~1 credit)")
     c.add_argument("--regions", default="us,au")
+    sub.add_parser("spreads", help="point spreads for upcoming games (~1 credit)")
     s = sub.add_parser("snapshot", help="player props for upcoming games")
     s.add_argument("--regions", default=None, help="instead of --bookmakers, e.g. us,au")
     s.add_argument("--bookmakers", default=",".join(DEFAULT_BOOKMAKERS))
@@ -307,6 +338,9 @@ def main() -> None:
                 props = [k for k in keys if k.startswith("player_")]
                 print(f"  {bk['key']:22s} {len(keys):3d} markets, {len(props):3d} player props: "
                       f"{', '.join(props[:8])}{' ...' if len(props) > 8 else ''}")
+        elif args.cmd == "spreads":
+            sp = game_spreads(budget)
+            print(sp.sort("commence_time"))
         elif args.cmd == "snapshot":
             markets = args.markets.split(",")
             evs = events(budget)[: args.max_events]

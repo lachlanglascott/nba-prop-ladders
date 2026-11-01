@@ -88,3 +88,29 @@ def test_b2b_rest_rates():
     r = rest_rates(pl.DataFrame(rows), date(2026, 1, 1), "22025")
     p = dict(r.select("player_id", "p_sit_b2b").iter_rows())
     assert p[1] > 0.8 and p[2] < 0.2
+
+
+def test_apply_blowout_cuts_starter_tails():
+    import numpy as np
+
+    from nba_ladders.candidates import apply_blowout
+
+    rng = np.random.default_rng(0)
+    s = {"minutes": np.full(20_000, 34.0), "pts": rng.poisson(20, 20_000), "reb": rng.poisson(6, 20_000),
+         "ast": rng.poisson(5, 20_000)}
+    big, close = apply_blowout(s, -14.0, 34.0), apply_blowout(s, -1.0, 34.0)
+    assert (big["pts"] >= 30).mean() < (close["pts"] >= 30).mean()
+    assert big["minutes"].mean() < close["minutes"].mean()
+    assert apply_blowout(s, None, 34.0) is s
+
+
+def test_sgm_ideas_needs_live_legs():
+    import numpy as np
+
+    from nba_ladders.candidates import sgm_ideas
+
+    rng = np.random.default_rng(1)
+    s = {"pts": rng.poisson(12, 40_000), "reb": rng.poisson(7, 40_000), "ast": rng.poisson(2, 40_000)}
+    prices = {("pts", 10): 2.2, ("reb", 7): 2.4, ("ast", 6): 9.0}
+    ideas = sgm_ideas(s, prices)
+    assert ideas and ideas[0]["combo"] == "10p/7r"  # 6+ ast is not a live leg (P < 40%)
