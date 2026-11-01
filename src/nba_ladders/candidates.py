@@ -728,19 +728,6 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
     def rung(r):
         return f"{r['threshold']}+ ${r['best_au']:.2f} (fair ${r['fair']:.2f})"
 
-    sg = [(c, r) for c in cands.values() if not (c.get("pick") or {}).get("star", True) for r in c.get("sgm_ideas", [])]
-    sg = sorted(sg, key=lambda cr: -cr[1]["ev"])
-    lines += ["", "## SGM ladders: low rungs combined", "",
-              (f"Each leg live on its own (model {LEG_MIN_P:.0%}+), combined into ${SGM_RANGE[0]:.0f}–${SGM_RANGE[1]:.0f}. "
-               f"Builder price estimated at {SGM_FACTOR}× the product of median AU single prices (your three winning "
-               "slips paid 0.87–1.2×): check the builder. Second-tier players only.")]
-    if sg:
-        lines += ["", "| Player | Combo | Model fair | Builder est. | EV | Legs (median AU) |", "|---|---|---|---|---|---|"]
-        for c, r in [x for x in sg if x[1]["ev"] > 0][:12]:
-            lines.append(f"| **{c['pick']['player']}** ({c['team']} vs {c['opp']}) | **{r['combo']}** | ${r['fair']:.2f} | "
-                         f"${r['est']:.2f} | {r['ev']:+.0%} | {r['legs']} |")
-    else:
-        lines.append("\nNone priced yet.")
     lines += ["", f"## Bets: model vs market, ${PRICE_RANGE[0]:.0f}–${PRICE_RANGE[1]:.0f}", "",
               ("Second-tier players (stars = 20+ ppg last season), ranked by EV of their best rung in range. "
                "The ladder is every in-range rung of that stat. "
@@ -762,6 +749,19 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
             lines.append(f"\nNo positive in-range rung: {', '.join(neg)}.")
     else:
         lines.append("\nNo in-range prices for tonight's candidates yet.")
+    sg = [(c, r) for c in cands.values() if not (c.get("pick") or {}).get("star", True) for r in c.get("sgm_ideas", [])]
+    sg = sorted(sg, key=lambda cr: -cr[1]["ev"])
+    lines += ["", "## SGM ladders: low rungs combined", "",
+              (f"Each leg live on its own (model {LEG_MIN_P:.0%}+), combined into ${SGM_RANGE[0]:.0f}–${SGM_RANGE[1]:.0f}. "
+               f"Builder price estimated at {SGM_FACTOR}× the product of median AU single prices (your three winning "
+               "slips paid 0.87–1.2×): check the builder. Second-tier players only.")]
+    if sg:
+        lines += ["", "| Player | Combo | Model fair | Builder est. | EV | Legs (median AU) |", "|---|---|---|---|---|---|"]
+        for c, r in [x for x in sg if x[1]["ev"] > 0][:12]:
+            lines.append(f"| **{c['pick']['player']}** ({c['team']} vs {c['opp']}) | **{r['combo']}** | ${r['fair']:.2f} | "
+                         f"${r['est']:.2f} | {r['ev']:+.0%} | {r['legs']} |")
+    else:
+        lines.append("\nNone priced yet.")
     lines += ["", f"## Every value rung (EV ≥ {VALUE_EV:.0%}, ${PRICE_RANGE[0]:.0f}–${PRICE_RANGE[1]:.0f}), stars included", ""]
     if shortlist:
         lines += ["| Player | Rung | Best AU | Model fair | EV | Angles |", "|---|---|---|---|---|---|"]
