@@ -111,6 +111,6 @@ def test_sgm_ideas_needs_live_legs():
 
     rng = np.random.default_rng(1)
     s = {"pts": rng.poisson(12, 40_000), "reb": rng.poisson(7, 40_000), "ast": rng.poisson(2, 40_000)}
-    prices = {("pts", 10): 2.2, ("reb", 7): 2.4, ("ast", 6): 9.0}
+    prices = {"betr_au": {("pts", 10): 2.2, ("reb", 7): 2.4, ("ast", 7): 9.0}}
     ideas = sgm_ideas(s, prices)
-    assert ideas and ideas[0]["combo"] == "10p/7r"  # 6+ ast is not a live leg (P < 40%)
+    assert ideas and ideas[0]["combo"] == "10p/7r" and ideas[0]["book"] == "betr_au"  # 7+ ast not live

@@ -609,49 +609,57 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
             for r in combos.iter_rows(named=True)))
     ideas = sgm_ideas(stats, leg_prices(odds, name))
     if ideas:
-        lines.append(f"- **SGM ideas** (builder est. = {SGM_FACTOR}× product of median AU legs): " + "; ".join(
-            f"{r['combo']} fair ${r['fair']:.2f} vs est ${r['est']:.2f} ({r['ev']:+.0%}; legs {r['legs']})" for r in ideas))
+        lines.append(f"- **SGM ideas** (builder est. = {SGM_FACTOR}× product of that book's legs): " + "; ".join(
+            f"{r['combo']} ({r['book']}) fair ${r['fair']:.2f} vs est ${r['est']:.2f} ({r['ev']:+.0%}; legs {r['legs']})" for r in ideas))
     c["player_id"] = info["player_id"]
     c["pick"] = _pick(name, c, stats, lad, combos)
     c["sgm_ideas"] = ideas
     return lines, value
 
 
-SGM_FACTOR = 0.9  # builder price ≈ this x product of median AU leg prices (user's slips: 0.87-1.2x)
+SGM_FACTOR = 0.9  # builder price ≈ this x product of the book's own leg prices (user's slips: 0.87-1.2x)
 SGM_RANGE = (4.0, 15.0)
 LEG_MIN_P = 0.40  # each leg should be live on its own (the user's shape: low rungs, combined)
+SGM_BOOKS = ("betr_au", "sportsbet")  # the user's builders; legs come from that book's own ladder
+LEG_MIN = {"pts": 8, "reb": 3, "ast": 3}  # no 2r / 2a / tiny points legs
 
 
 def leg_prices(odds: pl.DataFrame, name: str) -> dict:
-    """(stat, threshold) -> median AU Over price for single-stat rungs."""
+    """{book: {(stat, threshold): price}} for the user's SGM books, single-stat rungs only."""
     k = player_key(name)
-    o = odds.filter(pl.col("side") == "Over", pl.col("threshold").is_not_null(), pl.col("stat").is_in(["pts", "reb", "ast"]),
-                    pl.col("bookmaker").is_in(AU_BOOKS),
+    o = odds.filter(pl.col("side") == "Over", pl.col("threshold").is_not_null(), pl.col("stat").is_in(list(LEG_MIN)),
+                    pl.col("bookmaker").is_in(list(SGM_BOOKS)),
                     pl.col("player").map_elements(player_key, return_dtype=pl.String) == k)
-    return {(r[0], r[1]): r[2] for r in o.group_by("stat", "threshold").agg(pl.col("price").median()).iter_rows()}
+    out = {}
+    for bk, st, th, pr in o.select("bookmaker", "stat", "threshold", "price").iter_rows():
+        if th >= LEG_MIN[st]:
+            out.setdefault(bk, {})[(st, th)] = pr
+    return out
 
 
 def sgm_ideas(stats: dict, prices: dict, top: int = 3) -> list[dict]:
-    """2-3 leg P/R/A combos of live single rungs whose model fair beats the estimated builder price."""
+    """2-3 leg P/R/A combos from one book's ladder whose model fair beats the estimated builder price."""
     from itertools import combinations, product
 
-    legs = {s: [k for (st, k) in prices if st == s and LEG_MIN_P <= float(np.mean(stats[s] >= k)) <= 0.85]
-            for s in ("pts", "reb", "ast")}
     out = []
-    for n_legs in (2, 3):
-        for ss in combinations(("pts", "reb", "ast"), n_legs):
-            for ks in product(*(legs[s] for s in ss)):
-                hit = np.ones(len(stats["pts"]), dtype=bool)
-                for s, k in zip(ss, ks):
-                    hit &= stats[s] >= k
-                p = float(hit.mean())
-                if p <= 0:
-                    continue
-                fair = 1 / p
-                est = SGM_FACTOR * float(np.prod([prices[(s, k)] for s, k in zip(ss, ks)]))
-                if SGM_RANGE[0] <= est <= SGM_RANGE[1]:
-                    out.append({"combo": "/".join(f"{k}{s[0]}" for s, k in zip(ss, ks)), "fair": fair, "est": est,
-                                "ev": est * p - 1, "legs": " × ".join(f"${prices[(s, k)]:.2f}" for s, k in zip(ss, ks))})
+    for book in SGM_BOOKS:
+        bp = prices.get(book, {})
+        legs = {s: [k for (st, k) in bp if st == s and LEG_MIN_P <= float(np.mean(stats[s] >= k)) <= 0.85]
+                for s in LEG_MIN}
+        for n_legs in (2, 3):
+            for ss in combinations(("pts", "reb", "ast"), n_legs):
+                for ks in product(*(legs[s] for s in ss)):
+                    hit = np.ones(len(stats["pts"]), dtype=bool)
+                    for s, k in zip(ss, ks):
+                        hit &= stats[s] >= k
+                    p = float(hit.mean())
+                    if p <= 0:
+                        continue
+                    est = SGM_FACTOR * float(np.prod([bp[(s, k)] for s, k in zip(ss, ks)]))
+                    if SGM_RANGE[0] <= est <= SGM_RANGE[1]:
+                        out.append({"combo": "/".join(f"{k}{s[0]}" for s, k in zip(ss, ks)), "fair": 1 / p, "est": est,
+                                    "ev": est * p - 1, "book": book,
+                                    "legs": " × ".join(f"${bp[(s, k)]:.2f}" for s, k in zip(ss, ks))})
     out.sort(key=lambda r: -r["ev"])
     seen, best = set(), []
     for r in out:  # one per shape
@@ -753,12 +761,13 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
     sg = sorted(sg, key=lambda cr: -cr[1]["ev"])
     lines += ["", "## SGM ladders: low rungs combined", "",
               (f"Each leg live on its own (model {LEG_MIN_P:.0%}+), combined into ${SGM_RANGE[0]:.0f}–${SGM_RANGE[1]:.0f}. "
-               f"Builder price estimated at {SGM_FACTOR}× the product of median AU single prices (your three winning "
-               "slips paid 0.87–1.2×): check the builder. Second-tier players only.")]
+               f"Legs come from one book's own ladder (Betr: pts 8/10/12/15/18/20/25, reb 3/5/7/10/12, ast 3/5/7/10; "
+               f"Sportsbet: pts in 5s, reb/ast in 2s), no 2r/2a. Builder price ≈ {SGM_FACTOR}× the product of that book's "
+               "legs (your three winning slips paid 0.87–1.2×): check the builder. Second-tier players only.")]
     if sg:
-        lines += ["", "| Player | Combo | Model fair | Builder est. | EV | Legs (median AU) |", "|---|---|---|---|---|---|"]
+        lines += ["", "| Player | Combo | Book | Model fair | Builder est. | EV | Legs |", "|---|---|---|---|---|---|---|"]
         for c, r in [x for x in sg if x[1]["ev"] > 0][:12]:
-            lines.append(f"| **{c['pick']['player']}** ({c['team']} vs {c['opp']}) | **{r['combo']}** | ${r['fair']:.2f} | "
+            lines.append(f"| **{c['pick']['player']}** ({c['team']} vs {c['opp']}) | **{r['combo']}** | {r['book']} | ${r['fair']:.2f} | "
                          f"${r['est']:.2f} | {r['ev']:+.0%} | {r['legs']} |")
     else:
         lines.append("\nNone priced yet.")
