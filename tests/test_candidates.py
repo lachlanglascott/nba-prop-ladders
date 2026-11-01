@@ -114,3 +114,22 @@ def test_sgm_ideas_needs_live_legs():
     prices = {"betr_au": {("pts", 10): 2.2, ("reb", 7): 2.4, ("ast", 7): 9.0}}
     ideas = sgm_ideas(s, prices)
     assert ideas and ideas[0]["combo"] == "10p/7r" and ideas[0]["book"] == "betr_au"  # 7+ ast not live
+
+
+def test_tips_margin_and_questionable(monkeypatch):
+    import polars as pl
+
+    from nba_ladders import candidates as C
+
+    monkeypatch.setattr(C, "_frame", lambda name: pl.DataFrame(
+        {"season_id": ["22026"] * 2, "player_name": ["A B", "C D"], "minutes": [28.0, 20.0]}))
+    pick = {"star": False, "why": "w", "angles": ["unlocked"]}
+    sgm = {"combo": "12p/5r", "fair": 4.0, "est": 6.0, "book": "betr_au"}
+    cands = {"A B": {"team": "AAA", "opp": "BBB", "reasons": {"unlocked": ""}, "pick": pick, "proj_min": 29.0,
+                     "sgm_ideas": [sgm, {**sgm, "combo": "10p/3a", "est": 4.4}]},
+             "C D": {"team": "AAA", "opp": "BBB", "reasons": {"unlocked": ""}, "pick": pick, "proj_min": 30.0,
+                     "sgm_ideas": [sgm]}}
+    report = pl.DataFrame({"player_key": [C.player_key("C D")], "status": ["Questionable"]})
+    card = C.tips(cands, report)
+    assert [(r["player"], r["bet"]) for r in card] == [("A B", "12p/5r")]  # 10p/3a fails the 1.3x margin
+    assert card[0]["take_at"] == 1.3 * 4.0 and not card[0]["risk"]

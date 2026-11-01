@@ -607,13 +607,16 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
         lines.append("- **SGM combos** (worth it if the SGM builder pays at least fair): " + "; ".join(
             f"{r['combo']} fair ${r['fair']:.2f} (legs priced independently ${r['fair_indep']:.2f})"
             for r in combos.iter_rows(named=True)))
-    ideas = sgm_ideas(stats, leg_prices(odds, name))
+    c["leg_prices"] = leg_prices(odds, name)
+    ideas = sgm_ideas(stats, c["leg_prices"])
     if ideas:
         lines.append(f"- **SGM ideas** (builder est. = {SGM_FACTOR}× product of that book's legs): " + "; ".join(
             f"{r['combo']} ({r['book']}) fair ${r['fair']:.2f} vs est ${r['est']:.2f} ({r['ev']:+.0%}; legs {r['legs']})" for r in ideas))
     c["player_id"] = info["player_id"]
     c["pick"] = _pick(name, c, stats, lad, combos)
     c["sgm_ideas"] = ideas
+    c["proj_min"] = float(stats["minutes"].mean())
+    c["value_rungs"] = lad.filter(pl.col("in_range")).to_dicts() if lad.height else []
     return lines, value
 
 
@@ -690,6 +693,59 @@ def _pick(name: str, c: dict, stats: dict, lad: pl.DataFrame, combos: pl.DataFra
                      f"{stats['reb'].mean():.1f} reb / {stats['ast'].mean():.1f} ast")}
 
 
+TIP_SGM_MARGIN = 1.3  # builder estimate must be >= this x model fair (room for model error)
+TIP_SINGLE_MARGIN = 1.2
+TIP_MIN_RISK = 1.25  # projected minutes above this x his season average -> small stake
+TIP_ANGLE_WEIGHT = {"unlocked": 1.3, "starter_out": 1.3, "q_watch": 1.3, "pot_miss_ast": 1.2, "pot_volume_ast": 1.2,
+                    "luck_ast": 1.1, "luck_reb": 1.1, "foul_spot": 1.1, "hi_var_backup": 1.0, "model_scan": 1.0}
+TIP_N_SGM, TIP_N_SINGLE = 4, 2
+
+
+def tips(cands: dict, report: pl.DataFrame) -> list[dict]:
+    """The card: best SGM per player (one book's ladder, builder >= 1.3x fair), then points-first singles."""
+    shaky = set(report.filter(pl.col("status").is_in(["Questionable", "Doubtful", "Out"]))["player_key"].drop_nulls())
+    mpg = _frame("player_games").filter(pl.col("season_id") == "22026").group_by("player_name").agg(
+        pl.col("minutes").mean())
+    mpg = dict(mpg.iter_rows())
+    out = []
+    for name, c in cands.items():
+        pk = c.get("pick")
+        if not pk or pk["star"] or player_key(name) in shaky:
+            continue
+        w = max(TIP_ANGLE_WEIGHT.get(a, 1.0) for a in c["reasons"])
+        season = mpg.get(name)
+        risk = bool(season and c.get("proj_min", 0) > TIP_MIN_RISK * season)
+        base = {"player": name, "team": c["team"], "opp": c["opp"], "why": pk["why"], "risk": risk,
+                "angles": ", ".join(ANGLE_LABEL[a] for a in pk["angles"]), "proj_min": c.get("proj_min"), "season_min": season}
+        for r in c.get("sgm_ideas", []):
+            m = r["est"] / r["fair"]
+            if m >= TIP_SGM_MARGIN:
+                out.append({**base, "kind": "SGM", "bet": r["combo"], "book": r["book"], "fair": r["fair"],
+                            "price": r["est"], "take_at": TIP_SGM_MARGIN * r["fair"], "score": (m - 1) * w * (0.7 if risk else 1)})
+        for r in c.get("value_rungs", []):  # the user's books only: Sportsbet or Betr's price for the rung
+            mine = [(bk, px) for bk, px in ((AU_BASE, r["sportsbet"]),
+                    ("betr_au", c.get("leg_prices", {}).get("betr_au", {}).get((r["stat"], r["threshold"])))) if px]
+            if not mine:
+                continue
+            book, price = max(mine, key=lambda x: x[1])
+            r = {**r, "best_au": price, "best_book": book}
+            m = r["best_au"] / r["fair"]
+            if m >= TIP_SINGLE_MARGIN and m < 2.0 and PRICE_RANGE[0] <= price <= PRICE_RANGE[1]:  # EV >= 100% is usually the model, not the book
+                pts_bonus = 1.15 if r["stat"] == "pts" else 1.0
+                out.append({**base, "kind": "single", "bet": f"{r['threshold']}+ {r['stat']}", "book": r["best_book"],
+                            "fair": r["fair"], "price": r["best_au"], "take_at": TIP_SINGLE_MARGIN * r["fair"],
+                            "score": (m - 1) * w * pts_bonus * (0.7 if risk else 1)})
+    picks, used = [], set()
+    for kind, n in (("SGM", TIP_N_SGM), ("single", TIP_N_SINGLE)):
+        for r in sorted((x for x in out if x["kind"] == kind), key=lambda x: -x["score"]):
+            if sum(p["kind"] == kind for p in picks) >= n:
+                break
+            if r["player"] not in used:
+                picks.append(r)
+                used.add(r["player"])
+    return picks
+
+
 def _injuries(report: pl.DataFrame, team: str) -> str:
     r = report.filter(pl.col("team") == team, pl.col("status").is_in(["Out", "Doubtful", "Questionable"]),
                       ~pl.col("reason").str.contains("(?i)g ?league|two-way"))
@@ -736,6 +792,23 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
     def rung(r):
         return f"{r['threshold']}+ ${r['best_au']:.2f} (fair ${r['fair']:.2f})"
 
+    card = tips(cands, report)
+    lines += ["", "## My tips", "",
+              (f"SGMs from one book's own ladder where the builder estimate is at least {TIP_SGM_MARGIN}× model fair, then "
+               f"singles at {TIP_SINGLE_MARGIN}× fair or better (points first). Ranked by margin, weighted to your angles "
+               "(minutes unlocked, starting centre out, Questionable teammate, potentials). Players who are Questionable "
+               f"themselves are left out. **Small** = model minutes more than {TIP_MIN_RISK}× his season average. "
+               "Take each only at the 'take at' price or better.")]
+    if card:
+        lines += ["", "| # | Bet | Book | Model fair | Price | Take at | Stake | Why |", "|---|---|---|---|---|---|---|---|"]
+        for i, r in enumerate(card, 1):
+            est = "est. " if r["kind"] == "SGM" else ""
+            mins = (f"; {r['proj_min']:.0f} min vs {r['season_min']:.0f} season" if r["season_min"] else "")
+            lines.append(f"| {i} | **{r['player']}** ({r['team']} vs {r['opp']}) {r['kind']} **{r['bet']}** | {r['book']} | "
+                         f"${r['fair']:.2f} | {est}${r['price']:.2f} | **${r['take_at']:.2f}** | "
+                         f"{'small' if r['risk'] else 'standard'} | {r['angles']}: {r['why']}{mins} |")
+    else:
+        lines.append("\nNo tips clear the margins at current prices.")
     lines += ["", f"## Bets: model vs market, ${PRICE_RANGE[0]:.0f}–${PRICE_RANGE[1]:.0f}", "",
               ("Second-tier players (stars = 20+ ppg last season), ranked by EV of their best rung in range. "
                "The ladder is every in-range rung of that stat. "
