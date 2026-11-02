@@ -756,7 +756,8 @@ TIP_ANGLE_WEIGHT = {"unlocked": 1.3, "starter_out": 1.3, "q_watch": 1.3, "pot_mi
 TIP_N_SGM, TIP_N_SINGLE = 4, 2
 
 
-def tips(cands: dict, report: pl.DataFrame) -> list[dict]:
+def tips(cands: dict, report: pl.DataFrame, n_sgm: int = TIP_N_SGM, n_single: int = TIP_N_SINGLE,
+         mixed: int | None = None) -> list[dict]:
     """The card: best SGM per player (one book's ladder, builder >= 1.3x fair), then points-first singles."""
     shaky = set(report.filter(pl.col("status").is_in(["Questionable", "Doubtful", "Out"]))["player_key"].drop_nulls())
     unfiled = set(report.filter(pl.col("status") == "Not submitted")["team"].drop_nulls())
@@ -796,7 +797,15 @@ def tips(cands: dict, report: pl.DataFrame) -> list[dict]:
                             "fair": r["fair"], "price": r["best_au"], "take_at": TIP_SINGLE_MARGIN * r["fair"],
                             "score": (m - 1) * w * pts_bonus * (0.7 if risk else 1)})
     picks, used = [], set()
-    for kind, n in (("SGM", TIP_N_SGM), ("single", TIP_N_SINGLE)):
+    if mixed:  # top N of any kind, one per player
+        for r in sorted(out, key=lambda x: -x["score"]):
+            if len(picks) >= mixed:
+                break
+            if r["player"] not in used:
+                picks.append(r)
+                used.add(r["player"])
+        return picks
+    for kind, n in (("SGM", n_sgm), ("single", n_single)):
         for r in sorted((x for x in out if x["kind"] == kind), key=lambda x: -x["score"]):
             if sum(p["kind"] == kind for p in picks) >= n:
                 break
@@ -852,6 +861,23 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
     def rung(r):
         return f"{r['threshold']}+ ${r['best_au']:.2f} (fair ${r['fair']:.2f})"
 
+    def card_rows(card):
+        rows = ["", "| # | Bet | Book | Model fair | Price | Take at | Stake | Why |", "|---|---|---|---|---|---|---|---|"]
+        for i, r in enumerate(card, 1):
+            est = "est. " if r["kind"] == "SGM" else ""
+            mins = (f"; {r['proj_min']:.0f} min vs {r['season_min']:.0f} season" if r["season_min"] else "")
+            rows.append(f"| {i} | **{r['player']}** ({r['team']} vs {r['opp']}) {r['kind']} **{r['bet']}** | {r['book']} | "
+                        f"${r['fair']:.2f} | {est}${r['price']:.2f} | **${r['take_at']:.2f}** | "
+                        f"{'small' if r['risk'] else 'standard'}{' · **wait for report**' if r['wait'] else ''} | "
+                        f"{r['angles']}: {r['why']}{mins} |")
+        return rows
+
+    top10 = tips(cands, report, mixed=10)
+    lines += ["", "## Top 10", "",
+              ("The ten best bets on the slate, SGMs and singles together, one per player, ranked by margin over model fair "
+               "weighted to your angles. Same filters as the tips: your books, available players only, builder ≥ "
+               f"{TIP_SGM_MARGIN}× fair for SGMs, singles $3–$10 at ≥ {TIP_SINGLE_MARGIN}× fair.")]
+    lines += card_rows(top10) if top10 else ["", "Nothing clears the margins."]
     card = tips(cands, report)
     lines += ["", "## My tips", "",
               (f"SGMs from one book's own ladder where the builder estimate is at least {TIP_SGM_MARGIN}× model fair, then "
@@ -860,14 +886,7 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
                f"themselves are left out. **Small** = model minutes more than {TIP_MIN_RISK}× his season average. "
                "Take each only at the 'take at' price or better.")]
     if card:
-        lines += ["", "| # | Bet | Book | Model fair | Price | Take at | Stake | Why |", "|---|---|---|---|---|---|---|---|"]
-        for i, r in enumerate(card, 1):
-            est = "est. " if r["kind"] == "SGM" else ""
-            mins = (f"; {r['proj_min']:.0f} min vs {r['season_min']:.0f} season" if r["season_min"] else "")
-            lines.append(f"| {i} | **{r['player']}** ({r['team']} vs {r['opp']}) {r['kind']} **{r['bet']}** | {r['book']} | "
-                         f"${r['fair']:.2f} | {est}${r['price']:.2f} | **${r['take_at']:.2f}** | "
-                         f"{'small' if r['risk'] else 'standard'}{' · **wait for report**' if r['wait'] else ''} | "
-                         f"{r['angles']}: {r['why']}{mins} |")
+        lines += card_rows(card)
     else:
         lines.append("\nNo tips clear the margins at current prices.")
     lines += ["", f"## Bets: model vs market, ${PRICE_RANGE[0]:.0f}–${PRICE_RANGE[1]:.0f}", "",
