@@ -163,3 +163,21 @@ def test_carry_forward():
     filed = pl.DataFrame({"team": ["AAA"], "player_key": ["aaa"], "status": ["Available"]})
     cf2 = carry_forward(filed, pg, day)
     assert set(cf2["p_sit"].to_list()) == {0.30}
+
+
+def test_depth_chart_fc_starter():
+    from datetime import date
+
+    import polars as pl
+
+    from nba_ladders.sheet import depth_chart
+
+    rows = []
+    for i in range(10):
+        d = date(2026, 10, 20 + i)
+        rows += [{"player_id": 1, "player_name": "F C", "game_date": d, "minutes": 30, "reb": 8},
+                 {"player_id": 2, "player_name": "Cee", "game_date": d, "minutes": 18, "reb": 6}]
+    roster = pl.DataFrame({"player_id": [1, 2], "team_now": ["AAA", "AAA"]})
+    pos = pl.DataFrame({"player_id": [1, 2], "position": ["F-C", "C"]})
+    dc = depth_chart(pl.DataFrame(rows), roster, pos)
+    assert dc.filter(pl.col("is_starter"))["player_id"].to_list() == [1]  # the 30-mpg F-C starts, not the 18-mpg C

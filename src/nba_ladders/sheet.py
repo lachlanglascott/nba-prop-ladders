@@ -41,6 +41,7 @@ ALERT_STATUSES = {"Out", "Doubtful"}
 WATCH_STATUSES = {"Questionable"}
 RECENT_GAMES = 15
 ACTIVE_DAYS = 45  # no game in this window = long-term absent; not the current starter
+STARTER_GAP = 8.0  # minutes per game
 BACKUPS_PER_TEAM = 2
 COMBOS = ["8p/8r", "10p/10r", "12p/12r", "15p/12r", "10p/8r/2a", "12p/10r/3a"]
 TEAM_ABBR = {t["full_name"].replace(" ", ""): t["abbreviation"] for t in teams.get_teams()}
@@ -82,6 +83,13 @@ def depth_chart(pg: pl.DataFrame, roster: pl.DataFrame, pos: pl.DataFrame) -> pl
         )
         .sort(["active", "recent_min"], descending=[True, True])
     )
+    # an F-C who out-minutes the team's listed centres by STARTER_GAP is the real starting big
+    # (ATL 2026-27: Okongwu F-C 30 mpg, Landale C 18 mpg)
+    c_max = bigs.filter(pl.col("is_centre"), pl.col("active")).group_by("team_now").agg(
+        pl.col("recent_min").max().alias("c_max"))
+    bigs = bigs.join(c_max, on="team_now", how="left").with_columns(
+        (pl.col("is_centre") | (pl.col("active") & (pl.col("recent_min") >= pl.col("c_max").fill_null(0) + STARTER_GAP)))
+        .alias("is_centre")).drop("c_max").sort(["active", "recent_min"], descending=[True, True])
     starters = (
         bigs.filter(pl.col("is_centre"))
         .group_by("team_now", maintain_order=True)
