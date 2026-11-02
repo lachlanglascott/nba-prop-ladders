@@ -308,7 +308,8 @@ def main() -> None:
     s.add_argument("--bookmakers", default=",".join(DEFAULT_BOOKMAKERS))
     s.add_argument("--markets", default=",".join(DEFAULT_MARKETS))
     s.add_argument("--max-credits", type=int, default=40)
-    s.add_argument("--max-events", type=int, default=15)
+    s.add_argument("--max-events", type=int, default=20)
+    s.add_argument("--within-hours", type=float, default=36.0, help="every game tipping within this window")
     h = sub.add_parser("historical", help="props as of a past time (paid plans only)")
     h.add_argument("--date", required=True, help="ISO time, e.g. 2026-03-15T23:00:00Z")
     h.add_argument("--regions", default=None)
@@ -343,7 +344,10 @@ def main() -> None:
             print(sp.sort("commence_time"))
         elif args.cmd == "snapshot":
             markets = args.markets.split(",")
-            evs = events(budget)[: args.max_events]
+            from datetime import datetime, timedelta
+
+            horizon = (datetime.now(UTC) + timedelta(hours=args.within_hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            evs = [e for e in events(budget) if e["commence_time"] <= horizon][: args.max_events]
             frames = []
             for ev in evs:
                 books = None if args.regions else args.bookmakers.split(",")
