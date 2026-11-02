@@ -136,3 +136,30 @@ def test_tips_margin_and_questionable(monkeypatch):
     card = C.tips(cands, report)
     assert [(r["player"], r["bet"]) for r in card] == [("A B", "12p/5r")]  # 10p/3a fails the 1.3x margin
     assert card[0]["take_at"] == 1.3 * 4.0 and not card[0]["risk"]
+
+
+def test_carry_forward():
+    from datetime import date, timedelta
+
+    import polars as pl
+
+    from nba_ladders.availability import carry_forward
+
+    d0, rows = date(2026, 10, 20), []
+    for i in range(4):  # team AAA plays 4 games; A plays all, B misses the last one, C misses the last two
+        for pid, nm in ((1, "A Aa"), (2, "B Bb"), (3, "C Cc")):
+            if (nm == "B Bb" and i == 3) or (nm == "C Cc" and i >= 2):
+                continue
+            rows.append({"season_id": "22026", "player_name": nm, "team": "AAA", "game_date": d0 + timedelta(days=2 * i),
+                         "minutes": 30})
+    pg = pl.DataFrame(rows)
+    day = d0 + timedelta(days=8)
+    unfiled = pl.DataFrame({"team": ["AAA"], "player_key": [None], "status": ["Not submitted"]}, schema_overrides={"player_key": pl.String})
+    prev = lambda d: pl.DataFrame({"player_key": ["bbb"], "status": ["Out"], "reason": ["Injury/Illness-Back; Injury Management"]})
+    cf = {r["player"]: r for r in carry_forward(unfiled, pg, day, prev).iter_rows(named=True)}
+    assert set(cf) == {"B Bb", "C Cc"}
+    assert cf["B Bb"]["p_sit"] == 0.56 and cf["B Bb"]["status"] == "Questionable"  # Out last game, management
+    assert cf["C Cc"]["p_sit"] == 0.67  # missed 2 straight, no prior report row
+    filed = pl.DataFrame({"team": ["AAA"], "player_key": ["aaa"], "status": ["Available"]})
+    cf2 = carry_forward(filed, pg, day)
+    assert set(cf2["p_sit"].to_list()) == {0.30}

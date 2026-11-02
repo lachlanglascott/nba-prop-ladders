@@ -104,6 +104,7 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
                                            default=None).alias("team"))
     pg = _frame("player_games")
     report = add_b2b_rest(report, pg, day)
+    report = add_carry_forward(report, pg, day)
     pos = positions()
     roster = parse_player_index(get_player_index("2026-27"))
     dc = depth_chart(pg, roster, pos)
@@ -197,8 +198,9 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
                 + ", ".join(f"{x['player_name']} +{x['gain']:.1f} min" for x in top.iter_rows(named=True)))
         for r in hyp.filter(pl.col("gain") >= Q_WATCH_MIN).iter_rows(named=True):
             add(r["player_name"], r["team_id"], "q_watch",
-                f"{qr['player_name']} Questionable ({qr['reason']}); if he sits: +{r['gain']:.1f} min",
-                strength=r["gain"], q_minutes=r["gain"], q_mult={s: r[f"mult_{s}"] for s in RATES})
+                f"{qr['player_name']} Questionable ({qr['reason']}"
+                + ("" if "P(sits)" in qr["reason"] else f", P(sits) {p_sits(qr):.0%}") + f"); if he sits: +{r['gain']:.1f} min",
+                strength=r["gain"], q_minutes=r["gain"], q_mult={s: r[f"mult_{s}"] for s in RATES}, q_p=p_sits(qr))
 
     # potentials luck (season to date)
     lk = scan(report, day, top=8)
@@ -245,14 +247,31 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
 
     # tonight's absences (current teammates Out/Doubtful) for EVERY player: the history
     # adjustment backs out past absences of current teammates, so this adds tonight's back
-    tonight = {r["player_name"]: (r["shift_min"], {s: r[f"mult_{s}"] for s in RATES})
-               for r in ctx.iter_rows(named=True)}
+    tonight_det = {r["player_name"]: (r["shift_min"], {s: r[f"mult_{s}"] for s in RATES})
+                   for r in ctx.iter_rows(named=True)}
+    # uncertain teammates (Questionable, B2B rest risk, carry-forward): weight their absence by P(sits)
+    unc = q.select(pl.col("team").alias("team_id"), pl.col("player_id").alias("mate_id"), pl.col("min20").alias("mate_min"),
+                   pl.struct("status", "p_sit").map_elements(lambda s: p_sits(s), return_dtype=pl.Float64).alias("p"),
+                   pl.lit("t").alias("game_id"))
+    tonight = dict(tonight_det)
+    if unc.height:
+        both = pl.concat([absent.drop("mate"), unc.drop("p")], how="vertical_relaxed")
+        ctx_all = context_effects(playing, both, eff, pri, pos).join(playing.drop("game_id"), on="player_id")
+        pbar = dict(unc.group_by("team_id").agg(pl.col("p").mean()).iter_rows())
+        for r in ctx_all.filter(pl.col("team_id").is_in(list(pbar))).iter_rows(named=True):
+            w = pbar[r["team_id"]]
+            d_min, d_mult = tonight_det.get(r["player_name"], (0.0, {s: 1.0 for s in RATES}))
+            tonight[r["player_name"]] = (d_min + w * (r["shift_min"] - d_min),
+                                         {s: d_mult.get(s, 1.0) + w * (r[f"mult_{s}"] - d_mult.get(s, 1.0)) for s in RATES})
     from nba_ladders.sources.odds_api import latest_spreads
 
     abbr = {k: v for k, v in TEAM_ABBR.items()}
     spreads = {abbr.get(r["team_name"]): r["spread"] for r in latest_spreads().iter_rows(named=True)}
     min20 = dict(people.select("player_name", "min20").iter_rows())
-    CONTEXT.update(pg=pg, eff=eff, pri=pri, pos=pos, roster=roster, tonight=tonight, spreads=spreads, min20=min20)
+    CONTEXT.update(pg=pg, eff=eff, pri=pri, pos=pos, roster=roster, tonight=tonight, tonight_det=tonight_det,
+                   spreads=spreads, min20=min20,
+                   avail={r["player_key"]: (r["status"], p_sits(r), r["reason"]) for r in report.filter(
+                       pl.col("player_key").is_not_null()).iter_rows(named=True)})
     return cands, report, qwatch
 
 
@@ -274,13 +293,44 @@ def add_b2b_rest(report: pl.DataFrame, pg: pl.DataFrame, day: date) -> pl.DataFr
         if key in listed or x["team"] not in games:
             continue
         rows.append({"team": x["team"], "matchup": games[x["team"]], "player": x["player_name"], "player_key": key,
-                     "status": "Out" if x["p_sit_b2b"] >= SIT_OUT else "Questionable",
+                     "status": "Out" if x["p_sit_b2b"] >= SIT_OUT else "Questionable", "p_sit": x["p_sit_b2b"],
                      "reason": f"B2B rest (not on report): sat {x['b2b_sat']} of {x['b2b_games']} second nights, "
                                f"P(sits) {x['p_sit_b2b']:.0%}"})
     if not rows:
         return report
     add = pl.DataFrame(rows).join(meta, on="team", how="left")
+    if "p_sit" not in report.columns:
+        report = report.with_columns(pl.lit(None, dtype=pl.Float64).alias("p_sit"))
     return pl.concat([report, add.select(report.columns)], how="vertical_relaxed")
+
+
+def add_carry_forward(report: pl.DataFrame, pg: pl.DataFrame, day: date) -> pl.DataFrame:
+    """Players who missed their team's last game and aren't on tonight's report (see availability.py)."""
+    from nba_ladders.availability import carry_forward
+
+    if "p_sit" not in report.columns:
+        report = report.with_columns(pl.lit(None, dtype=pl.Float64).alias("p_sit"))
+
+    def prev(d):
+        try:
+            r = report_for_date(d)
+            return r.filter(pl.col("game_date") == d)
+        except Exception:  # noqa: BLE001 - an old report we can't fetch just means less information
+            return None
+
+    cf = carry_forward(report, pg, day, prev)
+    if cf.is_empty():
+        return report
+    games = dict(report.select("team", "matchup").unique().drop_nulls().iter_rows())
+    meta = report.select("team", "team_name", "report_time", "game_date", "game_time").unique("team")
+    cf = cf.filter(pl.col("team").is_in(list(games))).with_columns(
+        pl.col("team").replace_strict(games, default=None).alias("matchup")).join(meta, on="team", how="left")
+    return pl.concat([report, cf.select(report.columns)], how="vertical_relaxed")
+
+
+def p_sits(row: dict) -> float:
+    """P(sits) for a report row: its own estimate if we made it, else the status calibration."""
+    return row["p_sit"] if row.get("p_sit") is not None else P_OUT.get(row["status"], 0.0)
 
 
 CONTEXT: dict = {}  # set by gather(): data needed to line history up with tonight's roster
@@ -496,11 +546,13 @@ ORDER = list(ANGLE_LABEL)
 
 def _simulate(name: str, c: dict):
     sc = c["scenario"]
-    base_min, base_mult = CONTEXT.get("tonight", {}).get(name, (0.0, {}))
+    # a q_watch candidate prices his Questionable teammate explicitly, so start from certain absences only
+    src = "tonight_det" if "q_minutes" in sc else "tonight"
+    base_min, base_mult = CONTEXT.get(src, {}).get(name, (0.0, {}))
     if "p_out" in sc:  # NEW starting-centre absence
         variants = [({"starter_out": True}, sc["p_out"]), ({"starter_out": False}, 1 - sc["p_out"])]
     elif "q_minutes" in sc:  # a Questionable teammate: sits (53%) or plays
-        pq = P_OUT["Questionable"]
+        pq = sc.get("q_p", P_OUT["Questionable"])
         variants = [({"extra": sc["q_minutes"], "mult": sc["q_mult"]}, pq), ({}, 1 - pq)]
     else:
         variants = [({}, 1.0)]
@@ -551,6 +603,9 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
     lines = [f"### {name} ({c['team']})"]
     for a, detail in c["reasons"].items():
         lines.append(f"- **{ANGLE_LABEL[a]}**: {detail}.")
+    own = CONTEXT.get("avail", {}).get(player_key(name))
+    if own and own[0] in ("Questionable", "Doubtful", "Out"):
+        lines.append(f"- **His own status**: {own[0]}, P(plays) {1 - own[1]:.0%} ({own[2]}). Props void if he doesn't play.")
     stats, info, by_variant = _simulate(name, c)
     if stats is None:
         return lines + ["- Too little history to price."], []

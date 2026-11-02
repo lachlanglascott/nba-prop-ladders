@@ -20,7 +20,7 @@ SEASONS_BACK = 3
 SEASON_WEIGHTS = {0: 1.0, 1: 0.7, 2: 0.4}  # this season, last, the one before
 K_B2B = 2.0  # pseudo back-to-backs at his usual miss rate + the league rest excess
 MIN_MPG = 24.0  # only starters/rotation players get a rest rate
-SIT_OUT, SIT_WATCH = 0.70, 0.35  # tonight: treat as out / flag as a watch
+SIT_OUT, SIT_WATCH = 0.70, 0.50  # tonight: treat as out / flag as a watch (0.3-0.5 over-predicted)
 
 
 def player_legs(pg: pl.DataFrame) -> pl.DataFrame:

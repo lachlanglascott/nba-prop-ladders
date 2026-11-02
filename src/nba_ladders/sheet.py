@@ -36,7 +36,7 @@ from nba_ladders.sources.nba_stats import get_player_index
 # P(doesn't play) by status on the ~5 PM ET report, calibrated on 2025-26: 13,392 listings over
 # 164 game days vs box scores (python -m nba_ladders.status_calibration; docs/status_calibration.md).
 # "Available" sits 24% mostly via two-way/G-League designations, so it's treated as playing here.
-P_OUT = {"Out": 0.999, "Doubtful": 0.991, "Questionable": 0.53, "Probable": 0.12, "Available": 0.0}
+P_OUT = {"Out": 0.999, "Doubtful": 0.991, "Questionable": 0.55, "Probable": 0.12, "Available": 0.0}
 ALERT_STATUSES = {"Out", "Doubtful"}
 WATCH_STATUSES = {"Questionable"}
 RECENT_GAMES = 15
