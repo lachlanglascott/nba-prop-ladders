@@ -704,22 +704,27 @@ TIP_N_SGM, TIP_N_SINGLE = 4, 2
 def tips(cands: dict, report: pl.DataFrame) -> list[dict]:
     """The card: best SGM per player (one book's ladder, builder >= 1.3x fair), then points-first singles."""
     shaky = set(report.filter(pl.col("status").is_in(["Questionable", "Doubtful", "Out"]))["player_key"].drop_nulls())
-    mpg = _frame("player_games").filter(pl.col("season_id") == "22026").group_by("player_name").agg(
-        pl.col("minutes").mean())
-    mpg = dict(mpg.iter_rows())
+    unfiled = set(report.filter(pl.col("status") == "Not submitted")["team"].drop_nulls())
+    pg = _frame("player_games").filter(pl.col("season_id") == "22026")
+    mpg = dict(pg.group_by("player_name").agg(pl.col("minutes").mean()).iter_rows())
+    team_last = dict(pg.group_by("team").agg(pl.col("game_date").max()).iter_rows())
+    my_last = dict(pg.group_by("player_name", "team").agg(pl.col("game_date").max()).select("player_name", "game_date").iter_rows())
     out = []
     for name, c in cands.items():
         pk = c.get("pick")
         if not pk or pk["star"] or player_key(name) in shaky:
             continue
+        if c["team"] in unfiled and my_last.get(name) != team_last.get(c["team"]):
+            continue  # missed his team's last game and no report yet: status unknown
         w = max(TIP_ANGLE_WEIGHT.get(a, 1.0) for a in c["reasons"])
         season = mpg.get(name)
         risk = bool(season and c.get("proj_min", 0) > TIP_MIN_RISK * season)
         base = {"player": name, "team": c["team"], "opp": c["opp"], "why": pk["why"], "risk": risk,
+                "wait": c["team"] in unfiled,
                 "angles": ", ".join(ANGLE_LABEL[a] for a in pk["angles"]), "proj_min": c.get("proj_min"), "season_min": season}
         for r in c.get("sgm_ideas", []):
             m = r["est"] / r["fair"]
-            if m >= TIP_SGM_MARGIN:
+            if TIP_SGM_MARGIN <= m < 2.0:  # beyond 2x, the market probably knows something
                 out.append({**base, "kind": "SGM", "bet": r["combo"], "book": r["book"], "fair": r["fair"],
                             "price": r["est"], "take_at": TIP_SGM_MARGIN * r["fair"], "score": (m - 1) * w * (0.7 if risk else 1)})
         for r in c.get("value_rungs", []):  # the user's books only: Sportsbet or Betr's price for the rung
@@ -806,7 +811,8 @@ def render(day: date, cands: dict, report: pl.DataFrame, qwatch: dict | None = N
             mins = (f"; {r['proj_min']:.0f} min vs {r['season_min']:.0f} season" if r["season_min"] else "")
             lines.append(f"| {i} | **{r['player']}** ({r['team']} vs {r['opp']}) {r['kind']} **{r['bet']}** | {r['book']} | "
                          f"${r['fair']:.2f} | {est}${r['price']:.2f} | **${r['take_at']:.2f}** | "
-                         f"{'small' if r['risk'] else 'standard'} | {r['angles']}: {r['why']}{mins} |")
+                         f"{'small' if r['risk'] else 'standard'}{' · **wait for report**' if r['wait'] else ''} | "
+                         f"{r['angles']}: {r['why']}{mins} |")
     else:
         lines.append("\nNo tips clear the margins at current prices.")
     lines += ["", f"## Bets: model vs market, ${PRICE_RANGE[0]:.0f}–${PRICE_RANGE[1]:.0f}", "",

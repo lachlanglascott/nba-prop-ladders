@@ -63,3 +63,33 @@ with pl.Config(tbl_rows=20, tbl_hide_column_data_types=True):
     print(b)
 pl_ = b.filter(pl.col("hit").is_not_null())
 print("bets table: hits", pl_["hit"].sum(), "/", pl_.height, "flat P&L", round((pl_["hit"].cast(int) * pl_["price"]).sum() - pl_.height, 2))
+
+# My tips card (singles and SGMs like 12p/5r/3a)
+LEG = {"p": "pts", "r": "reb", "a": "ast"}
+tp, on = [], False
+for ln in md:
+    if ln.startswith("## My tips"):
+        on = True
+        continue
+    if on and ln.startswith("## "):
+        break
+    m = re.match(r"\| (\d+) \| \*\*(.+?)\*\* \(([A-Z]{3}) vs [A-Z]{3}\) (SGM|single) \*\*(.+?)\*\* \| (\S+) \| \$([\d.]+) \| (?:est\. )?\$([\d.]+) \| \*\*\$([\d.]+)\*\* \| (\w+)", ln) if on else None
+    if not m:
+        continue
+    _, n, _, kind, bet, book, fair, price, take, stake = m.groups()
+    if kind == "SGM":
+        legs = [(LEG[x[-1]], int(x[:-1])) for x in bet.split("/")]
+    else:
+        k, st = bet.split("+ ")
+        legs = [(st, int(k))]
+    vals = [actual(n, s) for s, _ in legs]
+    hit = None if any(v is None for v in vals) else all(v >= k for v, (_, k) in zip(vals, legs))
+    tp.append({"tip": f"{n} {kind} {bet}", "book": book, "fair": float(fair), "price": float(price), "stake": stake,
+               "actual": " / ".join("DNP" if v is None else f"{v}{s[0]}" for v, (s, _) in zip(vals, legs)), "hit": hit})
+if tp:
+    t = pl.DataFrame(tp)
+    with pl.Config(tbl_rows=20, tbl_hide_column_data_types=True, tbl_width_chars=160, fmt_str_lengths=40):
+        print(t)
+    g = t.filter(pl.col("hit").is_not_null())
+    print(f"tips: {g['hit'].sum()}/{g.height} hit; model expected {(1 / g['fair']).sum():.2f}; "
+          f"flat 1u at listed price {(g['hit'].cast(int) * g['price']).sum() - g.height:+.2f}u (SGM prices are estimates)")
