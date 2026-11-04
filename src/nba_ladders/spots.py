@@ -489,7 +489,7 @@ STAKE = {"A": "1u", "B": "0.5u", "C": "0.25u"}
 
 
 # ---------------------------------------------------------------- the slate
-def build(day: date, extra_out: dict | None = None) -> dict:
+def build(day: date, extra_out: dict | None = None, include: set | None = None) -> dict:
     """All spots for a day. extra_out: {team: {player_id}} to force absences (conditional cards)."""
     pg, trk = _frames(day)
     rep = _report(day, pg)
@@ -524,7 +524,7 @@ def build(day: date, extra_out: dict | None = None) -> dict:
         if pid is not None:
             status[pid] = (r["status"], _p_sit(r), r["reason"] or "")
     id_name = {**pid_name, **{("mpg", p): v for p, v in mpg.items()}, **{("grp", p): v for p, v in grp.items()}}
-    spots, leans, looked = [], [], 0
+    spots, leans, looked, evaluated = [], [], 0, []
     for team, m in teams.items():
         opp = next(x for x in m.split("@") if x != team)
         roster = [p for p, t in team_now.items() if t == team and mpg.get(p, 0) >= ROT_MPG]
@@ -547,7 +547,8 @@ def build(day: date, extra_out: dict | None = None) -> dict:
             gl = gt_last.filter(pl.col("player_id") == pid, pl.col("team") == team)
             a = analyse(pid, pid_name.get(pid, str(pid)), team, opp, g, last, out_t, unc, id_name,
                         ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl)
-            if a is None or not {x["kind"] for x in a["sits"]} & PRIMARY:
+            forced = include is not None and a is not None and a["name"] in include
+            if a is None or (not {x["kind"] for x in a["sits"]} & PRIMARY and not forced):
                 continue  # a 3-game volume spike alone regressed (replay: -40%); it only supports a real spot
             a["opp_line"] = weakness_line(opp, grp.get(pid, "W"), day)
             a["opp_comps"] = opp_comps(cur, grp, opp, grp.get(pid, "W"))
@@ -555,6 +556,11 @@ def build(day: date, extra_out: dict | None = None) -> dict:
             c = max(CONF_MIN, confidence(a, sum(unc.values()), team in filed) - 0.10 * own_p)
             a["own_p"] = own_p
             sim = simulate(a)
+            if forced:
+                a["sim"] = sim
+                a["mk_books"] = market_probs(odds, a["name"])
+                a["c"] = c
+                evaluated.append(a)
             mk, books = market_probs(odds, a["name"])
             bs = bets_for(a, sim, mk, books, c)
             a.update(conf=c, sim_means={k: float(v.mean()) for k, v in sim.items()},
@@ -568,7 +574,7 @@ def build(day: date, extra_out: dict | None = None) -> dict:
                 leans.append(a)
     spots.sort(key=lambda a: -max(b["ev"] * a["conf"] for b in a["bets"]))
     leans.sort(key=lambda a: -max(b["ev"] for b in a["bets"]))
-    return {"day": day, "spots": spots, "leans": leans, "report_time": str(rep["report_time"].max()), "filed": filed, "teams": set(teams),
+    return {"day": day, "spots": spots, "leans": leans, "evaluated": evaluated, "report_time": str(rep["report_time"].max()), "filed": filed, "teams": set(teams),
             "snapshot": odds["snapshot"].max() if odds.height else None, "looked": looked, "status": status,
             "pid_name": pid_name, "team_now": team_now, "mpg": mpg}
 
