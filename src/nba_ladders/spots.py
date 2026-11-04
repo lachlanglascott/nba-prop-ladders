@@ -67,6 +67,7 @@ SGM_BOOKS = ("betr_au", "sportsbet")
 SINGLE_RANGE = (2.5, 10.0)
 SGM_RANGE = (3.5, 15.0)
 FREED_CAP = 6.0  # minutes: the rough share-of-freed-minutes estimate when there's no game without them
+OPP_W_PTS = 1.5  # 2025-26 test: Poisson deviance best with the points factor at 1.5x weight (reb, ast: 1x)
 PRIMARY = {"role", "bounce"}  # spot types that stand on their own
 ROLE_MIN, ROLE_VOL = 2.0, 1.15
 ROLE_VOL_GAMES = 5  # a volume-only role spot (no extra minutes) needs this many matching games (Clingan, Gobert)  # a role spot needs +2 min or +15% volume vs his normal-lineup games
@@ -274,7 +275,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
     rc36 = rc36 if rc36 is not None else (float(g["reb"].sum() / g["minutes"].sum() * 36) / max(cr, 0.3))
     pts36 = pts36 if pts36 is not None else float(g["pts"].sum() / g["minutes"].sum() * 36)
     rate = {"ast": pot36 * ca / 36 * opp_f.get("ast", 1.0), "reb": rc36 * cr / 36 * opp_f.get("reb", 1.0),
-            "pts": pts36 / 36 * opp_f.get("pts", 1.0)}
+            "pts": pts36 / 36 * opp_f.get("pts", 1.0) ** OPP_W_PTS}
     src = sample if sample is not None and sample.height >= 3 else g.tail(8)
     min_sd = max(4.0, float(src["minutes"].std() or 0.0))
     hist = pl.concat([g.select("season_id", "pts", "reb", "ast"), last.select("season_id", "pts", "reb", "ast")]
@@ -283,6 +284,23 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
             "why_sample": why, "sample": sample, "base_min": base_min, "proj_min": proj_min, "min_sd": min_sd,
             "rate": rate, "pot36": pot36, "rc36": rc36, "ca": ca, "cr": cr, "spread": spread, "opp_f": opp_f,
             "games": g.height, "last_games": last.height}
+
+
+def opp_comps(cur: pl.DataFrame, grp: dict, opp: str, g: str, n: int = 5) -> dict:
+    """What players in the same position did against this opponent in its last n games, vs their own averages."""
+    top = 1 if g == "B" else 2
+    d = cur.filter(pl.col("opponent") == opp, pl.col("minutes") >= 15).with_columns(
+        pl.col("player_id").replace_strict(grp, default="W").alias("grp")).filter(pl.col("grp") == g)
+    if d.is_empty():
+        return {}
+    avg = cur.filter(pl.col("minutes") >= 15).group_by("player_id").agg(*[pl.col(s).mean().alias(f"avg_{s}") for s in ("pts", "reb", "ast")])
+    games = d.select("game_id", "game_date").unique().sort("game_date").tail(n)["game_id"].to_list()
+    rows = (d.filter(pl.col("game_id").is_in(games)).sort("minutes", descending=True).group_by("game_id", maintain_order=True).head(top)
+            .join(avg, on="player_id").sort("game_date", descending=True))
+    diff = {s: float((rows[s] - rows[f"avg_{s}"]).mean()) for s in ("pts", "reb", "ast")} if rows.height else {}
+    return {"rows": rows.select("game_date", "team", "player_name", "minutes", "pts", "reb", "ast",
+                                *[(pl.col(s) - pl.col(f"avg_{s}")).round(1).alias(f"d_{s}") for s in ("pts", "reb", "ast")]).rows(),
+            "diff": diff, "label": {"G": "guards", "W": "wings", "B": "starting bigs"}[g]}
 
 
 def simulate(a: dict, n: int = N_SIM) -> dict:
@@ -532,6 +550,7 @@ def build(day: date, extra_out: dict | None = None) -> dict:
             if a is None or not {x["kind"] for x in a["sits"]} & PRIMARY:
                 continue  # a 3-game volume spike alone regressed (replay: -40%); it only supports a real spot
             a["opp_line"] = weakness_line(opp, grp.get(pid, "W"), day)
+            a["opp_comps"] = opp_comps(cur, grp, opp, grp.get(pid, "W"))
             a["unc"] = {pid_name.get(p, str(p)): v for p, v in unc.items()}
             c = max(CONF_MIN, confidence(a, sum(unc.values()), team in filed) - 0.10 * own_p)
             a["own_p"] = own_p

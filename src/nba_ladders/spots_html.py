@@ -188,6 +188,19 @@ def render_html(res: dict, cond: list[dict]) -> str:
                 H.append(f'<tr><td>{d:%d %b} vs {esc(o)}</td><td class="num"><b>{mi}</b></td><td class="num">{p_}</td><td class="num">{r}</td>'
                          f'<td class="num">{x}</td><td class="num">{"" if pa is None else pa}</td><td class="num">{"" if rc is None else rc}</td></tr>')
             H.append("</table></div>")
+        oc = a.get("opp_comps") or {}
+        if oc.get("rows"):
+            dd = oc["diff"]
+            col = lambda v: "good" if v >= 0.5 else "warn" if v <= -0.5 else ""
+            H.append(f'<p class="note"><b>{esc(oc["label"].capitalize())} vs {esc(a["opp"])}, its last 5 games</b> (vs their own averages): '
+                     + " ".join(f'<span class="chip {col(dd[s])}">{lab} {dd[s]:+.1f}</span>' for s, lab in (("pts", "pts"), ("reb", "reb"), ("ast", "ast")))
+                     + ' <span class="note">· a handful of games is mostly noise; the opponent factor above is the tested number</span></p>')
+            H.append('<div class="scroll"><table class="games"><tr><th>Game</th><th>Player</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th></tr>')
+            for d, tm, nm, mi, p_, r, x, dp, dr, dx in oc["rows"]:
+                sg = lambda v: f' <span class="note">({v:+.0f})</span>'
+                H.append(f'<tr><td>{d:%d %b} ({esc(tm)})</td><td><b>{esc(nm)}</b></td><td class="num">{mi}</td>'
+                         f'<td class="num">{p_}{sg(dp)}</td><td class="num">{r}{sg(dr)}</td><td class="num">{x}{sg(dx)}</td></tr>')
+            H.append("</table></div>")
         H.append('<div class="scroll"><table><tr><th></th><th>Bet</th><th>Book</th><th>Price</th><th>Model</th><th>Market</th>'
                  '<th>Honest fair</th><th>EV</th><th>Take at</th></tr>')
         for b in a["bets"]:
