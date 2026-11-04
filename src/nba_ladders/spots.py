@@ -537,7 +537,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             own_p = status.get(pid, ("", 0, ""))[1]
             if own_p >= SAFE_P:
                 continue
-            if last_ppg.get(pid, 0) >= STAR_PPG:
+            if last_ppg.get(pid, 0) >= STAR_PPG and not (include and pid_name.get(pid) in include):
                 continue
             looked += 1
             g = gt.filter(pl.col("player_id") == pid, pl.col("team") == team)
