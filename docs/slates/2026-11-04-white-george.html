@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>White George Card</title>
+<style>
+  :root {
+    --bg: #f6f7f5; --card: #ffffff; --ink: #1c1f24; --muted: #646b75; --line: #e2e4e8;
+    --accent: #2c5fd0; --good: #1d7a49; --good-bg: #e5f3eb; --warn: #9b5c00; --warn-bg: #fcf0dd;
+    --bad: #b2271e; --bad-bg: #fbe6e4; --chip: #eef1f8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161a; --card: #1d2026; --ink: #e7e9ec; --muted: #9aa1ab; --line: #2f333b;
+      --accent: #8aa8ff; --good: #6fd19c; --good-bg: #17301f; --warn: #f0b45c; --warn-bg: #33281a;
+      --bad: #ff8a80; --bad-bg: #3a1b18; --chip: #232a3a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a; --card: #1d2026; --ink: #e7e9ec; --muted: #9aa1ab; --line: #2f333b;
+    --accent: #8aa8ff; --good: #6fd19c; --good-bg: #17301f; --warn: #f0b45c; --warn-bg: #33281a;
+    --bad: #ff8a80; --bad-bg: #3a1b18; --chip: #232a3a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 900px; margin: 0 auto; padding: 28px 16px 56px; }
+  h1 { font-size: 25px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin-top: 22px; }
+  h2 { font-size: 19px; margin: 0 0 10px; }
+  h3 { font-size: 13px; margin: 18px 0 8px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .verdict { border-radius: 8px; padding: 10px 14px; font-weight: 600; margin: 4px 0 14px; background: var(--good-bg); color: var(--good); }
+  .verdict.warn { background: var(--warn-bg); color: var(--warn); }
+  .scroll { overflow-x: auto; margin: 8px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+  td.wrap { white-space: normal; min-width: 220px; }
+  .yes { color: var(--good); font-weight: 700; } .meh { color: var(--warn); font-weight: 700; } .no { color: var(--bad); font-weight: 700; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; }
+  .chip { background: var(--chip); border-radius: 999px; padding: 3px 10px; font-size: 13px; }
+  ul { padding-left: 20px; margin: 6px 0; } li { margin: 3px 0; }
+  .note { color: var(--muted); font-size: 13px; }
+  .pick { border-left: 4px solid var(--accent); padding: 8px 12px; background: var(--chip); border-radius: 6px; margin: 8px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Derrick White &amp; Paul George: rebounds + assists</h1>
+  <p class="sub">BOS @ MIL · 4 Nov (US) / 11:40 AEDT 5 Nov · prices from the 21:07 AEDT snapshot · injury report 5 AM ET, so check the final report</p>
+
+  <section class="card">
+    <h2>The spot</h2>
+    <div class="chips">
+      <span class="chip">BOS −11.5 (blowout risk)</span>
+      <span class="chip">Tatum Questionable (rest)</span>
+      <span class="chip">Pritchard Questionable (shoulder)</span>
+      <span class="chip">Devin Carter Out</span>
+      <span class="chip">George: 30% sit risk (missed last game, not yet listed)</span>
+      <span class="chip">MIL: nobody listed</span>
+    </div>
+    <h3>MIL are soft on both stats</h3>
+    <ul>
+      <li>They allow <b>47.9 rebounds</b> a game (league 44.2) and <b>28.7 assists</b> (league 26.2).</li>
+      <li>Against guards, per minute, they allow <b>points +5%, rebounds +4%, assists +6%</b> relative to each player's own rate. Pace is +1%. This is now built into every projection on the slate.</li>
+      <li>The risk is a blowout: in a lopsided game both players can be held to 20–22 minutes.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Derrick White</h2>
+    <div class="verdict">Best bet of the two: his rebounding has been unlucky and should bounce back, and Tatum resting would add more.</div>
+    <div class="scroll"><table>
+      <tr><th></th><th>Rebounds</th><th>Rebound chances</th><th>Conversion</th><th>Assists</th><th>Potential assists</th><th>Conversion</th><th>Reb + ast</th></tr>
+      <tr><td>2026-27 (7 games)</td><td>3.1</td><td>7.1</td><td><b>44%</b></td><td>4.9</td><td>8.0</td><td>61%</td><td>8.0</td></tr>
+      <tr><td>2025-26 (77 games)</td><td>4.4</td><td>6.5</td><td>67%</td><td>5.4</td><td>9.5</td><td>57%</td><td>9.8</td></tr>
+      <tr><td>2025-26 without Tatum (62 games)</td><td>4.4</td><td></td><td></td><td><b>5.7</b></td><td></td><td></td><td><b>10.1</b></td></tr>
+    </table></div>
+    <ul>
+      <li>Last 3 games: 2, 2 and 2 rebounds from 7, 5 and 7 chances. This is the rebound bounce-back angle.</li>
+      <li>The model has him at 30 minutes, 4.4 rebounds, 5.3 assists, <b>9.7 reb+ast</b>. If Tatum sits it moves to 10.0. His history without Tatum is worth about +1.5, so call it about 10.3.</li>
+    </ul>
+    <div class="scroll"><table>
+      <tr><th>Bet</th><th>Book</th><th>Price</th><th>Fair (as listed)</th><th>Fair (Tatum out)</th><th>Take at</th><th></th></tr>
+      <tr><td><b>SGM 5 reb / 5 ast</b></td><td>Sportsbet</td><td>est. ~$5.90</td><td>$3.44</td><td>$3.21</td><td><b>$4.50+</b></td><td class="yes">Best</td></tr>
+      <tr><td><b>12+ reb+ast</b></td><td>Sportsbet</td><td>$5.00</td><td>$3.29</td><td>$3.02</td><td><b>$4.00+</b></td><td class="yes">Bet</td></tr>
+      <tr><td>5+ reb</td><td>Betr</td><td>$3.50</td><td>$2.27</td><td></td><td>$2.75+</td><td class="yes">Bet</td></tr>
+      <tr><td>10+ reb+ast</td><td>Sportsbet</td><td>$2.60</td><td>$2.01</td><td>$1.89</td><td>$2.40+</td><td class="yes">Bet</td></tr>
+      <tr><td>SGM 4 reb / 7 ast</td><td>Sportsbet</td><td>est. ~$7.40</td><td>$4.98</td><td></td><td>$6.00+</td><td class="yes">Ladder</td></tr>
+      <tr><td>SGM 5 reb / 5 ast</td><td>Betr</td><td>est. ~$4.30</td><td>$3.44</td><td></td><td></td><td class="meh">Thin, so use Sportsbet</td></tr>
+    </table></div>
+  </section>
+
+  <section class="card">
+    <h2>Paul George</h2>
+    <div class="verdict warn">Value if he plays. Wait for BOS's report (30% sit risk). Props are void if he doesn't play.</div>
+    <div class="scroll"><table>
+      <tr><th></th><th>Rebounds</th><th>Rebound chances</th><th>Conversion</th><th>Assists</th><th>Potential assists</th><th>Conversion</th><th>Reb + ast</th></tr>
+      <tr><td>2026-27 (6 games)</td><td>6.0</td><td>9.0</td><td>67%</td><td>5.0</td><td>7.5</td><td><b>67%</b></td><td><b>11.0</b></td></tr>
+      <tr><td>2025-26 (37 games)</td><td>5.3</td><td>7.8</td><td>68%</td><td>3.6</td><td>6.5</td><td>56%</td><td>8.9</td></tr>
+    </table></div>
+    <ul>
+      <li>His rebounding is genuine: he's converting chances at his career rate.</li>
+      <li>His assists are converting hot (67% against 56%), but his potentials are rising: 9, 10 and 10 in the last 3 games, with 7, 8 and 8 assists.</li>
+      <li>The model has him at 30 minutes, 5.2 rebounds, 4.1 assists, <b>9.4 reb+ast</b>. That's conservative on assists given those potentials; at about 60% conversion he'd have about 5.5–6.</li>
+    </ul>
+    <div class="scroll"><table>
+      <tr><th>Bet</th><th>Book</th><th>Price</th><th>Fair (as listed)</th><th>Fair (Tatum out)</th><th>Take at</th><th></th></tr>
+      <tr><td><b>10+ reb+ast</b></td><td>Sportsbet</td><td>$3.00</td><td>$2.17</td><td>$2.08</td><td><b>$2.60+</b></td><td class="yes">Bet if he plays</td></tr>
+      <tr><td><b>SGM 4 reb / 6 ast</b></td><td>Sportsbet</td><td>est. ~$7.20</td><td>$4.84</td><td>$4.61</td><td><b>$6.30+</b></td><td class="yes">Bet if he plays</td></tr>
+      <tr><td>SGM 5 reb / 5 ast</td><td>Betr</td><td>est. ~$5.70</td><td>$3.95</td><td>$3.79</td><td>$5.10+</td><td class="yes">Bet if he plays</td></tr>
+      <tr><td>6+ ast</td><td>Sportsbet</td><td>$5.75</td><td>$4.00</td><td></td><td>$5.20+</td><td class="yes">Small</td></tr>
+      <tr><td>12+ reb+ast</td><td>Sportsbet</td><td>$4.40</td><td>$3.69</td><td>$3.49</td><td></td><td class="meh">Small</td></tr>
+    </table></div>
+  </section>
+
+  <section class="card">
+    <h2>The card</h2>
+    <div class="pick"><b>1. White SGM 5 reb / 5 ast</b> (Sportsbet), take at $4.50+. If Tatum is ruled out, also take <b>12+ reb+ast at $5.00</b>.</div>
+    <div class="pick"><b>2. White 5+ reb</b> (Betr, $3.50) as the single version of the rebound bounce-back.</div>
+    <div class="pick"><b>3. George 10+ reb+ast</b> (Sportsbet, $3.00) or <b>SGM 4 reb / 6 ast</b>, only once BOS confirm he plays.</div>
+    <ul>
+      <li><b>Keep it as separate bets rather than one combined SGM on both players.</b> A BOS blowout (−11.5) would sink both at once.</li>
+      <li>The SGM prices are estimates. Check the builder and pass if it's below the take-at price.</li>
+      <li>Why rebounds + assists: Dosunmu went 19 / 12 / 8 last game. Our 15p/7r and 7+ rebounds hit, and 6 reb / 6 ast at $6 hit too, but our filter didn't surface it.</li>
+    </ul>
+    <p class="note">Model: minutes as a scenario mix; per-minute rates lined up with tonight's lineup (absences in and out, uncertain teammates weighted by their chance of sitting); opponent pace and what MIL allow to guards; potentials and rebound chances; and each simulated game's blowout margin drawn from the spread. No backtest adjustments.</p>
+  </section>
+</main>
+</body>
+</html>

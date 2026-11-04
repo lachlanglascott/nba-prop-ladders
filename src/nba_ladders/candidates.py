@@ -15,6 +15,7 @@ against the SGM builder. Needs a same-day odds snapshot for prices
 """
 
 import argparse
+import re
 from datetime import date, datetime, timedelta
 
 import numpy as np
@@ -268,7 +269,7 @@ def gather(day: date) -> tuple[dict, pl.DataFrame, dict]:
     abbr = {k: v for k, v in TEAM_ABBR.items()}
     spreads = {abbr.get(r["team_name"]): r["spread"] for r in latest_spreads().iter_rows(named=True)}
     min20 = dict(people.select("player_name", "min20").iter_rows())
-    CONTEXT.update(pg=pg, eff=eff, pri=pri, pos=pos, roster=roster, tonight=tonight, tonight_det=tonight_det,
+    CONTEXT.update(day=day, pg=pg, eff=eff, pri=pri, pos=pos, roster=roster, tonight=tonight, tonight_det=tonight_det,
                    spreads=spreads, min20=min20,
                    avail={r["player_key"]: (r["status"], p_sits(r), r["reason"]) for r in report.filter(
                        pl.col("player_key").is_not_null()).iter_rows(named=True)})
@@ -624,6 +625,11 @@ def candidate_block(name: str, c: dict, odds: pl.DataFrame) -> tuple[list[str], 
                  f"assists ×{info['opp_ast']:.2f}, rebounds ×{info['opp_reb']:.2f}.")
     if trk:
         lines.append(f"- **Tracking**: {'; '.join(trk)}.")
+    wl = _weakness(info["player_id"], c["opp"])
+    if wl:
+        lines.append(f"- **Matchup**: {wl} (what they allow per minute vs each player's own rate; in the projection).")
+    c["matchup"] = wl
+    c["opp_f"] = _opp_factors(info["player_id"], c["opp"])
     rl = recent_line(name)
     if rl:
         lines.append(f"- **Last {RECENT_N} games**: {rl}.")
@@ -775,14 +781,16 @@ def tips(cands: dict, report: pl.DataFrame, n_sgm: int = TIP_N_SGM, n_single: in
         w = max(TIP_ANGLE_WEIGHT.get(a, 1.0) for a in c["reasons"])
         season = mpg.get(name)
         risk = bool(season and c.get("proj_min", 0) > TIP_MIN_RISK * season)
-        base = {"player": name, "team": c["team"], "opp": c["opp"], "why": pk["why"], "risk": risk,
+        why = pk["why"] + (f"; {c['matchup']}" if c.get("matchup") else "")
+        base = {"player": name, "team": c["team"], "opp": c["opp"], "why": why, "risk": risk,
                 "wait": c["team"] in unfiled,
                 "angles": ", ".join(ANGLE_LABEL[a] for a in pk["angles"]), "proj_min": c.get("proj_min"), "season_min": season}
         for r in c.get("sgm_ideas", []):
             m = r["est"] / r["fair"]
             if TIP_SGM_MARGIN <= m < 2.0:  # beyond 2x, the market probably knows something
                 out.append({**base, "kind": "SGM", "bet": r["combo"], "book": r["book"], "fair": r["fair"],
-                            "price": r["est"], "take_at": TIP_SGM_MARGIN * r["fair"], "score": (m - 1) * w * (0.7 if risk else 1)})
+                            "price": r["est"], "take_at": TIP_SGM_MARGIN * r["fair"],
+                            "score": (m - 1) * w * (0.7 if risk else 1) * _matchup_tilt(c, r["combo"])})
         for r in c.get("value_rungs", []):  # the user's books only: Sportsbet or Betr's price for the rung
             mine = [(bk, px) for bk, px in ((AU_BASE, r["sportsbet"]),
                     ("betr_au", c.get("leg_prices", {}).get("betr_au", {}).get((r["stat"], r["threshold"])))) if px]
@@ -795,7 +803,7 @@ def tips(cands: dict, report: pl.DataFrame, n_sgm: int = TIP_N_SGM, n_single: in
                 pts_bonus = 1.15 if r["stat"] == "pts" else 1.0
                 out.append({**base, "kind": "single", "bet": f"{r['threshold']}+ {r['stat']}", "book": r["best_book"],
                             "fair": r["fair"], "price": r["best_au"], "take_at": TIP_SINGLE_MARGIN * r["fair"],
-                            "score": (m - 1) * w * pts_bonus * (0.7 if risk else 1)})
+                            "score": (m - 1) * w * pts_bonus * (0.7 if risk else 1) * _matchup_tilt(c, r["stat"])})
     picks, used = [], set()
     if mixed:  # top N of any kind, one per player
         for r in sorted(out, key=lambda x: -x["score"]):
@@ -813,6 +821,39 @@ def tips(cands: dict, report: pl.DataFrame, n_sgm: int = TIP_N_SGM, n_single: in
                 picks.append(r)
                 used.add(r["player"])
     return picks
+
+
+def _weakness(player_id: int, opp: str) -> str:
+    from nba_ladders.absences import position_groups
+    from nba_ladders.matchup import weakness_line
+
+    if "grp" not in CONTEXT:
+        CONTEXT["grp"] = dict(position_groups(positions()).iter_rows())
+    g = CONTEXT["grp"].get(player_id)
+    return weakness_line(opp, g, CONTEXT.get("day")) if g and CONTEXT.get("day") else ""
+
+
+def _opp_factors(player_id: int, opp: str) -> dict:
+    from nba_ladders.matchup import group_factors
+
+    g = CONTEXT.get("grp", {}).get(player_id)
+    if not g or not CONTEXT.get("day"):
+        return {}
+    r = group_factors(CONTEXT["day"]).filter(pl.col("opponent") == opp, pl.col("grp") == g)
+    return {s: r[s][0] for s in ("pts", "reb", "ast")} if r.height else {}
+
+
+TIP_MATCHUP_TILT = 2.0  # ranking: +5% allowed in the bet's stats -> +10% score
+
+
+def _matchup_tilt(c: dict, bet: str) -> float:
+    f = c.get("opp_f") or {}
+    stats = re.findall(r"(pts|reb|ast)", bet) or [LEG[x] for x in re.findall(r"\d+([pra])", bet)]
+    vals = [f[s] for s in stats if s in f]
+    return 1 + TIP_MATCHUP_TILT * (float(np.mean(vals)) - 1) if vals else 1.0
+
+
+LEG = {"p": "pts", "r": "reb", "a": "ast"}
 
 
 def _injuries(report: pl.DataFrame, team: str) -> str:
