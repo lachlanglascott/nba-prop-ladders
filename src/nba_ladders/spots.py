@@ -253,13 +253,19 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
                          "strength": (rm - pm) / 8})
     r5 = g.tail(6).drop_nulls(["potential_ast", "reb_chances"])
     if r5.height >= 5:
-        for stat, ch, conv, lab in (("ast", "potential_ast", ca, "assists"), ("reb", "reb_chances", cr, "rebounds")):
+        gs = g.drop_nulls(["potential_ast", "reb_chances"])
+        for stat, ch, career, lab in (("ast", "potential_ast", ca, "assists"), ("reb", "reb_chances", cr, "rebounds")):
             now = r5[stat].sum() / max(r5[ch].sum(), 1)
+            # baseline = half career, half this season: a slump all season (new teammates taking the boards,
+            # e.g. Coulibaly with Davis/Sarr/Dybantsa) is structural, not bad luck
+            season = gs[stat].sum() / max(gs[ch].sum(), 1)
+            conv = 0.5 * career + 0.5 * season
             vol36 = _per36(r5, ch)
             basev = b_pot if ch == "potential_ast" else b_rc
             if conv and now <= conv - BOUNCE_GAP and vol36 and basev and vol36 >= 0.9 * basev and r5[ch].mean() >= BOUNCE_VOL:
                 sits.append({"kind": "bounce", "stat": stat,
-                             "text": f"{lab}: converting {now:.0%} of his chances over the last {r5.height} (career {conv:.0%}) on normal volume",
+                             "text": f"{lab}: converting {now:.0%} of his chances over the last {r5.height} (career {career:.0%}, "
+                                     f"this season {season:.0%}) on normal volume",
                              "strength": (conv - now) * 3})
     # ---- projection (means): per-minute volume x career conversion x opponent (per-minute vs own rate)
     pot36 = pot36 if pot36 is not None else (float(g["ast"].sum() / g["minutes"].sum() * 36) / max(ca, 0.3))
@@ -632,14 +638,14 @@ def main() -> None:
                 print(f"{lab}: {d['hit'].sum()}/{d.height} hit | honest expected {d['p'].sum():.1f} | model {d['p_model'].sum():.1f} | "
                       f"market {d['p_mkt'].sum():.1f} | flat 1u {pnl:+.2f}u")
         return
-    from nba_ladders.candidates import to_html
-
     res = build(args.date)
     cond = [] if args.no_conditional else conditional(args.date, res)
     md = render(res, cond)
     out = config.ROOT / "docs" / "slates" / f"{args.date.isoformat()}-spots.md"
     out.write_text(md)
-    out.with_suffix(".html").write_text(to_html(md, f"Spots {args.date}"))
+    from nba_ladders.spots_html import render_html
+
+    out.with_suffix(".html").write_text(render_html(res, cond))
     save(res, cond)
     print(md[:3000])
     print(f"wrote {out} and .html")
