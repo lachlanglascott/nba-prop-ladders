@@ -46,7 +46,8 @@ not a normal distribution.
 - Spreads (blowout minutes, ~1 credit): `uv run python -m nba_ladders.sources.odds_api spreads` (take with each snapshot)
 - Odds (The Odds API, key in `.env` as ODDS_API_KEY): `uv run python -m nba_ladders.sources.odds_api coverage|snapshot|historical` (hard credit budget per run; never print the key)
 - Market vs model: `uv run python -m nba_ladders.market [--player X] [--all]` (needs a snapshot; flags are leads, not bets, until backtested)
-- **Game-day write-up / candidates**: `uv run python -m nba_ladders.candidates [--date YYYY-MM-DD]` → `docs/slates/<date>.md` + `.html` (model vs market, $3-$10 bets table, game cards; no backtest adjustments; take an odds snapshot first)
+- **Spots (the slate, situation-first)**: `uv run python -m nba_ladders.spots --date YYYY-MM-DD` → `docs/slates/<date>-spots.{md,html}`; grade after the games with `--grade`. A spot needs a reason (lineup role change incl. last season's matching games, conversion bounce on normal volume); projection from matching games; honest fair = calibrated market moved toward the model by a confidence (0.08-0.35); SGMs priced off AU-median legs (0.9×). Take a fresh odds snapshot + spreads first.
+- Game-day write-up / candidates (older model-vs-market slate): `uv run python -m nba_ladders.candidates [--date YYYY-MM-DD]` → `docs/slates/<date>.md` + `.html` (model vs market, $3-$10 bets table, game cards; no backtest adjustments; take an odds snapshot first)
 - Calibrated blend (book + model, fit on the market backtest): `uv run python -m nba_ladders.blend fit`
 - Grade a slate after the games (pull first): `uv run python -m nba_ladders.grade --date YYYY-MM-DD`
 - Availability (carry-forward of missed games, uncertain teammates weighted by P(sits)): `src/nba_ladders/availability.py`

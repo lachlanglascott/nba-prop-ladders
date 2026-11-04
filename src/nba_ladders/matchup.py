@@ -147,8 +147,8 @@ def player_multipliers(opponent: str, grp: str, as_of: date, season_id: str = "2
     if r.is_empty():
         team = multipliers(opponent, as_of, season_id)
         return {"pace": pace, "pts": team["pts"], "ast": team["ast"], "reb_grp": 1.0}
-    row = r.row(0, named=True)
-    return {"pace": pace, "pts": pace * row["pts"], "ast": pace * row["ast"], "reb_grp": row["reb"]}
+    row = r.row(0, named=True)  # per-minute vs each player's own rate: pace is already inside
+    return {"pace": pace, "pts": row["pts"], "ast": row["ast"], "reb_grp": row["reb"]}
 
 
 def weakness_line(opponent: str, grp: str, as_of: date) -> str:

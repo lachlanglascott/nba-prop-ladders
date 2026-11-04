@@ -181,3 +181,28 @@ def test_depth_chart_fc_starter():
     pos = pl.DataFrame({"player_id": [1, 2], "position": ["F-C", "C"]})
     dc = depth_chart(pl.DataFrame(rows), roster, pos)
     assert dc.filter(pl.col("is_starter"))["player_id"].to_list() == [1]  # the 30-mpg F-C starts, not the 18-mpg C
+
+
+def test_spots_market_and_grades():
+    from nba_ladders import spots as S
+
+    assert abs(S.market_ratio(1.24) - 0.934) < 1e-6 and S.market_ratio(5.62) < S.market_ratio(2.24)  # longshot bias
+    assert S.grade(0.15, 0.30, {"role"}) == "A"
+    assert S.grade(0.15, 0.30, {"bounce"}) == "B"  # only lineup roles make A
+    assert S.grade(0.50, 0.30, {"role"}, outlier=True) == "C"
+    a = {"sits": [{"kind": "bounce", "stat": "ast", "text": "ast"}, {"kind": "bounce", "stat": "reb", "text": "reb"}]}
+    assert S._why(a, {"kind": "single", "bet": "8+ reb"}) == "reb"
+    assert S._why(a, {"kind": "SGM", "bet": "12p/5a"}) == "ast"
+
+
+def test_spots_simulate_poisson_given_minutes():
+    import numpy as np
+
+    from nba_ladders import spots as S
+
+    a = {"proj_min": 30.0, "min_sd": 4.0, "spread": None, "rate": {"ast": 0.2, "reb": 0.2, "pts": 0.5}}
+    s = S.simulate(a, n=50_000)
+    assert abs(s["ast"].mean() - 6.0) < 0.15 and abs(s["minutes"].mean() - 30.0) < 0.2
+    # minutes spread makes counts over-dispersed vs Poisson, but only modestly (var/mean ~1.1-1.4)
+    assert 1.0 < s["ast"].var() / s["ast"].mean() < 1.5
+    assert np.corrcoef(s["ast"], s["reb"])[0, 1] > 0.05  # shared minutes correlate the stats
