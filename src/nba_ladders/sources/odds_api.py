@@ -40,12 +40,13 @@ DEFAULT_BOOKMAKERS = [AU_BASE, *AU_REFERENCE, *US_REFERENCE]  # <= 10 books = 1 
 DEFAULT_MARKETS = [
     "player_points_alternate", "player_rebounds_alternate", "player_assists_alternate",
     "player_points_rebounds_alternate", "player_points_assists_alternate",
-    "player_rebounds_assists_alternate",
+    "player_rebounds_assists_alternate", "player_threes_alternate",
 ]
 STAT_OF_MARKET = {
     "player_points": "pts", "player_rebounds": "reb", "player_assists": "ast",
     "player_points_rebounds": "pts+reb", "player_points_assists": "pts+ast",
     "player_rebounds_assists": "reb+ast", "player_points_rebounds_assists": "pts+reb+ast",
+    "player_threes": "3pm",
 }
 
 
