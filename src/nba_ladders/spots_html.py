@@ -117,16 +117,19 @@ def render_html(res: dict, cond: list[dict]) -> str:
          'builder estimates (0.9× the AU-median legs): take only at the <span class="take">take at</span> price or better. '
          'Grades: A = lineup role spot with strong evidence; B = solid; C = thin.</p></details>')]
     # the card
-    ok = lambda b: not b.get("outlier") and not b.get("alt")
-    card = [(a, next(b for b in a["bets"] if ok(b))) for a in res["spots"] if any(ok(b) for b in a["bets"])]
-    card = sorted(card, key=lambda ab: ("ABC".index(ab[1]["grade"]), -ab[1]["ev"]))[:10]
-    H.append('<h2>The card</h2><div class="card-list">')
+    from nba_ladders.spots import card_bets
+
+    card = card_bets(res, cond=cond)
+    H.append('<h2>The card: 5 tips</h2><div class="card-list">')
     for a, b in card:
         sg = next((x for x in a["bets"] if x["kind"] == "SGM" and x is not b), None)
         kinds = "".join(f'<span class="chip {KIND[x["kind"]][0]}">{KIND[x["kind"]][1]}</span>' for x in a["sits"] if x["kind"] in KIND)
-        H.append(f'<div class="row"><span class="badge {b["grade"]}">{b["grade"]}</span>'
-                 f'<div class="who"><b>{esc(a["name"])}</b><small>{esc(a["team"])} vs {esc(a["opp"])} · stake {STAKE[b["grade"]]}</small>'
-                 f'<div class="chips">{kinds}</div></div>'
+        g, stake = ("C", "0.25u · lean") if b.get("lean") else ("B", "0.5u · only if he sits") if b.get("if_sits") else (b["grade"], STAKE[b["grade"]])
+        mark = "L" if b.get("lean") else "IF" if b.get("if_sits") else g
+        cond_chip = f'<span class="chip warn">Only if {esc(b["if_sits"])}</span>' if b.get("if_sits") else ""
+        H.append(f'<div class="row"><span class="badge {g}">{mark}</span>'
+                 f'<div class="who"><b>{esc(a["name"])}</b><small>{esc(a["team"])} vs {esc(a["opp"])} · stake {stake}</small>'
+                 f'<div class="chips">{cond_chip}{kinds}</div></div>'
                  f'<div class="betcol">{_bet_html(b)}' + (f'<div class="sgm">SGM version: {_bet_html(sg, big=False)}</div>' if sg else "")
                  + f'</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
     H.append("</div>")

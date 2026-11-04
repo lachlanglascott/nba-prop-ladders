@@ -61,14 +61,15 @@ CONF_MIN, CONF_MAX = 0.08, 0.35
 SGM_FACTOR = 0.90  # builder ≈ this x product of the book's legs (user's slips: 0.87-1.2x)
 LEG_MIN_P = 0.50  # each SGM leg live on its own
 SGM_MIN_EV = 0.08
-CARD_N = 10
+CARD_N = 5
 LEG_MIN = {"pts": 8, "reb": 3, "ast": 3}
 SGM_BOOKS = ("betr_au", "sportsbet")
 SINGLE_RANGE = (2.5, 10.0)
 SGM_RANGE = (3.5, 15.0)
 FREED_CAP = 6.0  # minutes: the rough share-of-freed-minutes estimate when there's no game without them
 PRIMARY = {"role", "bounce"}  # spot types that stand on their own
-ROLE_MIN, ROLE_VOL = 2.0, 1.15  # a role spot needs +2 min or +15% volume vs his normal-lineup games
+ROLE_MIN, ROLE_VOL = 2.0, 1.15
+ROLE_VOL_GAMES = 5  # a volume-only role spot (no extra minutes) needs this many matching games (Clingan, Gobert)  # a role spot needs +2 min or +15% volume vs his normal-lineup games
 BOUNCE_GAP, BOUNCE_VOL = 0.18, 6.0  # conversion this far under career, on 6+ chances a game, over 5+ games
 OUTLIER = 1.35  # a book's price this far above the market's fair = stale or wrong line: check before betting
 MIN_EV = 0.04  # honest EV to list a bet
@@ -232,7 +233,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
         why = "no game yet with this lineup (estimated)"
     # ---- situations
     vol_up = max((pot36 or 0) / b_pot if b_pot else 1, (rc36 or 0) / b_rc if b_rc else 1)
-    if key_new and (proj_min - base_min >= ROLE_MIN or (vol_up >= ROLE_VOL and n_comp >= 3)):
+    if key_new and (proj_min - base_min >= ROLE_MIN or (vol_up >= ROLE_VOL and n_comp >= ROLE_VOL_GAMES)):
         names = ", ".join(sorted(id_name.get(m, str(m)) for m in key_new))
         d_min = proj_min - base_min
         sits.append({"kind": "role", "text": f"{names} out (usually plays): {d_min:+.1f} min vs his normal-lineup games"
@@ -407,8 +408,8 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float) -> list[dict]:
             (pm, hist_lab), pk = anchored(a, sim, [(st, k)]), mk[(st, k)]
             ph = pk + c * (pm - pk)
             ev = price * ph - 1
-            if ev >= MIN_EV:
-                out.append({"kind": "single", "bet": f"{k}+ {st}", "book": bk, "price": price, "p_model": pm, "p_mkt": pk, "hist": hist_lab,
+            if ev >= 0:
+                out.append({"kind": "single", "lean": ev < MIN_EV, "bet": f"{k}+ {st}", "book": bk, "price": price, "p_model": pm, "p_mkt": pk, "hist": hist_lab,
                             "p": ph, "ev": ev, "take_at": 1.10 / ph, "outlier": price * pk / 1.0 > OUTLIER})
     # SGMs from one book's ladder
     for bk in SGM_BOOKS:
@@ -445,7 +446,9 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float) -> list[dict]:
         if shape not in seen:
             seen.add(shape)
             best.append(b)
-    main = [b for b in best if not b.get("alt")][:4]
+    main = [b for b in best if not b.get("alt") and not b.get("lean")][:4]
+    if not main:  # no bet clears the bar: keep the best lean for the card's filler
+        main = [b for b in best if b.get("lean")][:1]
     sgm = next((b for b in best if b["kind"] == "SGM"), None)
     if sgm is not None and sgm not in main:
         main.append(sgm)
@@ -503,7 +506,7 @@ def build(day: date, extra_out: dict | None = None) -> dict:
         if pid is not None:
             status[pid] = (r["status"], _p_sit(r), r["reason"] or "")
     id_name = {**pid_name, **{("mpg", p): v for p, v in mpg.items()}, **{("grp", p): v for p, v in grp.items()}}
-    spots, looked = [], 0
+    spots, leans, looked = [], [], 0
     for team, m in teams.items():
         opp = next(x for x in m.split("@") if x != team)
         roster = [p for p, t in team_now.items() if t == team and mpg.get(p, 0) >= ROT_MPG]
@@ -540,10 +543,13 @@ def build(day: date, extra_out: dict | None = None) -> dict:
             kinds = {x["kind"] + ("-vol" if x["kind"] == "emerging" and x.get("stat") in ("ast", "reb") else "") for x in a["sits"]}
             for b in bs:
                 b["grade"] = grade(b["ev"], c, kinds, b.get("outlier", False))
-            if any(not b.get("alt") for b in bs):
+            if any(not b.get("alt") and not b.get("lean") for b in bs):
                 spots.append(a)
+            elif any(b.get("lean") for b in bs):
+                leans.append(a)
     spots.sort(key=lambda a: -max(b["ev"] * a["conf"] for b in a["bets"]))
-    return {"day": day, "spots": spots, "report_time": str(rep["report_time"].max()), "filed": filed, "teams": set(teams),
+    leans.sort(key=lambda a: -max(b["ev"] for b in a["bets"]))
+    return {"day": day, "spots": spots, "leans": leans, "report_time": str(rep["report_time"].max()), "filed": filed, "teams": set(teams),
             "snapshot": odds["snapshot"].max() if odds.height else None, "looked": looked, "status": status,
             "pid_name": pid_name, "team_now": team_now, "mpg": mpg}
 
@@ -572,6 +578,29 @@ def _fmt_bet(b):
             f"EV {b['ev']:+.0%} · take at **${b['take_at']:.2f}**")
 
 
+def card_bets(res: dict, n: int = CARD_N, cond: list | None = None) -> list[tuple[dict, dict]]:
+    """Top n tips: one per spot (grade, then honest EV); filled with leans, then the best
+    'if X sits' bets (labelled), if fewer qualify."""
+    ok = lambda b: not b.get("outlier") and not b.get("alt") and not b.get("lean")
+    card = [(a, next(b for b in a["bets"] if ok(b))) for a in res["spots"] if any(ok(b) for b in a["bets"])]
+    card = sorted(card, key=lambda ab: ("ABC".index(ab[1]["grade"]), -ab[1]["ev"]))[:n]
+    for a in res.get("leans", []):
+        if len(card) >= n:
+            break
+        b = next((x for x in a["bets"] if x.get("lean") and not x.get("outlier")), None)
+        if b is not None:
+            card.append((a, b))
+    have = {a["name"] for a, _ in card}
+    extra = sorted(((c, a, b) for c in (cond or []) for a, b in c["bets"]), key=lambda x: -x[2]["ev"])
+    for c, a, b in extra:
+        if len(card) >= n:
+            break
+        if a["name"] not in have:
+            card.append((a, {**b, "if_sits": f"{c['player']} sits ({c['p']:.0%})"}))
+            have.add(a["name"])
+    return card
+
+
 def _why(a: dict, b: dict) -> str:
     """The situation that drives this bet's stat (role spots drive every stat)."""
     leg = {"p": "pts", "r": "reb", "a": "ast"}
@@ -595,12 +624,15 @@ def render(res: dict, cond: list[dict]) -> str:
               "games that match tonight. **Fair and EV are honest**: they start from the market's own probability and "
               "move toward the model only by the confidence shown, so a +15% here means more than +80% did before. "
               "SGM prices are builder estimates (0.9× the legs on that book): take only at the 'take at' price or better.")]
-    ok = lambda b: not b.get("outlier") and not b.get("alt")
-    card = [(a, next(b for b in a["bets"] if ok(b))) for a in res["spots"] if any(ok(b) for b in a["bets"])]
+    card = card_bets(res, cond=cond)
     L += ["", "## The card", "", "| Grade | Stake | Player | Bet | SGM version | Why |", "|---|---|---|---|---|---|"]
-    for a, b in sorted(card, key=lambda ab: ("ABC".index(ab[1]["grade"]), -ab[1]["ev"]))[:CARD_N]:
+    for a, b in card:
         sg = next((x for x in a["bets"] if x["kind"] == "SGM" and x is not b), None)
-        L.append(f"| **{b['grade']}** | {STAKE[b['grade']]} | **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | "
+        if b.get("if_sits"):
+            L.append(f"| **If** | 0.5u | **{a['name']}** ({a['team']} vs {a['opp']}) | **only if {b['if_sits']}**: {_fmt_bet(b)} | — | "
+                     f"{_why(a, b)} |")
+            continue
+        L.append(f"| **{'Lean' if b.get('lean') else b['grade']}** | {'0.25u' if b.get('lean') else STAKE[b['grade']]} | **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | "
                  f"{_fmt_bet(sg) if sg else '—'} | {_why(a, b)}" + (f"; {a['opp_line']}" if a.get('opp_line') else "") + " |")
     shop = [(a, b) for a in res["spots"] for b in a["bets"] if b.get("outlier")]
     if shop:
