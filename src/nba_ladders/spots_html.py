@@ -72,7 +72,8 @@ def _bet_html(b, big=True):
     out = (f'<div class="bet">{esc(label)} <small>{book} · {est}${b["price"]:.2f}</small></div>' if big
            else f'<b>{esc(label)}</b> {book} {est}${b["price"]:.2f}')
     nums = (f'<div class="nums"><span>fair <b>${1 / b["p"]:.2f}</b></span><span>EV {_ev(b["ev"])}</span>'
-            f'<span>take at <span class="take">${b["take_at"]:.2f}</span></span></div>')
+            f'<span>take at <span class="take">${b["take_at"]:.2f}</span></span>'
+            + (f'<span>{esc(b["hist"])}</span>' if b.get("hist") else "") + '</div>')
     return out + (nums if big else f' · fair ${1 / b["p"]:.2f} · EV {_ev(b["ev"])} · take at <span class="take">${b["take_at"]:.2f}</span>')
 
 
@@ -129,21 +130,27 @@ def render_html(res: dict, cond: list[dict]) -> str:
                  f'<div class="betcol">{_bet_html(b)}' + (f'<div class="sgm">SGM version: {_bet_html(sg, big=False)}</div>' if sg else "")
                  + f'</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
     H.append("</div>")
+    if cond:
+        H.append('<h2>Key questionable players: the bet if they miss</h2><div class="cond">')
+        for c in cond:
+            H.append(f'<div class="panel"><h3>{esc(c["player"])} <span class="chip">{esc(c["team"])} · {c["mpg"]:.0f} min/g</span>'
+                     f'<span class="chip warn">P(sits) {c["p"]:.0%}</span></h3><p class="note">{esc(c["reason"])}</p>')
+            if c["bets"]:
+                H.append("<ul>")
+                for a, b in c["bets"]:
+                    H.append(f'<li>If he misses: <b>{esc(a["name"])}</b> {_bet_html(b, big=False)} · <span class="note">{esc(_why(a, b))}</span></li>')
+                H.append("</ul>")
+            else:
+                H.append('<p class="note">No bet clears if he misses: thin evidence for his teammates without him, '
+                         'or the market has already moved.</p>')
+            H.append("</div>")
+        H.append("</div>")
     shop = [(a, b) for a in res["spots"] for b in a["bets"] if b.get("outlier")]
     if shop:
         H.append('<h2>Check these prices are live</h2><div class="panel warn"><ul>')
         for a, b in sorted(shop, key=lambda ab: -ab[1]["ev"])[:6]:
             H.append(f'<li><b>{esc(a["name"])}</b> ({esc(a["team"])}): {_bet_html(b, big=False)} · market fair ${1 / b["p_mkt"]:.2f}</li>')
         H.append("</ul></div>")
-    if cond:
-        H.append('<h2>If they sit</h2><div class="cond">')
-        for c in cond:
-            H.append(f'<div class="panel"><h3>If {esc(c["player"])} sits <span class="chip">{esc(c["team"])}</span>'
-                     f'<span class="chip warn">P(sits) {c["p"]:.0%}</span></h3><p class="note">{esc(c["reason"])}</p><ul>')
-            for a, b in c["bets"]:
-                H.append(f'<li><b>{esc(a["name"])}</b>: {_bet_html(b, big=False)}</li>')
-            H.append("</ul></div>")
-        H.append("</div>")
     # spots
     H.append("<h2>Spots</h2>")
     for a in res["spots"]:
@@ -183,7 +190,7 @@ def render_html(res: dict, cond: list[dict]) -> str:
         for b in a["bets"]:
             book = b["book"].replace("_au", "")
             flag = ' <span class="chip warn">check live</span>' if b.get("outlier") else (' <span class="chip">SGM version</span>' if b.get("alt") else "")
-            H.append(f'<tr><td><span class="badge {b["grade"]}">{b["grade"]}</span></td><td><b>{"SGM " if b["kind"] == "SGM" else ""}{esc(b["bet"])}</b>{flag}</td>'
+            H.append(f'<tr><td><span class="badge {b["grade"]}">{b["grade"]}</span></td><td><b>{"SGM " if b["kind"] == "SGM" else ""}{esc(b["bet"])}</b>{flag}<br><span class="note">{esc(b.get("hist", ""))}</span></td>'
                      f'<td>{book}</td><td class="num">{"est. " if b["kind"] == "SGM" else ""}${b["price"]:.2f}</td>'
                      f'<td class="num">${1 / b["p_model"]:.2f}</td><td class="num">${1 / b["p_mkt"]:.2f}</td>'
                      f'<td class="num"><b>${1 / b["p"]:.2f}</b></td><td class="num">{_ev(b["ev"])}</td>'

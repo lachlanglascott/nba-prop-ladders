@@ -66,6 +66,7 @@ LEG_MIN = {"pts": 8, "reb": 3, "ast": 3}
 SGM_BOOKS = ("betr_au", "sportsbet")
 SINGLE_RANGE = (2.5, 10.0)
 SGM_RANGE = (3.5, 15.0)
+FREED_CAP = 6.0  # minutes: the rough share-of-freed-minutes estimate when there's no game without them
 PRIMARY = {"role", "bounce"}  # spot types that stand on their own
 ROLE_MIN, ROLE_VOL = 2.0, 1.15  # a role spot needs +2 min or +15% volume vs his normal-lineup games
 BOUNCE_GAP, BOUNCE_VOL = 0.18, 6.0  # conversion this far under career, on 6+ chances a game, over 5+ games
@@ -213,7 +214,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
         if last_comp is not None:  # last season counts half
             w = w * np.where(sample["season_id"].to_numpy() == SEASON, 1.0, 0.5)
         n_comp = int(comp.height + (0.5 * last_comp.height if last_comp is not None else 0))
-        k = 2.0  # pseudo-games of baseline
+        k = 3.0  # pseudo-games of baseline
         s_min = _wmean(sample, "minutes", w)
         proj_min = (s_min * w.sum() + base_min * k) / (w.sum() + k)
         def blend36(col, prior):
@@ -227,11 +228,11 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
     elif key_new:  # no game yet without them: a share of the freed minutes, mostly to the same position
         mine = id_name.get(("grp", pid), "W")
         freed = sum(id_name.get(("mpg", m), 30.0) * (0.25 if id_name.get(("grp", m), "W") == mine else 0.06) for m in key_new)
-        proj_min = min(base_min + freed, 40.0)
+        proj_min = min(base_min + min(freed, FREED_CAP), 40.0)
         why = "no game yet with this lineup (estimated)"
     # ---- situations
     vol_up = max((pot36 or 0) / b_pot if b_pot else 1, (rc36 or 0) / b_rc if b_rc else 1)
-    if key_new and (proj_min - base_min >= ROLE_MIN or vol_up >= ROLE_VOL):
+    if key_new and (proj_min - base_min >= ROLE_MIN or (vol_up >= ROLE_VOL and n_comp >= 3)):
         names = ", ".join(sorted(id_name.get(m, str(m)) for m in key_new))
         d_min = proj_min - base_min
         sits.append({"kind": "role", "text": f"{names} out (usually plays): {d_min:+.1f} min vs his normal-lineup games"
@@ -275,7 +276,9 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
             "pts": pts36 / 36 * opp_f.get("pts", 1.0)}
     src = sample if sample is not None and sample.height >= 3 else g.tail(8)
     min_sd = max(4.0, float(src["minutes"].std() or 0.0))
-    return {"pid": pid, "name": name, "team": team, "opp": opp, "sits": sits, "key_new": key_new, "n_comp": n_comp,
+    hist = pl.concat([g.select("season_id", "pts", "reb", "ast"), last.select("season_id", "pts", "reb", "ast")]
+                     if last.height else [g.select("season_id", "pts", "reb", "ast")], how="vertical_relaxed")
+    return {"pid": pid, "name": name, "team": team, "opp": opp, "sits": sits, "hist": hist, "key_new": key_new, "n_comp": n_comp,
             "why_sample": why, "sample": sample, "base_min": base_min, "proj_min": proj_min, "min_sd": min_sd,
             "rate": rate, "pot36": pot36, "rc36": rc36, "ca": ca, "cr": cr, "spread": spread, "opp_f": opp_f,
             "games": g.height, "last_games": last.height}
@@ -342,6 +345,54 @@ def _p(sim: dict, legs) -> float:
     return float(hit.mean())
 
 
+PLAUSIBLE = 0.10  # he must have hit the line in 10%+ of games over two seasons (this season x2)...
+BIG_ROLE_MIN = 4.0  # ...unless tonight's role adds 4+ minutes
+HIST_W = 0.4  # weight of his own hit rate on the line (this season counts double) in the model probability
+
+
+def hit_rate(a: dict, legs) -> tuple[float | None, str]:
+    """His own history on these legs: weighted hit rate and a 'hit 2/6 this season, 16/77 last' label."""
+    h = a.get("hist")
+    if h is None or h.is_empty():
+        return None, ""
+    hit = pl.lit(True)
+    for s, k in legs:
+        hit = hit & (pl.sum_horizontal([pl.col(x) for x in s.split("+")]) >= k)
+    d = h.with_columns(hit.alias("hit"))
+    cur, prev = d.filter(pl.col("season_id") == SEASON), d.filter(pl.col("season_id") != SEASON)
+    n = 2 * cur.height + prev.height
+    if n == 0:
+        return None, ""
+    rate = (2 * cur["hit"].sum() + prev["hit"].sum()) / n
+    lab = f"hit {cur['hit'].sum()}/{cur.height} this season" + (f", {prev['hit'].sum()}/{prev.height} last" if prev.height else "")
+    return float(rate), lab
+
+
+def anchored(a: dict, sim: dict, legs) -> tuple[float, str]:
+    """Model probability blended with his own hit rate. For a lineup role change his old games
+    describe the old role, so the anchor is the games that match tonight (3+), or none."""
+    pm = _p(sim, legs)
+    hr, lab = hit_rate(a, legs)
+    if any(x["kind"] == "role" for x in a["sits"]):
+        s = a.get("sample")
+        if s is not None and s.height >= 3:
+            hit = pl.lit(True)
+            for st, k in legs:
+                hit = hit & (pl.sum_horizontal([pl.col(x) for x in st.split("+")]) >= k)
+            n_hit = int(s.select(hit.alias("h"))["h"].sum())
+            return (1 - HIST_W) * pm + HIST_W * n_hit / s.height, f"hit {n_hit}/{s.height} in games like tonight · {lab}"
+        return pm, f"{lab} (old role)" if lab else ""
+    return (pm if hr is None else (1 - HIST_W) * pm + HIST_W * hr), lab
+
+
+def plausible(a: dict, legs) -> bool:
+    """'He's never got 4': skip lines he almost never reaches, unless his minutes jump."""
+    if a["proj_min"] - a["base_min"] >= BIG_ROLE_MIN:
+        return True
+    hr, _ = hit_rate(a, legs)
+    return hr is None or hr >= PLAUSIBLE
+
+
 def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float) -> list[dict]:
     stats = {s.get("stat") for s in a["sits"] if s.get("stat") in ("ast", "reb")}
     focus = stats or {"pts", "reb", "ast"}
@@ -351,11 +402,13 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float) -> list[dict]:
         for (st, k), price in books.get(bk, {}).items():
             if "+" in st or not (SINGLE_RANGE[0] <= price <= SINGLE_RANGE[1]) or st not in focus or (st, k) not in mk:
                 continue  # combined-stat rungs: build them as SGM legs instead
-            pm, pk = _p(sim, [(st, k)]), mk[(st, k)]
+            if not plausible(a, [(st, k)]):
+                continue
+            (pm, hist_lab), pk = anchored(a, sim, [(st, k)]), mk[(st, k)]
             ph = pk + c * (pm - pk)
             ev = price * ph - 1
             if ev >= MIN_EV:
-                out.append({"kind": "single", "bet": f"{k}+ {st}", "book": bk, "price": price, "p_model": pm, "p_mkt": pk,
+                out.append({"kind": "single", "bet": f"{k}+ {st}", "book": bk, "price": price, "p_model": pm, "p_mkt": pk, "hist": hist_lab,
                             "p": ph, "ev": ev, "take_at": 1.10 / ph, "outlier": price * pk / 1.0 > OUTLIER})
     # SGMs from one book's ladder
     for bk in SGM_BOOKS:
@@ -367,19 +420,22 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float) -> list[dict]:
                     continue
                 for ks in product(*(legs[s] for s in ss)):
                     lg = list(zip(ss, ks))
-                    pj = _p(sim, lg)
+                    if not plausible(a, lg):
+                        continue
+                    pj_raw = _p(sim, lg)
+                    pj, hist_lab = anchored(a, sim, lg)
                     med = books.get("au_median", {})
                     if any(x not in med for x in lg):
                         continue
                     est = SGM_FACTOR * float(np.prod([med[x] for x in lg]))  # builders price off the market, not one book
                     if not (SGM_RANGE[0] <= est <= SGM_RANGE[1]) or any(x not in mk for x in lg) or pj <= 0:
                         continue
-                    rho = pj / float(np.prod([_p(sim, [x]) for x in lg]))  # model's within-player correlation
+                    rho = pj_raw / float(np.prod([_p(sim, [x]) for x in lg]))  # model's within-player correlation
                     pk = float(np.prod([mk[x] for x in lg])) * rho
                     ph = pk + c * (pj - pk)
                     ev = est * ph - 1
                     if ev >= 0.0:  # below SGM_MIN_EV it's shown as the spot's SGM version, not a card bet
-                        out.append({"kind": "SGM", "alt": ev < SGM_MIN_EV, "bet": "/".join(f"{k}{s[0]}" for s, k in lg), "book": bk, "price": est,
+                        out.append({"kind": "SGM", "alt": ev < SGM_MIN_EV, "hist": hist_lab, "bet": "/".join(f"{k}{s[0]}" for s, k in lg), "book": bk, "price": est,
                                     "p_model": pj, "p_mkt": pk, "p": ph, "ev": ev, "take_at": 1.10 / ph, "outlier": False,
                                     "legs": " × ".join(f"${med[x]:.2f}" for x in lg)})
     out.sort(key=lambda b: -b["ev"])
@@ -426,10 +482,11 @@ def build(day: date, extra_out: dict | None = None) -> dict:
     gt_last = _game_table(pg, trk, team_now, str(int(SEASON) - 1))
     cur = pg.filter(pl.col("season_id") == SEASON)
     mpg = dict(cur.group_by("player_id").agg(pl.col("minutes").mean()).iter_rows())
-    last_season = pg.filter(pl.col("season_id") == str(int(SEASON) - 1))
-    last_ppg = dict(last_season.group_by("player_id").agg(pl.col("pts").mean()).filter(
-        pl.col("player_id").is_in(last_season.group_by("player_id").len().filter(pl.col("len") >= 20)["player_id"].implode()))
-        .iter_rows())
+    # stars: 20+ ppg in the most recent of the last two seasons where he played 20+ games (Tatum missed 2025-26)
+    last_ppg = {}
+    for sid in (str(int(SEASON) - 2), str(int(SEASON) - 1)):
+        s = pg.filter(pl.col("season_id") == sid).group_by("player_id").agg(pl.col("pts").mean(), pl.len())
+        last_ppg.update(dict(s.filter(pl.col("len") >= 20).select("player_id", "pts").iter_rows()))
     trk_last = trk.filter(pl.col("season_id") == str(int(SEASON) - 1))
     ca, cr = _conversions(trk)
     grp = dict(position_groups(positions()).iter_rows())
@@ -497,14 +554,14 @@ def conditional(day: date, base: dict) -> list[dict]:
     have = {(a["name"], b["bet"]) for a in base["spots"] for b in a["bets"]}
     for pid, (st, p, reason) in base["status"].items():
         team = base["team_now"].get(pid)
-        if team not in base["teams"] or not (SAFE_P <= p < OUT_P) or base["mpg"].get(pid, 0) < KEY_MPG:
+        if team not in base["teams"] or not (0.15 <= p < OUT_P) or base["mpg"].get(pid, 0) < KEY_MPG:
             continue
         alt = build(day, extra_out={team: {pid}})
         new = [(a, b) for a in alt["spots"] if a["team"] == team for b in a["bets"]
-               if (a["name"], b["bet"]) not in have and b["ev"] >= 0.10]
-        if new:
-            out.append({"player": base["pid_name"].get(pid, str(pid)), "team": team, "p": p, "reason": reason,
-                        "bets": sorted(new, key=lambda ab: -ab[1]["ev"])[:4]})
+               if (a["name"], b["bet"]) not in have and not b.get("alt") and not b.get("outlier") and b["ev"] >= MIN_EV]
+        out.append({"player": base["pid_name"].get(pid, str(pid)), "team": team, "p": p, "reason": reason,
+                    "mpg": base["mpg"].get(pid, 0.0), "bets": sorted(new, key=lambda ab: -ab[1]["ev"])[:3]})
+    out.sort(key=lambda c: -c["mpg"])
     return out
 
 
@@ -603,6 +660,8 @@ def save(res: dict, cond: list[dict]) -> None:
 def grade_day(day: date) -> pl.DataFrame:
     """Score a saved card: hits vs honest / model / market expectation, flat-stake P&L."""
     df = pl.read_parquet(config.DATA_PROCESSED / "spots" / f"{day}.parquet")
+    if df.is_empty() or "player" not in df.columns:
+        return pl.DataFrame()
     pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet").filter(pl.col("game_date") == day)
     box = {player_key(r["player_name"]): r for r in pg.iter_rows(named=True)}
     leg = {"p": "pts", "r": "reb", "a": "ast"}
