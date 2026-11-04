@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harper Flagg SGP</title>
+<style>
+:root{--bg:#f4f5f2;--card:#fff;--ink:#1b1e23;--muted:#646b76;--line:#e1e4e8;--soft:#f6f7f9;
+--good:#18794e;--good-bg:#dff3e8;--blue:#2457c5;--blue-bg:#e3ebfb;--warn:#a05a00;--warn-bg:#fcefd9;--bad:#b42318;--bad-bg:#fbe7e1;--gold:#9a6b00}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121418;--card:#1c1f25;--ink:#e8eaed;--muted:#9aa2ad;--line:#2d323a;--soft:#232730;
+--good:#5fd39a;--good-bg:#17322a;--blue:#8fb0ff;--blue-bg:#1d2a45;--warn:#f3b860;--warn-bg:#3a2c16;--bad:#ff8a80;--bad-bg:#3c211b;--gold:#ffc53d}}
+:root[data-theme=dark]{--bg:#121418;--card:#1c1f25;--ink:#e8eaed;--muted:#9aa2ad;--line:#2d323a;--soft:#232730;--good:#5fd39a;--good-bg:#17322a;
+--blue:#8fb0ff;--blue-bg:#1d2a45;--warn:#f3b860;--warn-bg:#3a2c16;--bad:#ff8a80;--bad-bg:#3c211b;--gold:#ffc53d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:980px;margin:0 auto;padding:26px 16px 64px}
+h1{font-size:26px;margin:0;letter-spacing:-.01em}h2{font-size:19px;margin:0 0 10px}h3{font-size:13px;margin:18px 0 8px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.sub{color:var(--muted);margin:4px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-top:18px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.chip{border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;background:var(--soft);color:var(--muted);white-space:nowrap}
+.chip.good{background:var(--good-bg);color:var(--good)}.chip.warn{background:var(--warn-bg);color:var(--warn)}.chip.bad{background:var(--bad-bg);color:var(--bad)}.chip.blue{background:var(--blue-bg);color:var(--blue)}
+.verdict{border-radius:10px;padding:12px 16px;font-weight:600;background:var(--good-bg);color:var(--good);margin-top:14px}
+.slip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.leg{background:var(--soft);border-radius:10px;padding:10px 12px}.leg b{display:block;font-size:15px}.leg span{font-size:12.5px;color:var(--muted)}
+.big{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px}
+.stat{background:var(--soft);border-radius:10px;padding:10px 14px;min-width:150px}.stat .v{font-size:24px;font-weight:800}.stat .l{font-size:12px;color:var(--muted)}
+.v.gold{color:var(--gold)}.v.good{color:var(--good)}.v.bad{color:var(--bad)}
+.scroll{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:600}td.num{font-variant-numeric:tabular-nums}
+td.hit{color:var(--good);font-weight:700}td.miss{color:var(--muted)}
+.pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
+ul{margin:8px 0 0;padding-left:20px}li{margin:4px 0}
+.note{font-size:13px;color:var(--muted)}
+.foot{color:var(--muted);font-size:12.5px;margin-top:36px;border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:700px){.slip{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<main>
+<h1>Harper + Flagg 6/6 SGP: deep dive</h1>
+<p class="sub">Dallas @ San Antonio · Wed 4 Nov (US) · 8:30 PM CT / Thu 11:30 AEDT · odds snapshot 08:45 AEDT · injury report 4:45 PM ET (final)</p>
+
+<section class="card">
+  <h2>The slip</h2>
+  <div class="slip">
+    <div class="leg"><b>Harper 6+ reb</b><span>FanDuel $2.72 · AU median $2.20</span></div>
+    <div class="leg"><b>Harper 6+ ast</b><span>FanDuel $3.60 · AU median $2.75</span></div>
+    <div class="leg"><b>Flagg 6+ reb</b><span>FanDuel $1.57 · AU median $1.53</span></div>
+    <div class="leg"><b>Flagg 6+ ast</b><span>FanDuel $1.96 · AU median $1.83</span></div>
+  </div>
+  <div class="big">
+    <div class="stat"><div class="v">$14.63</div><div class="l">SGP price (+1363)</div></div>
+    <div class="stat"><div class="v gold">$21.45</div><div class="l">with 50% profit boost (+2045)</div></div>
+    <div class="stat"><div class="v">≈ $16.70</div><div class="l">honest fair price</div></div>
+    <div class="stat"><div class="v good">+29%</div><div class="l">honest EV, boosted</div></div>
+    <div class="stat"><div class="v bad">−12%</div><div class="l">honest EV, unboosted</div></div>
+  </div>
+  <div class="verdict">Bet it only because of the boost, and small (0.1–0.25u). It wins about 1 time in 17–19. Without the boost it's negative EV.</div>
+</section>
+
+<section class="card">
+  <h2>Game context</h2>
+  <div class="chips">
+    <span class="chip warn">SAS −12.5: blowout risk</span>
+    <span class="chip">SAS out: Tobias Harris (calf), Jayden Quaintance (knee)</span>
+    <span class="chip">DAL out: Dereck Lively II, Max Christie, Tarik Biberovic, Sergio de Larrea</span>
+    <span class="chip">DAL doubtful: Santi Aldama</span>
+    <span class="chip">Caleb Martin available</span>
+  </div>
+  <ul>
+    <li>Both lineups are confirmed on the 4:45 PM ET report, so there's no lineup uncertainty left on either player.</li>
+    <li><b>The spread is the main risk.</b> In games decided by 15+, starters lose about 2–6 minutes on average; on the losing side Flagg can sit the 4th. Your friend's model treats any spread of 9.5–15 as watch-only for this reason.</li>
+    <li>DAL are thin in the frontcourt (Lively and Aldama out), so Flagg's role is big, but so is the chance DAL get run off the floor.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Dylan Harper (SAS guard)</h2>
+  <p class="note">His role this season is new: 32.4 min against 22.6 last season. His rebounds and assists rose with it.</p>
+  <div class="scroll"><table>
+    <tr><th>Season</th><th>Games</th><th>Min</th><th>Reb</th><th>Ast</th><th>6+ reb</th><th>6+ ast</th><th>Both</th></tr>
+    <tr><td>2026-27</td><td class="num">7</td><td class="num">32.4</td><td class="num">5.7</td><td class="num">5.3</td><td class="num">57%</td><td class="num">57%</td><td class="num"><b>43%</b></td></tr>
+    <tr><td>2025-26</td><td class="num">69</td><td class="num">22.6</td><td class="num">3.4</td><td class="num">3.9</td><td class="num">12%</td><td class="num">22%</td><td class="num">4%</td></tr>
+  </table></div>
+  <h3>This season, game by game</h3>
+  <div class="scroll"><table>
+    <tr><th>Date</th><th>Opp</th><th>Min</th><th>Pts</th><th>Reb</th><th>Reb chances</th><th>Ast</th><th>Potential ast</th><th>6/6?</th></tr>
+    <tr><td>20 Oct</td><td>OKC</td><td class="num">32</td><td class="num">18</td><td class="num">7</td><td class="num">9</td><td class="num">5</td><td class="num">7</td><td class="miss">no</td></tr>
+    <tr><td>23 Oct</td><td>HOU</td><td class="num">34</td><td class="num">20</td><td class="num">3</td><td class="num">6</td><td class="num">2</td><td class="num">8</td><td class="miss">no</td></tr>
+    <tr><td>24 Oct</td><td><b>DAL</b></td><td class="num">28</td><td class="num">22</td><td class="num">5</td><td class="num">13</td><td class="num">2</td><td class="num">7</td><td class="miss">no</td></tr>
+    <tr><td>27 Oct</td><td>SAC</td><td class="num">30</td><td class="num">13</td><td class="num">6</td><td class="num">9</td><td class="num">6</td><td class="num">10</td><td class="hit">yes</td></tr>
+    <tr><td>28 Oct</td><td>UTA</td><td class="num">37</td><td class="num">13</td><td class="num">5</td><td class="num">9</td><td class="num">8</td><td class="num">13</td><td class="miss">no</td></tr>
+    <tr><td>31 Oct</td><td>MIN</td><td class="num">39</td><td class="num">25</td><td class="num">7</td><td class="num">12</td><td class="num">6</td><td class="num">7</td><td class="hit">yes</td></tr>
+    <tr><td>2 Nov</td><td>UTA</td><td class="num">27</td><td class="num">17</td><td class="num">7</td><td class="num">9</td><td class="num">8</td><td class="num">11</td><td class="hit">yes</td></tr>
+  </table></div>
+  <ul>
+    <li>Last four games: 6/6, 5/8, 7/6, 7/8 (rebounds/assists). Potential assists 7–13 a game.</li>
+    <li>Matchup: DAL allow guards <b>+3% rebounds, +2% assists</b> (per minute, vs each player's own rate; pace 0%).</li>
+    <li>Against DAL on 24 Oct he managed only 5 rebounds and 2 assists in 28 minutes.</li>
+    <li>Projection: <b>31.5 min</b> (25–39), <b>6.4 reb, 5.1 ast</b>.</li>
+  </ul>
+  <div class="scroll"><table>
+    <tr><th>Leg</th><th>Our model</th><th>Anchored to his history</th><th>Market's real chance</th></tr>
+    <tr><td>6+ rebounds</td><td class="num">59%</td><td class="num">43%</td><td class="num">41%</td></tr>
+    <tr><td>6+ assists</td><td class="num">40%</td><td class="num">35%</td><td class="num">32%</td></tr>
+    <tr><td>Both</td><td class="num">25.7%</td><td colspan="2" class="note">vs 23.5% if independent: about 1.1× easier together (shared minutes)</td></tr>
+  </table></div>
+</section>
+
+<section class="card">
+  <h2>Cooper Flagg (DAL wing)</h2>
+  <p class="note">His profile has flipped: more of a playmaker this season (6.5 ast) and fewer rebounds (5.7, from 6.7).</p>
+  <div class="scroll"><table>
+    <tr><th>Season</th><th>Games</th><th>Min</th><th>Reb</th><th>Ast</th><th>6+ reb</th><th>6+ ast</th><th>Both</th></tr>
+    <tr><td>2026-27</td><td class="num">6</td><td class="num">33.7</td><td class="num">5.7</td><td class="num">6.5</td><td class="num"><b>33%</b></td><td class="num">83%</td><td class="num">33%</td></tr>
+    <tr><td>2025-26</td><td class="num">70</td><td class="num">33.6</td><td class="num">6.7</td><td class="num">4.5</td><td class="num">70%</td><td class="num">37%</td><td class="num">31%</td></tr>
+  </table></div>
+  <h3>This season, game by game</h3>
+  <div class="scroll"><table>
+    <tr><th>Date</th><th>Opp</th><th>Min</th><th>Pts</th><th>Reb</th><th>Reb chances</th><th>Ast</th><th>Potential ast</th><th>6/6?</th></tr>
+    <tr><td>21 Oct</td><td>HOU</td><td class="num">33</td><td class="num">32</td><td class="num">5</td><td class="num">12</td><td class="num">2</td><td class="num">9</td><td class="miss">no</td></tr>
+    <tr><td>23 Oct</td><td>IND</td><td class="num">17</td><td class="num">14</td><td class="num">5</td><td class="num">9</td><td class="num">6</td><td class="num">11</td><td class="miss">no</td></tr>
+    <tr><td>26 Oct</td><td>MIA</td><td class="num">40</td><td class="num">29</td><td class="num">6</td><td class="num">10</td><td class="num">11</td><td class="num">15</td><td class="hit">yes</td></tr>
+    <tr><td>28 Oct</td><td>OKC</td><td class="num">33</td><td class="num">26</td><td class="num">5</td><td class="num">8</td><td class="num">8</td><td class="num">15</td><td class="miss">no</td></tr>
+    <tr><td>30 Oct</td><td>HOU</td><td class="num">39</td><td class="num">33</td><td class="num">9</td><td class="num">17</td><td class="num">6</td><td class="num">11</td><td class="hit">yes</td></tr>
+    <tr><td>2 Nov</td><td>SAC</td><td class="num">40</td><td class="num">17</td><td class="num">4</td><td class="num">8</td><td class="num">6</td><td class="num">8</td><td class="miss">no</td></tr>
+  </table></div>
+  <ul>
+    <li>Matchup: SAS are a tough opponent for wings: <b>−2% points, −3% rebounds, −3% assists</b>.</li>
+    <li>The 17-minute game against IND shows the minutes risk. In a SAS blowout he's on the losing side and could sit the 4th. Our minutes range is wide: <b>14–48</b>, mean 30.5.</li>
+    <li>Projection: <b>30.5 min, 5.7 reb, 4.8 ast</b>. That's more cautious than the market on both legs.</li>
+  </ul>
+  <div class="scroll"><table>
+    <tr><th>Leg</th><th>Our model</th><th>Anchored to his history</th><th>Market's real chance</th></tr>
+    <tr><td>6+ rebounds</td><td class="num">49%</td><td class="num">55%</td><td class="num">61%</td></tr>
+    <tr><td>6+ assists</td><td class="num">37%</td><td class="num">40%</td><td class="num">50%</td></tr>
+    <tr><td>Both</td><td class="num">26.0%</td><td colspan="2" class="note">vs 18.4% if independent: about 1.4× easier together (minutes drive both)</td></tr>
+  </table></div>
+</section>
+
+<section class="card">
+  <h2>Prices by book (6+ rungs)</h2>
+  <div class="scroll"><table>
+    <tr><th>Leg</th><th>FanDuel</th><th>DraftKings</th><th>Sportsbet</th><th>PointsBet</th><th>TAB</th><th>Dabble</th><th>Neds / Ladbrokes</th></tr>
+    <tr><td>Harper 6+ reb</td><td class="num">$2.72</td><td class="num">$2.60</td><td class="num">$2.70</td><td class="num">$2.50</td><td class="num">$2.05</td><td class="num">$2.15</td><td class="num">$2.35</td></tr>
+    <tr><td>Harper 6+ ast</td><td class="num">$3.60</td><td class="num">$3.37</td><td class="num">$3.45</td><td class="num">$3.00</td><td class="num">$2.90</td><td class="num">$3.00</td><td class="num">$2.80</td></tr>
+    <tr><td>Flagg 6+ reb</td><td class="num">$1.57</td><td class="num">$1.58</td><td class="num">$1.56</td><td class="num">$1.56</td><td class="num">$1.65</td><td class="num">$1.72</td><td class="num">$1.53</td></tr>
+    <tr><td>Flagg 6+ ast</td><td class="num">$1.96</td><td class="num">$1.98</td><td class="num">$1.96</td><td class="num">$1.95</td><td class="num">$1.80</td><td class="num">$1.92</td><td class="num">$1.83</td></tr>
+  </table></div>
+  <p class="note">"Market's real chance" uses the AU median price, adjusted for how often alt overs actually land at that price (93% of implied at $1.25, about 77% at $9; 664k Sportsbet rungs).</p>
+</section>
+
+<section class="card">
+  <h2>Pricing the parlay</h2>
+  <p class="note">Within each player the legs are correlated (minutes drive both). Between the two players we assume independence, though a blowout would cut both players' minutes at once.</p>
+  <div class="scroll"><table>
+    <tr><th>View</th><th>Chance all 4 land</th><th>Fair price</th><th>EV at boosted $21.45</th><th>EV unboosted $14.63</th></tr>
+    <tr><td>Our model (legs anchored to history, correlated)</td><td class="num">5.2%</td><td class="num">$19.39</td><td class="num pos">+11%</td><td class="num neg">−25%</td></tr>
+    <tr><td>Market's real chance (same correlation)</td><td class="num">6.3%</td><td class="num">$15.94</td><td class="num pos">+35%</td><td class="num neg">−8%</td></tr>
+    <tr><td><b>Honest blend</b> (market moved 25% toward our model)</td><td class="num"><b>6.0%</b></td><td class="num"><b>$16.68</b></td><td class="num pos"><b>+29%</b></td><td class="num neg">−12%</td></tr>
+    <tr><td class="note">Raw hit rates this season (43% × 33%)</td><td class="num note">14.3%</td><td class="num note">$7.00</td><td colspan="2" class="note">small samples; ignores the blowout spread and last season</td></tr>
+  </table></div>
+</section>
+
+<section class="card">
+  <h2>Verdict</h2>
+  <ul>
+    <li><b>The boost is the edge.</b> At +1363 the SGP is a little short of fair (−8% to −25%). The 50% profit boost lifts it to $21.45, above every fair estimate ($15.94–19.39).</li>
+    <li><b>Stake: 0.1–0.25u</b>, a lottery ticket. It loses about 94% of the time. Profit boosts usually cap the stake, so check that.</li>
+    <li><b>How it fails:</b>
+      <ul>
+        <li>A SAS blowout (−12.5) costs both players 4th-quarter minutes. Flagg is the more exposed, on the losing side.</li>
+        <li>Flagg's 6+ rebounds: 2 of 6 this season, yet priced at about 61%. It's the weakest leg by our numbers.</li>
+        <li>Harper did 5/2 against this DAL team two weeks ago.</li>
+      </ul>
+    </li>
+    <li><b>If you could change one leg:</b> Flagg 5+ rebounds instead of 6+ raises the hit rate. Only do it if the boosted price still clears about $16.50.</li>
+  </ul>
+</section>
+
+<p class="foot">Personal model, public data (NBA.com box scores and tracking, official injury reports, The Odds API). Analysis, not financial advice. Gamble responsibly · Gambling Help 1800 858 858 · BetStop betstop.gov.au</p>
+</main>
+</body>
+</html>
