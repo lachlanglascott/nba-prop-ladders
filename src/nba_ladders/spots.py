@@ -292,7 +292,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
             "w_reb": OPP_W_REB_G if grp_me == "G" else 1.0, "key_new": key_new, "n_comp": n_comp,
             "why_sample": why, "sample": sample, "base_min": base_min, "proj_min": proj_min, "min_sd": min_sd,
             "rate": rate, "pot36": pot36, "rc36": rc36, "ca": ca, "cr": cr, "spread": spread, "opp_f": opp_f,
-            "games": g.height, "last_games": last.height}
+            "games": g.height, "last_games": last.height, "last5": g.tail(5)}
 
 
 def opp_comps(cur: pl.DataFrame, grp: dict, opp: str, g: str, n: int = 5) -> dict:

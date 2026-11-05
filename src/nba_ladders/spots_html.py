@@ -189,13 +189,27 @@ def render_html(res: dict, cond: list[dict]) -> str:
                  f'<div class="stat"><div class="v">{s["reb"]:.1f}</div><div class="l">rebounds · {a["rc36"]:.1f} chances/36 at {a["cr"]:.0%}</div></div>'
                  f'<div class="stat"><div class="v">{s["ast"]:.1f}</div><div class="l">assists · {a["pot36"]:.1f} potential/36 at {a["ca"]:.0%}</div></div></div>'
                  f'<p class="note">Projection from {esc(a["why_sample"] or "his baseline")}.</p>')
-        if a["sample"] is not None and a["sample"].height:
-            rows = a["sample"].tail(6).select("game_date", "opponent", "minutes", "pts", "reb", "ast", "potential_ast", "reb_chances").rows()
-            H.append('<div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>')
-            for d, o, mi, p_, r, x, pa, rc in rows:
+        def games_table(df, title):
+            rows = df.select("game_date", "opponent", "minutes", "pts", "reb", "ast", "potential_ast", "reb_chances").rows()
+            H.append(f'<p class="note"><b>{title}</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th>'
+                     '<th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>')
+            for d, o, mi, p_, r, x, pa, rc in rows[::-1]:
                 H.append(f'<tr><td>{d:%d %b} vs {esc(o)}</td><td class="num"><b>{mi}</b></td><td class="num">{p_}</td><td class="num">{r}</td>'
                          f'<td class="num">{x}</td><td class="num">{"" if pa is None else pa}</td><td class="num">{"" if rc is None else rc}</td></tr>')
             H.append("</table></div>")
+
+        if a.get("last5") is not None and a["last5"].height:
+            games_table(a["last5"], "Last 5 games (any lineup)")
+        if a["sample"] is not None and a["sample"].height:
+            from nba_ladders.spots import SEASON
+
+            this = a["sample"].filter(a["sample"]["season_id"] == SEASON)
+            n_last = a["sample"].height - this.height
+            extra = f" · plus {n_last} last-season games used in the projection, not shown" if n_last else ""
+            if this.height:
+                games_table(this.tail(6), f"Games that match tonight, this season ({esc(a['why_sample'].split(' (')[0])}){extra}")
+            elif n_last:
+                H.append(f'<p class="note">No game this season matches tonight\'s lineup; the projection uses {n_last} last-season games.</p>')
         oc = a.get("opp_comps") or {}
         if oc.get("rows"):
             dd = oc["diff"]
