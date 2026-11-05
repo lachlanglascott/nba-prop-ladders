@@ -68,6 +68,9 @@ SINGLE_RANGE = (2.5, 10.0)
 SGM_RANGE = (3.5, 15.0)
 FREED_CAP = 6.0  # minutes: the rough share-of-freed-minutes estimate when there's no game without them
 OPP_W_PTS = 1.5  # 2025-26 test: Poisson deviance best with the points factor at 1.5x weight (reb, ast: 1x)
+# 2025-26 decile test: extreme opponents play out bigger than predicted for guards' rebounds (slope 1.28;
+# HOU vs guards 2026-27 raw -12% vs -7% modelled), about right for assists and other rebounds (1.04-1.06)
+OPP_W_REB_G = 1.3
 PRIMARY = {"role", "bounce"}  # spot types that stand on their own
 ROLE_MIN, ROLE_VOL = 2.0, 1.15
 ROLE_VOL_GAMES = 5  # a volume-only role spot (no extra minutes) needs this many matching games (Clingan, Gobert)  # a role spot needs +2 min or +15% volume vs his normal-lineup games
@@ -163,7 +166,7 @@ def _wmean(df: pl.DataFrame, col: str, w: np.ndarray) -> float:
 
 def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.DataFrame, tonight_out: set,
             tonight_unc: dict, id_name: dict, ca: float, cr: float, opp_f: dict, spread: float | None,
-            g_last: pl.DataFrame | None = None) -> dict | None:
+            g_last: pl.DataFrame | None = None, opp_tab: dict | None = None, grp_me: str = "W") -> dict | None:
     """Situations, comparable games and the projection for one player. g = his games this season (current team)."""
     if g.height < 2:
         return None
@@ -219,12 +222,16 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
         k = 3.0  # pseudo-games of baseline
         s_min = _wmean(sample, "minutes", w)
         proj_min = (s_min * w.sum() + base_min * k) / (w.sum() + k)
+        stat_of = {"potential_ast": "ast", "reb_chances": "reb", "pts": "pts"}
+
         def blend36(col, prior):
             d = sample.drop_nulls(col)
             if not d.height:
                 return prior
             ww = _weights(d.height) * np.where(d["season_id"].to_numpy() == SEASON, 1.0, 0.5)
-            v = float(np.sum(d[col].to_numpy() * ww) / np.sum(d["minutes"].to_numpy() * ww) * 36)
+            # remove each matching game's opponent effect, so tonight's opponent is applied to a neutral rate
+            of = np.array([(opp_tab or {}).get(o, {}).get(stat_of[col], 1.0) for o in d["opponent"].to_list()])
+            v = float(np.sum(d[col].to_numpy() / of * ww) / np.sum(d["minutes"].to_numpy() * ww) * 36)
             return v if prior is None else (v * ww.sum() + prior * k) / (ww.sum() + k)
         pot36, rc36, pts36 = blend36("potential_ast", b_pot), blend36("reb_chances", b_rc), blend36("pts", b_pts)
     elif key_new:  # no game yet without them: a share of the freed minutes, mostly to the same position
@@ -274,13 +281,15 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
     pot36 = pot36 if pot36 is not None else (float(g["ast"].sum() / g["minutes"].sum() * 36) / max(ca, 0.3))
     rc36 = rc36 if rc36 is not None else (float(g["reb"].sum() / g["minutes"].sum() * 36) / max(cr, 0.3))
     pts36 = pts36 if pts36 is not None else float(g["pts"].sum() / g["minutes"].sum() * 36)
-    rate = {"ast": pot36 * ca / 36 * opp_f.get("ast", 1.0), "reb": rc36 * cr / 36 * opp_f.get("reb", 1.0),
+    w_reb = OPP_W_REB_G if grp_me == "G" else 1.0
+    rate = {"ast": pot36 * ca / 36 * opp_f.get("ast", 1.0), "reb": rc36 * cr / 36 * opp_f.get("reb", 1.0) ** w_reb,
             "pts": pts36 / 36 * opp_f.get("pts", 1.0) ** OPP_W_PTS}
     src = sample if sample is not None and sample.height >= 3 else g.tail(8)
     min_sd = max(4.0, float(src["minutes"].std() or 0.0))
     hist = pl.concat([g.select("season_id", "pts", "reb", "ast"), last.select("season_id", "pts", "reb", "ast")]
                      if last.height else [g.select("season_id", "pts", "reb", "ast")], how="vertical_relaxed")
-    return {"pid": pid, "name": name, "team": team, "opp": opp, "sits": sits, "hist": hist, "key_new": key_new, "n_comp": n_comp,
+    return {"pid": pid, "name": name, "team": team, "opp": opp, "sits": sits, "hist": hist, "opp_tab": opp_tab or {},
+            "w_reb": OPP_W_REB_G if grp_me == "G" else 1.0, "key_new": key_new, "n_comp": n_comp,
             "why_sample": why, "sample": sample, "base_min": base_min, "proj_min": proj_min, "min_sd": min_sd,
             "rate": rate, "pot36": pot36, "rc36": rc36, "ca": ca, "cr": cr, "spread": spread, "opp_f": opp_f,
             "games": g.height, "last_games": last.height}
@@ -395,10 +404,17 @@ def anchored(a: dict, sim: dict, legs) -> tuple[float, str]:
     if any(x["kind"] == "role" for x in a["sits"]):
         s = a.get("sample")
         if s is not None and s.height >= 3:
-            hit = pl.lit(True)
+            # each matching game rescaled to tonight's opponent: value x (tonight's factor / that game's factor)
+            tab, tonight = a.get("opp_tab", {}), a.get("opp_f", {})
+            w = {"pts": OPP_W_PTS, "reb": a.get("w_reb", 1.0), "ast": 1.0}
+            hits = np.ones(s.height, dtype=bool)
             for st, k in legs:
-                hit = hit & (pl.sum_horizontal([pl.col(x) for x in st.split("+")]) >= k)
-            n_hit = int(s.select(hit.alias("h"))["h"].sum())
+                tot = np.zeros(s.height)
+                for x in st.split("+"):
+                    game_f = np.array([tab.get(o, {}).get(x, 1.0) for o in s["opponent"].to_list()])
+                    tot += s[x].to_numpy() * (tonight.get(x, 1.0) / game_f) ** w[x]
+                hits &= tot >= k - 0.5  # counts are whole numbers: within half a rebound/assist counts as reaching k
+            n_hit = int(hits.sum())
             return (1 - HIST_W) * pm + HIST_W * n_hit / s.height, f"hit {n_hit}/{s.height} in games like tonight · {lab}"
         return pm, f"{lab} (old role)" if lab else ""
     return (pm if hr is None else (1 - HIST_W) * pm + HIST_W * hr), lab
@@ -545,8 +561,10 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             row = gf.filter(pl.col("opponent") == opp, pl.col("grp") == grp.get(pid, "W"))
             opp_f = {s: row[s][0] for s in ("pts", "reb", "ast")} if row.height else {}
             gl = gt_last.filter(pl.col("player_id") == pid, pl.col("team") == team)
+            gme = grp.get(pid, "W")
+            opp_tab = {r["opponent"]: {s: r[s] for s in ("pts", "reb", "ast")} for r in gf.filter(pl.col("grp") == gme).iter_rows(named=True)}
             a = analyse(pid, pid_name.get(pid, str(pid)), team, opp, g, last, out_t, unc, id_name,
-                        ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl)
+                        ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl, opp_tab, gme)
             forced = include is not None and a is not None and a["name"] in include
             if a is None or (not {x["kind"] for x in a["sits"]} & PRIMARY and not forced):
                 continue  # a 3-game volume spike alone regressed (replay: -40%); it only supports a real spot
