@@ -709,9 +709,15 @@ def save(res: dict, cond: list[dict]) -> None:
                          "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
                          "ev": b["ev"], "grade": b["grade"], "conf": a["conf"], "card": i == 0 and not b.get("alt"), "alt": bool(b.get("alt")),
                          "situations": "; ".join(x["kind"] for x in a["sits"])})
+    for c in cond:
+        for a, b in c["bets"]:
+            rows.append({"day": res["day"], "player": a["name"], "team": a["team"], "kind": b["kind"], "bet": b["bet"],
+                         "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
+                         "ev": b["ev"], "grade": "IF", "conf": a["conf"], "card": False, "alt": False,
+                         "situations": "if " + c["player"] + " sits", "if_sits": c["player"]})
     out = config.DATA_PROCESSED / "spots" / f"{res['day']}.parquet"
     out.parent.mkdir(parents=True, exist_ok=True)
-    pl.DataFrame(rows).write_parquet(out)
+    pl.DataFrame(rows, infer_schema_length=None).write_parquet(out)
 
 
 def grade_day(day: date) -> pl.DataFrame:
@@ -725,7 +731,8 @@ def grade_day(day: date) -> pl.DataFrame:
     hits = []
     for r in df.iter_rows(named=True):
         b = box.get(player_key(r["player"]))
-        if b is None:
+        trig = r.get("if_sits")
+        if b is None or (trig and player_key(trig) in box):  # DNP, or the conditional never triggered (void)
             hits.append(None)
             continue
         if r["kind"] == "SGM":
@@ -735,6 +742,33 @@ def grade_day(day: date) -> pl.DataFrame:
             legs = [(st, int(k))]
         hits.append(all(sum(b[s] for s in st.split("+")) >= k for st, k in legs))
     return df.with_columns(pl.Series("hit", hits, dtype=pl.Boolean))
+
+
+LIVE_FROM = date(2026, 11, 4)  # first slate published before tip-off (earlier days are in-sample replays)
+
+
+def record(upto: date, live: bool = True) -> dict | None:
+    """Running record of graded slates before `upto`: card bets + triggered conditional bets, 1u flat."""
+    rows = []
+    for f in sorted((config.DATA_PROCESSED / "spots").glob("*.parquet")):
+        d = date.fromisoformat(f.stem)
+        if d >= upto or (live and d < LIVE_FROM) or (not live and d >= LIVE_FROM):
+            continue
+        pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet").filter(pl.col("game_date") == d)
+        if pg.is_empty():
+            continue
+        g = grade_day(d)
+        if g.is_empty():
+            continue
+        if "if_sits" not in g.columns:
+            g = g.with_columns(pl.lit(None, dtype=pl.String).alias("if_sits"))
+        g = g.filter(pl.col("hit").is_not_null(), pl.col("card") | pl.col("if_sits").is_not_null())
+        rows.append(g.select("day", "price", "p", "hit"))
+    if not rows:
+        return None
+    a = pl.concat(rows)
+    return {"n": a.height, "hits": int(a["hit"].sum()), "exp": float(a["p"].sum()),
+            "pnl": float((a["hit"].cast(int) * a["price"]).sum() - a.height), "days": a["day"].n_unique()}
 
 
 def main() -> None:
@@ -755,6 +789,7 @@ def main() -> None:
                       f"market {d['p_mkt'].sum():.1f} | flat 1u {pnl:+.2f}u")
         return
     res = build(args.date)
+    res["record"], res["replay"] = record(args.date), record(args.date, live=False)
     cond = [] if args.no_conditional else conditional(args.date, res)
     md = render(res, cond)
     out = config.ROOT / "docs" / "slates" / f"{args.date.isoformat()}-spots.md"

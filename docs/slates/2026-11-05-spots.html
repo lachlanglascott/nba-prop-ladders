@@ -1,0 +1,66 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spots 2026-11-05</title><style>
+:root{--bg:#f4f5f2;--card:#fff;--ink:#1b1e23;--muted:#646b76;--line:#e1e4e8;--soft:#f6f7f9;
+--a:#18794e;--a-bg:#dff3e8;--b:#2457c5;--b-bg:#e3ebfb;--c:#5d6470;--c-bg:#eceef1;
+--role:#6a3fc1;--role-bg:#efe8fb;--bounce:#a05a00;--bounce-bg:#fcefd9;--opp:#0f7b80;--opp-bg:#ddf3f3;
+--warn:#a33a1f;--warn-bg:#fbe7e1;--good:#18794e;--bad:#b42318;--accent:#2457c5}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121418;--card:#1c1f25;--ink:#e8eaed;--muted:#9aa2ad;
+--line:#2d323a;--soft:#232730;--a:#5fd39a;--a-bg:#17322a;--b:#8fb0ff;--b-bg:#1d2a45;--c:#a7aeb8;--c-bg:#2a2f37;
+--role:#b99bff;--role-bg:#2c2440;--bounce:#f3b860;--bounce-bg:#3a2c16;--opp:#6fd6da;--opp-bg:#163536;--warn:#ff9a7f;
+--warn-bg:#3c211b;--good:#5fd39a;--bad:#ff8a80;--accent:#8fb0ff}}
+:root[data-theme=dark]{--bg:#121418;--card:#1c1f25;--ink:#e8eaed;--muted:#9aa2ad;--line:#2d323a;--soft:#232730;--a:#5fd39a;
+--a-bg:#17322a;--b:#8fb0ff;--b-bg:#1d2a45;--c:#a7aeb8;--c-bg:#2a2f37;--role:#b99bff;--role-bg:#2c2440;--bounce:#f3b860;
+--bounce-bg:#3a2c16;--opp:#6fd6da;--opp-bg:#163536;--warn:#ff9a7f;--warn-bg:#3c211b;--good:#5fd39a;--bad:#ff8a80;--accent:#8fb0ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:26px 16px 64px}
+h1{font-size:26px;margin:0;letter-spacing:-.01em}h2{font-size:18px;margin:34px 0 12px}h3{margin:0;font-size:17px}
+.sub{color:var(--muted);margin:4px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:600;background:var(--soft);color:var(--muted);white-space:nowrap}
+.chip.role{background:var(--role-bg);color:var(--role)}.chip.bounce{background:var(--bounce-bg);color:var(--bounce)}
+.chip.opp{background:var(--opp-bg);color:var(--opp)}.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.good{background:var(--a-bg);color:var(--a)}
+.badge{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;font-weight:800;font-size:15px}
+.badge.A{background:var(--a-bg);color:var(--a)}.badge.B{background:var(--b-bg);color:var(--b)}.badge.C{background:var(--c-bg);color:var(--c)}
+details.how{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:18px}
+details.how summary{cursor:pointer;font-weight:600}details.how p{color:var(--muted);margin:8px 0 0}
+.card-list{display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:44px minmax(0,1.3fr) minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:center;
+background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.row .who b{font-size:15.5px}.row .who small{display:block;color:var(--muted)}
+.bet{font-weight:700;font-size:16px}.bet small{font-weight:500;color:var(--muted);font-size:13px}
+.nums{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;color:var(--muted);margin-top:3px}
+.nums b{color:var(--ink)}.take{color:var(--accent);font-weight:800}
+.ev{font-weight:800}.ev.pos{color:var(--good)}.ev.neg{color:var(--bad)}
+.sgm{font-size:13px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+.why{font-size:13.5px;color:var(--ink)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.panel.warn{border-color:var(--warn);background:var(--warn-bg)}
+.cond{display:grid;gap:10px}.cond .panel h3{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+ul{margin:8px 0 0;padding-left:18px}li{margin:3px 0}
+.spot{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0}
+.spot-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.conf{min-width:170px}.conf .lbl{font-size:12px;color:var(--muted)}.bar{height:7px;border-radius:5px;background:var(--soft);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.proj{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 6px}
+.stat{background:var(--soft);border-radius:10px;padding:8px 10px}.stat .v{font-size:20px;font-weight:800}.stat .l{font-size:12px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:6px 0 0}
+.scroll{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:600}td.num{font-variant-numeric:tabular-nums}
+.games td{color:var(--muted)}.games td b{color:var(--ink)}
+.foot{color:var(--muted);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:760px){.row{grid-template-columns:40px minmax(0,1fr)}.row>.betcol,.row>.why{grid-column:1/-1}.proj{grid-template-columns:repeat(2,1fr)}}
+</style></head><body><main>
+<h1>Spots · Thu 05 Nov</h1><p class="sub">US Eastern slate · situation-first · honest prices</p>
+<div class="chips"><span class="chip">Injury report 2026-11-05 01:45:00 ET</span><span class="chip">Odds 20261105T065624Z</span><span class="chip">27 players checked · 0 spots</span><span class="chip warn">Not yet filed: MIA, PHX</span><span class="chip good">Live record (1 slate, card + triggered ifs): 2/4 (expected 0.9) · +9.5u at 1u</span><span class="chip">Replay (in-sample, 3 slates): 9/27 · +13.9u</span></div>
+<details class="how"><summary>How to read this</summary><p>A spot needs a reason the player is different tonight: a <b>role change</b> from tonight's lineup (his own games without those teammates, this season and last) or a <b>bounce</b> (normal volume, conversion well below his career rate). Opposition is shown on every spot and is in the projection. <b>Fair and EV are honest</b>: they start from the market's real probability (alt overs hit ~93% of implied at $1.25, ~77% at $9) and move toward the model only by the confidence bar. SGM prices are builder estimates (0.9× the AU-median legs): take only at the <span class="take">take at</span> price or better. Grades: A = lineup role spot with strong evidence; B = solid; C = thin.</p></details>
+<h2>The card: 5 tips</h2><div class="card-list">
+</div>
+<h2>Key questionable players: the bet if they miss</h2><div class="cond">
+<div class="panel"><h3>Anthony Black <span class="chip">ORL · 28 min/g</span><span class="chip warn">P(sits) 30%</span></h3><p class="note">Carry-forward: missed last game but not on tonight&#x27;s report (missed 1), P(sits) 30%</p>
+<p class="note">No bet clears if he misses: thin evidence for his teammates without him, or the market has already moved.</p>
+</div>
+</div>
+<h2>Spots</h2>
+<p class="foot">Personal model, public data (NBA.com box scores and tracking, official injury reports, The Odds API). Gamble responsibly · Gambling Help 1800 858 858 · BetStop betstop.gov.au</p></main></body></html>

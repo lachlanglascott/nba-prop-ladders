@@ -105,6 +105,14 @@ def render_html(res: dict, cond: list[dict]) -> str:
             f'<span class="chip">{res["looked"]} players checked · {len(res["spots"])} spots</span>']
     if unfiled:
         head.append(f'<span class="chip warn">Not yet filed: {esc(", ".join(unfiled))}</span>')
+    rec = res.get("record")
+    if rec:
+        cls = "good" if rec["pnl"] >= 0 else "warn"
+        head.append(f'<span class="chip {cls}">Live record ({rec["days"]} slate{"s" * (rec["days"] > 1)}, card + triggered ifs): '
+                    f'{rec["hits"]}/{rec["n"]} (expected {rec["exp"]:.1f}) · {rec["pnl"]:+.1f}u at 1u</span>')
+    rp = res.get("replay")
+    if rp:
+        head.append(f'<span class="chip">Replay (in-sample, {rp["days"]} slates): {rp["hits"]}/{rp["n"]} · {rp["pnl"]:+.1f}u</span>')
     H = ['<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
          f'<title>Spots {day}</title><style>{CSS}</style></head><body><main>',
          f'<h1>Spots · {day:%a %d %b}</h1><p class="sub">US Eastern slate · situation-first · honest prices</p>',

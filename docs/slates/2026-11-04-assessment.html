@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4 Nov Assessment</title>
+<style>
+:root{--bg:#f4f5f2;--card:#fff;--ink:#1b1e23;--muted:#646b76;--line:#e1e4e8;--soft:#f6f7f9;
+--good:#18794e;--good-bg:#dff3e8;--blue:#2457c5;--blue-bg:#e3ebfb;--warn:#a05a00;--warn-bg:#fcefd9;--bad:#b42318;--bad-bg:#fbe7e1}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121418;--card:#1c1f25;--ink:#e8eaed;--muted:#9aa2ad;--line:#2d323a;--soft:#232730;
+--good:#5fd39a;--good-bg:#17322a;--blue:#8fb0ff;--blue-bg:#1d2a45;--warn:#f3b860;--warn-bg:#3a2c16;--bad:#ff8a80;--bad-bg:#3c211b}}
+:root[data-theme=dark]{--bg:#121418;--card:#1c1f25;--ink:#e8eaed;--muted:#9aa2ad;--line:#2d323a;--soft:#232730;--good:#5fd39a;--good-bg:#17322a;
+--blue:#8fb0ff;--blue-bg:#1d2a45;--warn:#f3b860;--warn-bg:#3a2c16;--bad:#ff8a80;--bad-bg:#3c211b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:26px 16px 64px}
+h1{font-size:26px;margin:0}h2{font-size:19px;margin:30px 0 10px}.sub{color:var(--muted);margin:4px 0 0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.kpi .v{font-size:24px;font-weight:800}.kpi .l{font-size:12.5px;color:var(--muted)}
+.v.good{color:var(--good)}.v.bad{color:var(--bad)}
+.tip{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0;display:grid;grid-template-columns:64px minmax(0,1fr) 150px;gap:14px;align-items:start}
+.res{display:grid;place-items:center;height:52px;border-radius:10px;font-weight:800;font-size:15px}
+.res.W{background:var(--good-bg);color:var(--good)}.res.L{background:var(--bad-bg);color:var(--bad)}.res.V{background:var(--soft);color:var(--muted)}
+.bet{font-weight:700;font-size:16px}.bet small{font-weight:500;color:var(--muted)}
+.line{font-size:13.5px;color:var(--muted);margin-top:3px}.why{font-size:13.5px;margin-top:6px}
+.side{text-align:right;font-size:13px;color:var(--muted)}.side b{display:block;font-size:17px;color:var(--ink)}
+.chip{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;background:var(--soft);color:var(--muted);margin:4px 4px 0 0}
+.chip.good{background:var(--good-bg);color:var(--good)}.chip.bad{background:var(--bad-bg);color:var(--bad)}.chip.blue{background:var(--blue-bg);color:var(--blue)}.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+ul{margin:6px 0 0;padding-left:20px}li{margin:4px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left}th{font-size:12px;color:var(--muted)}
+.foot{color:var(--muted);font-size:12.5px;margin-top:36px;border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}.tip{grid-template-columns:52px minmax(0,1fr)}.side{grid-column:1/-1;text-align:left}}
+</style>
+</head>
+<body>
+<main>
+<h1>4 Nov (US) · how the tips went</h1>
+<p class="sub">14 games · graded on box scores (tracking for the night not yet published) · big margins: NYK +30, DEN +19, ATL +15</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="v good">+1.5u</div><div class="l">Our card (2 A bets at 1u): 1/2</div></div>
+  <div class="kpi"><div class="v good">+4.0u</div><div class="l">"If they sit" bets that triggered (0.5u): 1/2</div></div>
+  <div class="kpi"><div class="v bad">−0.65u</div><div class="l">Friend's 5-tip card at their stakes: 0/5</div></div>
+  <div class="kpi"><div class="v good">4/4</div><div class="l">bets our new filters removed that lost</div></div>
+</div>
+
+<h2>Our card</h2>
+<div class="tip"><div class="res L">L</div><div><div class="bet">Ayo Dosunmu 7+ rebounds <small>Betr $3.80 · A · 1u</small></div>
+  <div class="line">Result: <b>1 rebound</b> in 34 min (21 pts, 6 ast). Honest fair $3.08 (+23% EV).</div>
+  <div class="why">Edwards out: he'd hit 7+ in 3 of 4 games without him. HOU's −7% rebounds to guards was already in the price, and they held him to one board. The process was sound and this was variance: we priced it at about 33%, and one rebound in 34 minutes is an outlier.</div>
+  <span class="chip bad">bad variance</span><span class="chip">role spot</span></div><div class="side"><b>−1.0u</b>stake 1u</div></div>
+<div class="tip"><div class="res W">W</div><div><div class="bet">Nolan Traore 15+ points <small>Betr $3.50 · A · 1u</small></div>
+  <div class="line">Result: <b>16 points</b> in 27 min. Honest fair $3.10 (+13% EV).</div>
+  <div class="why">Dëmin out: +4 minutes in his 3 games without him. The role spot worked.</div>
+  <span class="chip good">good process</span><span class="chip">role spot</span></div><div class="side"><b>+2.5u</b>stake 1u</div></div>
+
+<h2>"If they sit" bets</h2>
+<div class="tip"><div class="res W">W</div><div><div class="bet">Neemias Queta 12+ rebounds, if Tatum sits <small>Betr $10.00 · 0.5u</small></div>
+  <div class="line">Tatum sat (rest). Result: <b>12 rebounds</b> in 29 min. Fair $8.19 if Tatum out.</div>
+  <div class="why">Built from his 7 games without Tatum last season. It triggered and landed, the best result of the night.</div>
+  <span class="chip good">triggered · good process</span></div><div class="side"><b>+4.5u</b>stake 0.5u</div></div>
+<div class="tip"><div class="res L">L</div><div><div class="bet">Mikal Bridges 5+ assists, if Hart sits <small>Betr $8.50 · 0.5u</small></div>
+  <div class="line">Hart sat. Result: <b>4 assists</b> in only 22 min (7 pts). Fair $5.98 if Hart out.</div>
+  <div class="why">It triggered, but NYK won by 30 and Bridges sat the 4th. That's the blowout risk.</div>
+  <span class="chip bad">blowout</span></div><div class="side"><b>−0.5u</b>stake 0.5u</div></div>
+<div class="tip"><div class="res V">VOID</div><div><div class="bet">Jeremiah Fears 6+ assists, if Dejounte Murray sits <small>Sportsbet $5.20</small></div>
+  <div class="line">Murray played <b>45 min</b>, so it didn't trigger. Fears had <b>2 assists</b>.</div>
+  <div class="why">This was the lineup trap flagged on the friend's card: Fears only goes big without Murray.</div>
+  <span class="chip blue">read correctly</span></div><div class="side"><b>0</b>not triggered</div></div>
+
+<h2>Friend's 5-tip card</h2>
+<div class="panel"><table>
+  <tr><th>Their tip</th><th>Price</th><th>Result</th><th>Our call</th><th></th></tr>
+  <tr><td>Clingan 14+ reb (core)</td><td>$4.00</td><td>11 reb (24 pts, 29 min)</td><td>Pass (−3%): trend was one game</td><td><span class="chip good">our call right</span></td></tr>
+  <tr><td>Jamal Murray 6+ threes</td><td>$8.50</td><td>2 threes (28 min, DEN won by 19)</td><td>Small lean (15% vs 9% market)</td><td><span class="chip bad">our lean lost</span></td></tr>
+  <tr><td>Fears 6+ ast</td><td>$4.60</td><td>2 ast (Murray back)</td><td>Pass: lineup trap</td><td><span class="chip good">our call right</span></td></tr>
+  <tr><td>Jrue Holiday 6+ reb</td><td>$3.45</td><td>4 reb</td><td>Pass (−8%)</td><td><span class="chip good">our call right</span></td></tr>
+  <tr><td>Maxey 8+ ast</td><td>$7.50</td><td>7 ast</td><td>Pass: one-game spike</td><td><span class="chip good">our call right</span></td></tr>
+</table></div>
+
+<h2>Other bets we discussed</h2>
+<div class="panel"><table>
+  <tr><th>Bet</th><th>Result</th><th>Note</th></tr>
+  <tr><td>Harper + Flagg 6/6 SGP (boosted $21.45, 0.1–0.25u)</td><td><b>L</b>: Harper 5 reb, <b>0 ast</b> (36 min); Flagg 10 reb, 5 ast</td><td>SAS won by 1, so no blowout. Harper's zero-assist game sank it. We priced it at about 6%.</td></tr>
+  <tr><td>Derrick White 12+ reb+ast / 5+ reb</td><td><b>L</b>: 4 reb, 7 ast (R+A 11)</td><td>The 10+ R+A at $2.40 would have won. Prices had moved before tip.</td></tr>
+  <tr><td>Paul George 10+ reb+ast / 8+ ast</td><td><b>L</b>: 3 reb, 5 ast</td><td>Tatum sat but George's assists didn't rise. Priced out by evening anyway ($1.72).</td></tr>
+</table></div>
+
+<h2>What the new filters removed</h2>
+<div class="panel"><table>
+  <tr><th>Removed bet</th><th>Why removed</th><th>Result</th></tr>
+  <tr><td>Rudy Gobert 4+ ast ($8.50)</td><td>Volume-only role spot; he never gets 4</td><td>2 ast: would have lost</td></tr>
+  <tr><td>Donovan Clingan 4+ ast ($7.75)</td><td>Two-game potentials blip</td><td>1 ast: would have lost</td></tr>
+  <tr><td>Bilal Coulibaly 7+ reb ($5.80)</td><td>Season-long slump is structural (Davis/Sarr/Dybantsa)</td><td>2 reb: would have lost</td></tr>
+  <tr><td>Christian Braun 8+ reb ($7.50)</td><td>Same bounce-baseline fix</td><td>3 reb: would have lost</td></tr>
+</table></div>
+
+<h2>Lessons and adjustments</h2>
+<div class="panel"><ul>
+  <li><b>The "if they sit" bets were the best part of the card.</b> Queta at $10 triggered on Tatum's rest. These are now saved and graded automatically (void if the player plays), so they count in the record.</li>
+  <li><b>The live record now shows on every slate</b> (card + triggered ifs, 1u flat), kept separate from the in-sample replays. After tonight: <b>2/4, +9.5u at 1u</b>, one night only.</li>
+  <li><b>Blowout risk is real on conditional bets too.</b> Bridges lost his 4th quarter in a 30-point win. The spread is already in the projection; I'm watching whether it needs more weight before changing anything.</li>
+  <li><b>No model change from one night.</b> Dosunmu's one rebound is variance. The filters that removed four losers stay.</li>
+  <li><b>The friend's model went 0/5.</b> Our evaluation matched the results on 4 of 5: one-game spikes, a lineup trap, and over-stated edges.</li>
+</ul></div>
+
+<p class="foot">Personal model, public data. Analysis, not financial advice · Gambling Help 1800 858 858 · BetStop betstop.gov.au</p>
+</main>
+</body>
+</html>
