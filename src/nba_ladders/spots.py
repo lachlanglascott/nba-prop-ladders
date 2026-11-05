@@ -704,10 +704,10 @@ def render(res: dict, cond: list[dict]) -> str:
                  f"{a['min_p10_90'][1]:.0f}), {s['pts']:.1f} pts / {s['reb']:.1f} reb / {s['ast']:.1f} ast · "
                  f"{a['pot36']:.1f} potential ast and {a['rc36']:.1f} reb chances per 36 at {a['ca']:.0%} / {a['cr']:.0%} career conversion"
                  + (f" · spread {a['spread']:+.1f}" if a["spread"] is not None else ""))
-        def games_line(df, title):
+        def games_line(df, title, L=L):
             rows = df.select("game_date", "opponent", "minutes", "pts", "reb", "ast", "potential_ast", "reb_chances").rows()
             L.append(f"- **{title}**: " + "; ".join(
-                f"{d:%d %b} vs {o}: {mi} min {p}/{r}/{x}" + (f" ({pa} pot, {rc} ch)" if pa is not None else "")
+                f"{d:%d %b} vs {o}: {mi} min {p}/{r}/{x}" + (f" ({pa} pot, {'–' if rc is None else rc} ch)" if pa is not None else "")
                 for d, o, mi, p, r, x, pa, rc in rows[::-1]))
 
         if a.get("last5") is not None and a["last5"].height:
