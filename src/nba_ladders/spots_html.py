@@ -38,6 +38,7 @@ background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1
 .ev{font-weight:800}.ev.pos{color:var(--good)}.ev.neg{color:var(--bad)}
 .sgm{font-size:13px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
 .why{font-size:13.5px;color:var(--ink)}
+.projline{font-size:13px;margin-top:5px;padding:4px 8px;border-radius:7px;background:var(--soft);color:var(--ink);font-weight:600}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .panel.warn{border-color:var(--warn);background:var(--warn-bg)}
 .cond{display:grid;gap:10px}.cond .panel h3{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -91,6 +92,13 @@ def _opp_chips(a):
     return f'<span class="chip opp">{esc(a["opp"])} vs {esc(grp or name.get("W"))}</span>' + "".join(chips)
 
 
+def _proj(a, b):
+    from nba_ladders.spots import proj_line
+
+    s = proj_line(a, b)
+    return f'<div class="projline">{esc(s)}</div>' if s else ""
+
+
 def _why(a, b):
     from nba_ladders.spots import _why as why
 
@@ -125,12 +133,15 @@ def _spot_html(a: dict) -> list[str]:
              f'<div class="stat"><div class="v">{s["ast"]:.1f}</div><div class="l">assists · {a["pot36"]:.1f} potential/36 at {a["ca"]:.0%}</div></div></div>'
              f'<p class="note">Projection from {esc(a["why_sample"] or "his baseline")}.</p>')
     def games_table(df, title):
+        also = "also_out" in df.columns
         rows = df.select("game_date", "opponent", "minutes", "pts", "reb", "ast", "potential_ast", "reb_chances").rows()
+        extra = df["also_out"].to_list() if also else [""] * df.height
         H.append(f'<p class="note"><b>{title}</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th>'
-                 '<th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>')
-        for d, o, mi, p_, r, x, pa, rc in rows[::-1]:
+                 '<th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th>' + ("<th>Also out then (plays tonight)</th>" if also else "") + "</tr>")
+        for (d, o, mi, p_, r, x, pa, rc), e in list(zip(rows, extra))[::-1]:
             H.append(f'<tr><td>{d:%d %b} vs {esc(o)}</td><td class="num"><b>{mi}</b></td><td class="num">{p_}</td><td class="num">{r}</td>'
-                     f'<td class="num">{x}</td><td class="num">{"" if pa is None else pa}</td><td class="num">{"" if rc is None else rc}</td></tr>')
+                     f'<td class="num">{x}</td><td class="num">{"" if pa is None else pa}</td><td class="num">{"" if rc is None else rc}</td>'
+                     + (("<td>" + (f'<span class="chip warn">{esc(e)} · counts less</span>' if e else "same lineup") + "</td>") if also else "") + "</tr>")
         H.append("</table></div>")
 
     if a.get("last5") is not None and a["last5"].height:
@@ -217,7 +228,7 @@ def render_html(res: dict, cond: list[dict]) -> str:
         H.append(f'<div class="row"><span class="badge {g}">{mark}</span>'
                  f'<div class="who"><b>{esc(a["name"])}</b><small>{esc(a["team"])} vs {esc(a["opp"])} · stake {stake}</small>'
                  f'<div class="chips">{cond_chip}{kinds}</div></div>'
-                 f'<div class="betcol">{_bet_html(b)}' + (f'<div class="sgm">SGM version: {_bet_html(sg, big=False)}</div>' if sg else "")
+                 f'<div class="betcol">{_bet_html(b)}{_proj(a, b)}' + (f'<div class="sgm">SGM version: {_bet_html(sg, big=False)}</div>' if sg else "")
                  + f'</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
     H.append("</div>")
     if cond:
@@ -267,7 +278,7 @@ def render_next_html(res: dict, card: list, picks: list) -> str:
          '<h2>On the card</h2><div class="card-list">']
     for a, b in card:
         H.append(f'<div class="row"><span class="badge {b.get("grade", "C")}">{b.get("grade", "C")}</span><div class="who"><b>{esc(a["name"])}</b>'
-                 f'<small>{esc(a["team"])} vs {esc(a["opp"])}</small></div><div class="betcol">{_bet_html(b)}</div>'
+                 f'<small>{esc(a["team"])} vs {esc(a["opp"])}</small></div><div class="betcol">{_bet_html(b)}{_proj(a, b)}</div>'
                  f'<div class="why">{esc(_why(a, b))}</div></div>')
     H.append("</div>")
     for title, rows in (("Next best", picks[:need]), ("Reserves", picks[need:])):
@@ -282,7 +293,7 @@ def render_next_html(res: dict, card: list, picks: list) -> str:
                 tag += '<span class="chip warn">Just under fair: take-at price only</span>'
             H.append(f'<div class="row"><span class="badge C">{i}</span><div class="who"><b>{esc(a["name"])}</b>'
                      f'<small>{esc(a["team"])} vs {esc(a["opp"])} · stake 0.25u</small><div class="chips">{tag}</div></div>'
-                     f'<div class="betcol">{_bet_html(b)}</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
+                     f'<div class="betcol">{_bet_html(b)}{_proj(a, b)}</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
         H.append("</div>")
     H.append("<h2>The detail</h2>")
     seen = set()

@@ -206,3 +206,14 @@ def test_spots_simulate_poisson_given_minutes():
     # minutes spread makes counts over-dispersed vs Poisson, but only modestly (var/mean ~1.1-1.4)
     assert 1.0 < s["ast"].var() / s["ast"].mean() < 1.5
     assert np.corrcoef(s["ast"], s["reb"])[0, 1] > 0.05  # shared minutes correlate the stats
+
+
+def test_lineup_weights_extra_absences_count_less():
+    import polars as pl
+
+    from nba_ladders.spots import EXTRA_OUT_W, _lineup_weights
+
+    s = pl.DataFrame({"absent_wide": [[1], [1, 2, 3], [1, 9]]})
+    out = _lineup_weights(s, pid=5, tonight_in={2, 3}, id_name={2: "Horford", 3: "Williams"})
+    assert out["lw"].to_list() == [1.0, EXTRA_OUT_W ** 2, 1.0]  # 9 isn't playing tonight: same lineup
+    assert out["also_out"].to_list() == ["", "Horford, Williams", ""]

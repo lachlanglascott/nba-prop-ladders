@@ -44,6 +44,8 @@ from nba_ladders.sources.odds_api import load_cached
 
 SEASON = "22026"
 ROT_MPG = 20.0  # teammates whose absence changes a lineup
+LINEUP_MPG = 12.0  # wider net for "was the rest of the lineup the same?" (Horford 18.7, B. Williams 17.4: Will Richard 2 Nov)
+EXTRA_OUT_W = 0.5  # a matching game counts this much less per extra teammate missing then who plays tonight
 KEY_MPG = 24.0  # a "key" absence for role spots
 CAND_MPG = 15.0  # players considered (recent minutes)
 STAR_PPG = 20.0  # last season: stars are left out (sharply priced)
@@ -129,17 +131,20 @@ def _spreads(day: date) -> dict:
 def _game_table(pg: pl.DataFrame, trk: pl.DataFrame, team_now: dict, season: str = SEASON) -> pl.DataFrame:
     """A season's player-games with tracking and the set of absent rotation teammates."""
     cur = pg.filter(pl.col("season_id") == season)
-    rot = (cur.group_by("player_id", "team").agg(pl.col("minutes").mean().alias("mpg"), pl.len().alias("gp"))
-           .filter(pl.col("mpg") >= ROT_MPG, pl.col("gp") >= 2))
+    mp = (cur.group_by("player_id", "team").agg(pl.col("minutes").mean().alias("mpg"), pl.len().alias("gp"))
+          .filter(pl.col("gp") >= 2))
     games = cur.select("team", "game_id").unique()
     played = cur.filter(pl.col("minutes") > 0).select("team", "game_id", "player_id")
-    absent = (games.join(rot.select("team", "player_id"), on="team")
-              .join(played, on=["team", "game_id", "player_id"], how="anti")
-              .group_by("team", "game_id").agg(pl.col("player_id").alias("absent")))
+
+    def missing(min_mpg, col):
+        return (games.join(mp.filter(pl.col("mpg") >= min_mpg).select("team", "player_id"), on="team")
+                .join(played, on=["team", "game_id", "player_id"], how="anti")
+                .group_by("team", "game_id").agg(pl.col("player_id").alias(col)))
     t = trk.filter(pl.col("season_id") == season).select("player_id", "game_id", "potential_ast", "reb_chances")
     return (cur.join(t, on=["player_id", "game_id"], how="left")
-            .join(absent, on=["team", "game_id"], how="left")
-            .with_columns(pl.col("absent").fill_null([]))
+            .join(missing(ROT_MPG, "absent"), on=["team", "game_id"], how="left")
+            .join(missing(LINEUP_MPG, "absent_wide"), on=["team", "game_id"], how="left")
+            .with_columns(pl.col("absent").fill_null([]), pl.col("absent_wide").fill_null([]))
             .sort("player_id", "game_date"))
 
 
@@ -166,10 +171,20 @@ def _wmean(df: pl.DataFrame, col: str, w: np.ndarray) -> float:
     return float(np.sum(df[col].to_numpy() * w) / np.sum(w))
 
 
+def _lineup_weights(sample: pl.DataFrame, pid: int, tonight_in: set | None, id_name: dict) -> pl.DataFrame:
+    """Each matching game's weight and who else was missing then but plays tonight."""
+    extra = [sorted(set(a) & (tonight_in or set()) - {pid}) for a in sample["absent_wide"].to_list()]
+    return sample.with_columns(pl.Series("lw", [EXTRA_OUT_W ** len(e) for e in extra], dtype=pl.Float64),
+                               pl.Series("also_out", [", ".join(id_name.get(m, str(m)) for m in e) for e in extra], dtype=pl.Utf8))
+
+
 def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.DataFrame, tonight_out: set,
             tonight_unc: dict, id_name: dict, ca: float, cr: float, opp_f: dict, spread: float | None,
-            g_last: pl.DataFrame | None = None, opp_tab: dict | None = None, grp_me: str = "W") -> dict | None:
-    """Situations, comparable games and the projection for one player. g = his games this season (current team)."""
+            g_last: pl.DataFrame | None = None, opp_tab: dict | None = None, grp_me: str = "W",
+            tonight_in: set | None = None) -> dict | None:
+    """Situations, comparable games and the projection for one player. g = his games this season (current team).
+    tonight_in = teammates (12+ min) expected to play tonight: a matching game where some of them were also
+    missing is a bigger role than tonight's, so it counts less (EXTRA_OUT_W per extra absence)."""
     if g.height < 2:
         return None
     absent_sets = [set(a) for a in g["absent"].to_list()]
@@ -209,18 +224,21 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
     if key_new and (comp.height or last_comp is not None):
         parts = [comp] + ([last_comp] if last_comp is not None else [])
         sample = pl.concat([x.select(comp.columns) for x in parts], how="vertical_relaxed").sort("game_date")
+        sample = _lineup_weights(sample, pid, tonight_in, id_name)
         why = "games with " + ", ".join(sorted(id_name.get(m, str(m)) for m in key_new)) + " out" + (
             f" ({comp.height} this season, {last_comp.height} last season)" if last_comp is not None else "")
     elif key_new:
         sample, why = None, ""
     else:
-        sample, why = comp.tail(6), "recent games with tonight's lineup"
+        sample, why = _lineup_weights(comp.tail(6), pid, tonight_in, id_name), "recent games with tonight's lineup"
     proj_min, pot36, rc36, pts36, n_comp = base_min, b_pot, b_rc, b_pts, 0
     if sample is not None and sample.height:
-        w = _weights(sample.height)
+        lw = sample["lw"].to_numpy()
+        w = _weights(sample.height) * lw
         if last_comp is not None:  # last season counts half
             w = w * np.where(sample["season_id"].to_numpy() == SEASON, 1.0, 0.5)
-        n_comp = int(comp.height + (0.5 * last_comp.height if last_comp is not None else 0))
+        this_s = sample["season_id"].to_numpy() == SEASON
+        n_comp = round(float(lw[this_s].sum() + 0.5 * lw[~this_s].sum()))  # effective games: extra absences count less
         k = 3.0  # pseudo-games of baseline
         s_min = _wmean(sample, "minutes", w)
         proj_min = (s_min * w.sum() + base_min * k) / (w.sum() + k)
@@ -230,7 +248,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
             d = sample.drop_nulls(col)
             if not d.height:
                 return prior
-            ww = _weights(d.height) * np.where(d["season_id"].to_numpy() == SEASON, 1.0, 0.5)
+            ww = _weights(d.height) * np.where(d["season_id"].to_numpy() == SEASON, 1.0, 0.5) * d["lw"].to_numpy()
             # remove each matching game's opponent effect, so tonight's opponent is applied to a neutral rate
             of = np.array([(opp_tab or {}).get(o, {}).get(stat_of[col], 1.0) for o in d["opponent"].to_list()])
             v = float(np.sum(d[col].to_numpy() / of * ww) / np.sum(d["minutes"].to_numpy() * ww) * 36)
@@ -417,7 +435,9 @@ def anchored(a: dict, sim: dict, legs) -> tuple[float, str]:
                     tot += s[x].to_numpy() * (tonight.get(x, 1.0) / game_f) ** w[x]
                 hits &= tot >= k - 0.5  # counts are whole numbers: within half a rebound/assist counts as reaching k
             n_hit = int(hits.sum())
-            return (1 - HIST_W) * pm + HIST_W * n_hit / s.height, f"hit {n_hit}/{s.height} in games like tonight · {lab}"
+            lw = s["lw"].to_numpy() if "lw" in s.columns else np.ones(s.height)
+            rate = float((hits * lw).sum() / lw.sum())  # games with extra teammates missing count less
+            return (1 - HIST_W) * pm + HIST_W * rate, f"hit {n_hit}/{s.height} in games like tonight · {lab}"
         return pm, f"{lab} (old role)" if lab else ""
     return (pm if hr is None else (1 - HIST_W) * pm + HIST_W * hr), lab
 
@@ -548,6 +568,8 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
         roster = [p for p, t in team_now.items() if t == team and mpg.get(p, 0) >= ROT_MPG]
         out_t = {p for p in roster if status.get(p, ("", 0, ""))[1] >= OUT_P} | (extra_out or {}).get(team, set())
         unc = {p: status[p][1] for p in roster if p in status and SAFE_P <= status[p][1] < OUT_P and p not in out_t}
+        wide = [p for p, t in team_now.items() if t == team and mpg.get(p, 0) >= LINEUP_MPG]
+        t_in = {p for p in wide if p not in out_t and status.get(p, ("", 0, ""))[1] < SAFE_P}
         cands = cur.filter(pl.col("team") == team).group_by("player_id").agg(pl.col("minutes").tail(5).mean().alias("m5"))
         for pid, m5 in cands.iter_rows():
             if team_now.get(pid) != team or m5 < CAND_MPG or pid in out_t:
@@ -566,7 +588,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             gme = grp.get(pid, "W")
             opp_tab = {r["opponent"]: {s: r[s] for s in ("pts", "reb", "ast")} for r in gf.filter(pl.col("grp") == gme).iter_rows(named=True)}
             a = analyse(pid, pid_name.get(pid, str(pid)), team, opp, g, last, out_t, unc, id_name,
-                        ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl, opp_tab, gme)
+                        ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl, opp_tab, gme, t_in)
             forced = include is not None and a is not None and a["name"] in include
             if a is None:
                 continue
@@ -694,6 +716,17 @@ def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2
     return out
 
 
+def proj_line(a: dict, b: dict) -> str:
+    """'Exp 18 min (9-28) · 5.5p / 3.1r / 1.0a · 5+ reb: 17% (fair $5.94)'."""
+    s = a.get("sim_means")
+    if not s:
+        return ""
+    lo, hi = a.get("min_p10_90", (None, None))
+    rng = f" ({lo:.0f}–{hi:.0f})" if lo is not None else ""
+    return (f"Exp {s['minutes']:.0f} min{rng} · {s['pts']:.1f}p / {s['reb']:.1f}r / {s['ast']:.1f}a · "
+            f"{b['bet']}: {b['p']:.0%} chance (fair ${1 / b['p']:.2f})")
+
+
 def _why(a: dict, b: dict) -> str:
     """The situation that drives this bet's stat (role spots drive every stat)."""
     leg = {"p": "pts", "r": "reb", "a": "ast"}
@@ -718,14 +751,14 @@ def render(res: dict, cond: list[dict]) -> str:
               "move toward the model only by the confidence shown, so a +15% here means more than +80% did before. "
               "SGM prices are builder estimates (0.9× the legs on that book): take only at the 'take at' price or better.")]
     card = card_bets(res, cond=cond)
-    L += ["", "## The card", "", "| Grade | Stake | Player | Bet | SGM version | Why |", "|---|---|---|---|---|---|"]
+    L += ["", "## The card", "", "| Grade | Stake | Player | Bet | Projection | SGM version | Why |", "|---|---|---|---|---|---|---|"]
     for a, b in card:
         sg = next((x for x in a["bets"] if x["kind"] == "SGM" and x is not b), None)
         if b.get("if_sits"):
-            L.append(f"| **If** | 0.5u | **{a['name']}** ({a['team']} vs {a['opp']}) | **only if {b['if_sits']}**: {_fmt_bet(b)} | — | "
+            L.append(f"| **If** | 0.5u | **{a['name']}** ({a['team']} vs {a['opp']}) | **only if {b['if_sits']}**: {_fmt_bet(b)} | {proj_line(a, b)} | — | "
                      f"{_why(a, b)} |")
             continue
-        L.append(f"| **{'Lean' if b.get('lean') else b['grade']}** | {'0.25u' if b.get('lean') else STAKE[b['grade']]} | **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | "
+        L.append(f"| **{'Lean' if b.get('lean') else b['grade']}** | {'0.25u' if b.get('lean') else STAKE[b['grade']]} | **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | {proj_line(a, b)} | "
                  f"{_fmt_bet(sg) if sg else '—'} | {_why(a, b)}" + (f"; {a['opp_line']}" if a.get('opp_line') else "") + " |")
     shop = [(a, b) for a in res["spots"] for b in a["bets"] if b.get("outlier")]
     if shop:
@@ -756,9 +789,11 @@ def render(res: dict, cond: list[dict]) -> str:
                  + (f" · spread {a['spread']:+.1f}" if a["spread"] is not None else ""))
         def games_line(df, title, L=L):
             rows = df.select("game_date", "opponent", "minutes", "pts", "reb", "ast", "potential_ast", "reb_chances").rows()
+            extra = df["also_out"].to_list() if "also_out" in df.columns else [""] * df.height
             L.append(f"- **{title}**: " + "; ".join(
                 f"{d:%d %b} vs {o}: {mi} min {p}/{r}/{x}" + (f" ({pa} pot, {'–' if rc is None else rc} ch)" if pa is not None else "")
-                for d, o, mi, p, r, x, pa, rc in rows[::-1]))
+                + (f" [also out: {e}, counts less]" if e else "")
+                for (d, o, mi, p, r, x, pa, rc), e in list(zip(rows, extra))[::-1]))
 
         if a.get("last5") is not None and a["last5"].height:
             games_line(a["last5"], "last 5 games (any lineup)")
