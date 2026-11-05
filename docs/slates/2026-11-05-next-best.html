@@ -1,0 +1,207 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Next Best 2026-11-05</title><style>
+:root{--bg:#f4f5f2;--card:#fff;--ink:#1b1e23;--muted:#646b76;--line:#e1e4e8;--soft:#f6f7f9;
+--a:#18794e;--a-bg:#dff3e8;--b:#2457c5;--b-bg:#e3ebfb;--c:#5d6470;--c-bg:#eceef1;
+--role:#6a3fc1;--role-bg:#efe8fb;--bounce:#a05a00;--bounce-bg:#fcefd9;--opp:#0f7b80;--opp-bg:#ddf3f3;
+--warn:#a33a1f;--warn-bg:#fbe7e1;--good:#18794e;--bad:#b42318;--accent:#2457c5}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121418;--card:#1c1f25;--ink:#e8eaed;--muted:#9aa2ad;
+--line:#2d323a;--soft:#232730;--a:#5fd39a;--a-bg:#17322a;--b:#8fb0ff;--b-bg:#1d2a45;--c:#a7aeb8;--c-bg:#2a2f37;
+--role:#b99bff;--role-bg:#2c2440;--bounce:#f3b860;--bounce-bg:#3a2c16;--opp:#6fd6da;--opp-bg:#163536;--warn:#ff9a7f;
+--warn-bg:#3c211b;--good:#5fd39a;--bad:#ff8a80;--accent:#8fb0ff}}
+:root[data-theme=dark]{--bg:#121418;--card:#1c1f25;--ink:#e8eaed;--muted:#9aa2ad;--line:#2d323a;--soft:#232730;--a:#5fd39a;
+--a-bg:#17322a;--b:#8fb0ff;--b-bg:#1d2a45;--c:#a7aeb8;--c-bg:#2a2f37;--role:#b99bff;--role-bg:#2c2440;--bounce:#f3b860;
+--bounce-bg:#3a2c16;--opp:#6fd6da;--opp-bg:#163536;--warn:#ff9a7f;--warn-bg:#3c211b;--good:#5fd39a;--bad:#ff8a80;--accent:#8fb0ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:26px 16px 64px}
+h1{font-size:26px;margin:0;letter-spacing:-.01em}h2{font-size:18px;margin:34px 0 12px}h3{margin:0;font-size:17px}
+.sub{color:var(--muted);margin:4px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:600;background:var(--soft);color:var(--muted);white-space:nowrap}
+.chip.role{background:var(--role-bg);color:var(--role)}.chip.bounce{background:var(--bounce-bg);color:var(--bounce)}
+.chip.opp{background:var(--opp-bg);color:var(--opp)}.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.good{background:var(--a-bg);color:var(--a)}
+.badge{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;font-weight:800;font-size:15px}
+.badge.A{background:var(--a-bg);color:var(--a)}.badge.B{background:var(--b-bg);color:var(--b)}.badge.C{background:var(--c-bg);color:var(--c)}
+details.how{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:18px}
+details.how summary{cursor:pointer;font-weight:600}details.how p{color:var(--muted);margin:8px 0 0}
+.card-list{display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:44px minmax(0,1.3fr) minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:center;
+background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.row .who b{font-size:15.5px}.row .who small{display:block;color:var(--muted)}
+.bet{font-weight:700;font-size:16px}.bet small{font-weight:500;color:var(--muted);font-size:13px}
+.nums{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;color:var(--muted);margin-top:3px}
+.nums b{color:var(--ink)}.take{color:var(--accent);font-weight:800}
+.ev{font-weight:800}.ev.pos{color:var(--good)}.ev.neg{color:var(--bad)}
+.sgm{font-size:13px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+.why{font-size:13.5px;color:var(--ink)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.panel.warn{border-color:var(--warn);background:var(--warn-bg)}
+.cond{display:grid;gap:10px}.cond .panel h3{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+ul{margin:8px 0 0;padding-left:18px}li{margin:3px 0}
+.spot{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0}
+.spot-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.conf{min-width:170px}.conf .lbl{font-size:12px;color:var(--muted)}.bar{height:7px;border-radius:5px;background:var(--soft);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.proj{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 6px}
+.stat{background:var(--soft);border-radius:10px;padding:8px 10px}.stat .v{font-size:20px;font-weight:800}.stat .l{font-size:12px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:6px 0 0}
+.scroll{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:600}td.num{font-variant-numeric:tabular-nums}
+.games td{color:var(--muted)}.games td b{color:var(--ink)}
+.foot{color:var(--muted);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:760px){.row{grid-template-columns:40px minmax(0,1fr)}.row>.betcol,.row>.why{grid-column:1/-1}.proj{grid-template-columns:repeat(2,1fr)}}
+</style></head><body><main>
+<h1>Next best · Thu 05 Nov</h1><p class="sub">Only 1 tip cleared the card tonight. These are the next 2 to make 3, plus reserves in case a price has moved.</p>
+<div class="panel"><p class="note" style="margin:0">These are a step below card quality. Stake them smaller than the card: <b>0.25u</b>, or 0.5u for the IF bets once the player is confirmed out. A negative EV means the price is just under our honest fair. Take those only at the <span class="take">take at</span> price or better. "No lineup angle" means a projection against the price, without a teammate change behind it.</p></div>
+<h2>On the card</h2><div class="card-list">
+<div class="row"><span class="badge A">A</span><div class="who"><b>Will Richard</b><small>GSW vs MIA</small></div><div class="betcol"><div class="bet">5+ reb <small>Sportsbet · $6.50</small></div><div class="nums"><span>fair <b>$5.55</b></span><span>EV <span class="ev pos">+17%</span></span><span>take at <span class="take">$6.11</span></span><span>hit 4/14 in games like tonight · hit 2/8 this season, 14/69 last</span></div></div><div class="why">Gui Santos out (usually plays): +5.1 min vs his normal-lineup games (8 games without them)</div></div>
+</div>
+<h2>Next best</h2><div class="card-list">
+<div class="row"><span class="badge C">1</span><div class="who"><b>Jalen Green</b><small>PHX vs ORL · stake 0.25u</small><div class="chips"><span class="chip">No lineup angle</span></div></div><div class="betcol"><div class="bet">6+ reb <small>Sportsbet · $5.20</small></div><div class="nums"><span>fair <b>$4.48</b></span><span>EV <span class="ev pos">+16%</span></span><span>take at <span class="take">$4.92</span></span><span>hit 1/6 this season, 6/32 last</span></div></div><div class="why">No lineup angle: projection vs price. ORL vs guards: pts +0%, reb -0%, ast -1%; pace -0%<div class="chips"><span class="chip opp">ORL vs guards</span><span class="chip ">pts +0%</span><span class="chip ">reb -0%</span><span class="chip ">ast -1%</span></div></div></div>
+<div class="row"><span class="badge C">2</span><div class="who"><b>Klay Thompson</b><small>MIA vs GSW · stake 0.25u</small><div class="chips"><span class="chip">No lineup angle</span></div></div><div class="betcol"><div class="bet">19+ pts <small>Sportsbet · $6.50</small></div><div class="nums"><span>fair <b>$5.63</b></span><span>EV <span class="ev pos">+15%</span></span><span>take at <span class="take">$6.20</span></span><span>hit 3/8 this season, 12/69 last</span></div></div><div class="why">minutes up to 29 over his last 3 (from 20)<div class="chips"><span class="chip opp">GSW vs guards</span><span class="chip ">pts -0%</span><span class="chip ">reb +1%</span><span class="chip ">ast +0%</span></div></div></div>
+</div>
+<h2>Reserves</h2><div class="card-list">
+<div class="row"><span class="badge C">1</span><div class="who"><b>Davion Mitchell</b><small>MIA vs GSW · stake 0.25u</small><div class="chips"><span class="chip">No lineup angle</span></div></div><div class="betcol"><div class="bet">9+ ast <small>Sportsbet · $3.20</small></div><div class="nums"><span>fair <b>$2.83</b></span><span>EV <span class="ev pos">+13%</span></span><span>take at <span class="take">$3.11</span></span><span>hit 5/8 this season, 18/70 last</span></div></div><div class="why">No lineup angle: projection vs price. GSW vs guards: pts -0%, reb +1%, ast +0%; pace -0%<div class="chips"><span class="chip opp">GSW vs guards</span><span class="chip ">pts -0%</span><span class="chip ">reb +1%</span><span class="chip ">ast +0%</span></div></div></div>
+<div class="row"><span class="badge C">2</span><div class="who"><b>Collin Gillespie</b><small>PHX vs ORL · stake 0.25u</small><div class="chips"><span class="chip">No lineup angle</span></div></div><div class="betcol"><div class="bet">7+ ast <small>Sportsbet · $7.50</small></div><div class="nums"><span>fair <b>$6.85</b></span><span>EV <span class="ev pos">+9%</span></span><span>take at <span class="take">$7.54</span></span><span>hit 2/6 this season, 15/80 last</span></div></div><div class="why">No lineup angle: projection vs price. ORL vs guards: pts +0%, reb -0%, ast -1%; pace -0%<div class="chips"><span class="chip opp">ORL vs guards</span><span class="chip ">pts +0%</span><span class="chip ">reb -0%</span><span class="chip ">ast -1%</span></div></div></div>
+</div>
+<h2>The detail</h2>
+<div class="spot"><div class="spot-head"><div><h3>Jalen Green <span class="chip">PHX vs ORL</span> <span class="chip">spread -1.5</span></h3><div class="chips"><span class="chip ">proj</span></div></div><div class="conf"><div class="lbl">confidence 0.25 (model weight vs market)</div><div class="bar"><i style="width:71%"></i></div></div></div><ul>
+<li>No lineup angle: projection vs price. ORL vs guards: pts +0%, reb -0%, ast -1%; pace -0%</li>
+</ul><div class="chips"><span class="chip opp">ORL vs guards</span><span class="chip ">pts +0%</span><span class="chip ">reb -0%</span><span class="chip ">ast -1%</span></div>
+<div class="proj"><div class="stat"><div class="v">30</div><div class="l">minutes (23–37)</div></div><div class="stat"><div class="v">14.1</div><div class="l">points</div></div><div class="stat"><div class="v">5.0</div><div class="l">rebounds · 9.8 chances/36 at 61%</div></div><div class="stat"><div class="v">3.6</div><div class="l">assists · 8.3 potential/36 at 53%</div></div></div><p class="note">Projection from recent games with tonight&#x27;s lineup.</p>
+<p class="note"><b>Last 5 games (any lineup)</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>
+<tr><td>04 Nov vs POR</td><td class="num"><b>32</b></td><td class="num">22</td><td class="num">2</td><td class="num">2</td><td class="num">7</td><td class="num">12</td></tr>
+<tr><td>02 Nov vs GSW</td><td class="num"><b>36</b></td><td class="num">11</td><td class="num">8</td><td class="num">8</td><td class="num">11</td><td class="num">13</td></tr>
+<tr><td>30 Oct vs DEN</td><td class="num"><b>25</b></td><td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">4</td><td class="num">4</td></tr>
+<tr><td>26 Oct vs OKC</td><td class="num"><b>31</b></td><td class="num">20</td><td class="num">4</td><td class="num">4</td><td class="num">9</td><td class="num">5</td></tr>
+<tr><td>24 Oct vs GSW</td><td class="num"><b>26</b></td><td class="num">12</td><td class="num">2</td><td class="num">1</td><td class="num">2</td><td class="num">4</td></tr>
+</table></div>
+<p class="note"><b>Games that match tonight, this season (recent games with tonight&#x27;s lineup)</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>
+<tr><td>04 Nov vs POR</td><td class="num"><b>32</b></td><td class="num">22</td><td class="num">2</td><td class="num">2</td><td class="num">7</td><td class="num">12</td></tr>
+<tr><td>02 Nov vs GSW</td><td class="num"><b>36</b></td><td class="num">11</td><td class="num">8</td><td class="num">8</td><td class="num">11</td><td class="num">13</td></tr>
+<tr><td>30 Oct vs DEN</td><td class="num"><b>25</b></td><td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">4</td><td class="num">4</td></tr>
+<tr><td>21 Oct vs POR</td><td class="num"><b>25</b></td><td class="num">10</td><td class="num">2</td><td class="num">3</td><td class="num">6</td><td class="num">5</td></tr>
+</table></div>
+<p class="note"><b>Guards vs ORL, its last 5 games</b> (vs their own averages): <span class="chip warn">pts -1.0</span> <span class="chip good">reb +0.5</span> <span class="chip ">ast -0.5</span> <span class="note">· a handful of games is mostly noise; the opponent factor above is the tested number</span></p>
+<div class="scroll"><table class="games"><tr><th>Game</th><th>Player</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th></tr>
+<tr><td>02 Nov (WAS)</td><td><b>Bilal Coulibaly</b></td><td class="num">33</td><td class="num">7 <span class="note">(-1)</span></td><td class="num">1 <span class="note">(-2)</span></td><td class="num">2 <span class="note">(+1)</span></td></tr>
+<tr><td>02 Nov (WAS)</td><td><b>Trae Young</b></td><td class="num">34</td><td class="num">15 <span class="note">(-5)</span></td><td class="num">3 <span class="note">(-0)</span></td><td class="num">9 <span class="note">(-0)</span></td></tr>
+<tr><td>01 Nov (BOS)</td><td><b>Payton Pritchard</b></td><td class="num">27</td><td class="num">7 <span class="note">(-6)</span></td><td class="num">7 <span class="note">(+4)</span></td><td class="num">3 <span class="note">(-1)</span></td></tr>
+<tr><td>01 Nov (BOS)</td><td><b>Derrick White</b></td><td class="num">34</td><td class="num">12 <span class="note">(-1)</span></td><td class="num">2 <span class="note">(-1)</span></td><td class="num">2 <span class="note">(-3)</span></td></tr>
+<tr><td>30 Oct (TOR)</td><td><b>Immanuel Quickley</b></td><td class="num">37</td><td class="num">17 <span class="note">(-0)</span></td><td class="num">6 <span class="note">(+2)</span></td><td class="num">8 <span class="note">(+2)</span></td></tr>
+<tr><td>30 Oct (TOR)</td><td><b>Ja&#x27;Kobe Walter</b></td><td class="num">32</td><td class="num">9 <span class="note">(-2)</span></td><td class="num">3 <span class="note">(-1)</span></td><td class="num">1 <span class="note">(-2)</span></td></tr>
+<tr><td>28 Oct (TOR)</td><td><b>Immanuel Quickley</b></td><td class="num">29</td><td class="num">16 <span class="note">(-1)</span></td><td class="num">3 <span class="note">(-0)</span></td><td class="num">7 <span class="note">(+1)</span></td></tr>
+<tr><td>28 Oct (TOR)</td><td><b>Ja&#x27;Kobe Walter</b></td><td class="num">28</td><td class="num">14 <span class="note">(+3)</span></td><td class="num">5 <span class="note">(+1)</span></td><td class="num">2 <span class="note">(-0)</span></td></tr>
+<tr><td>25 Oct (NYK)</td><td><b>Mikal Bridges</b></td><td class="num">35</td><td class="num">6 <span class="note">(-1)</span></td><td class="num">5 <span class="note">(+2)</span></td><td class="num">1 <span class="note">(-1)</span></td></tr>
+<tr><td>25 Oct (NYK)</td><td><b>Josh Hart</b></td><td class="num">35</td><td class="num">13 <span class="note">(+4)</span></td><td class="num">8 <span class="note">(+1)</span></td><td class="num">2 <span class="note">(-2)</span></td></tr>
+</table></div>
+<div class="scroll"><table><tr><th></th><th>Bet</th><th>Book</th><th>Price</th><th>Model</th><th>Market</th><th>Honest fair</th><th>EV</th><th>Take at</th></tr>
+<tr><td><span class="badge C">C</span></td><td><b>6+ reb</b><br><span class="note">hit 1/6 this season, 6/32 last</span></td><td>sportsbet</td><td class="num">$5.20</td><td class="num">$3.32</td><td class="num">$5.06</td><td class="num"><b>$4.48</b></td><td class="num"><span class="ev pos">+16%</span></td><td class="num"><span class="take">$4.92</span></td></tr>
+</table></div></div>
+<div class="spot"><div class="spot-head"><div><h3>Klay Thompson <span class="chip">MIA vs GSW</span> <span class="chip">spread +4.5</span></h3><div class="chips"><span class="chip opp">Volume up</span><span class="chip ">proj</span></div></div><div class="conf"><div class="lbl">confidence 0.23 (model weight vs market)</div><div class="bar"><i style="width:66%"></i></div></div></div><ul>
+<li>minutes up to 29 over his last 3 (from 20)</li>
+<li>No lineup angle: projection vs price. GSW vs guards: pts -0%, reb +1%, ast +0%; pace -0%</li>
+</ul><div class="chips"><span class="chip opp">GSW vs guards</span><span class="chip ">pts -0%</span><span class="chip ">reb +1%</span><span class="chip ">ast +0%</span></div>
+<div class="proj"><div class="stat"><div class="v">25</div><div class="l">minutes (16–34)</div></div><div class="stat"><div class="v">16.4</div><div class="l">points</div></div><div class="stat"><div class="v">3.0</div><div class="l">rebounds · 7.0 chances/36 at 61%</div></div><div class="stat"><div class="v">1.5</div><div class="l">assists · 3.5 potential/36 at 60%</div></div></div><p class="note">Projection from recent games with tonight&#x27;s lineup.</p>
+<p class="note"><b>Last 5 games (any lineup)</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>
+<tr><td>04 Nov vs LAC</td><td class="num"><b>35</b></td><td class="num">30</td><td class="num">5</td><td class="num">3</td><td class="num">2</td><td class="num">8</td></tr>
+<tr><td>02 Nov vs LAL</td><td class="num"><b>27</b></td><td class="num">19</td><td class="num">1</td><td class="num">1</td><td class="num">2</td><td class="num">1</td></tr>
+<tr><td>30 Oct vs IND</td><td class="num"><b>26</b></td><td class="num">25</td><td class="num">0</td><td class="num">3</td><td class="num">5</td><td class="num"></td></tr>
+<tr><td>28 Oct vs ATL</td><td class="num"><b>17</b></td><td class="num">3</td><td class="num">1</td><td class="num">2</td><td class="num">2</td><td class="num">6</td></tr>
+<tr><td>26 Oct vs DAL</td><td class="num"><b>15</b></td><td class="num">6</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">3</td></tr>
+</table></div>
+<p class="note"><b>Games that match tonight, this season (recent games with tonight&#x27;s lineup)</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>
+<tr><td>04 Nov vs LAC</td><td class="num"><b>35</b></td><td class="num">30</td><td class="num">5</td><td class="num">3</td><td class="num">2</td><td class="num">8</td></tr>
+<tr><td>02 Nov vs LAL</td><td class="num"><b>27</b></td><td class="num">19</td><td class="num">1</td><td class="num">1</td><td class="num">2</td><td class="num">1</td></tr>
+<tr><td>30 Oct vs IND</td><td class="num"><b>26</b></td><td class="num">25</td><td class="num">0</td><td class="num">3</td><td class="num">5</td><td class="num"></td></tr>
+<tr><td>28 Oct vs ATL</td><td class="num"><b>17</b></td><td class="num">3</td><td class="num">1</td><td class="num">2</td><td class="num">2</td><td class="num">6</td></tr>
+<tr><td>26 Oct vs DAL</td><td class="num"><b>15</b></td><td class="num">6</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">3</td></tr>
+<tr><td>24 Oct vs CHA</td><td class="num"><b>27</b></td><td class="num">14</td><td class="num">3</td><td class="num">0</td><td class="num">2</td><td class="num">8</td></tr>
+</table></div>
+<p class="note"><b>Guards vs GSW, its last 5 games</b> (vs their own averages): <span class="chip warn">pts -2.1</span> <span class="chip ">reb +0.3</span> <span class="chip good">ast +0.6</span> <span class="note">· a handful of games is mostly noise; the opponent factor above is the tested number</span></p>
+<div class="scroll"><table class="games"><tr><th>Game</th><th>Player</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th></tr>
+<tr><td>02 Nov (PHX)</td><td><b>Jalen Green</b></td><td class="num">36</td><td class="num">11 <span class="note">(-2)</span></td><td class="num">8 <span class="note">(+5)</span></td><td class="num">8 <span class="note">(+5)</span></td></tr>
+<tr><td>02 Nov (PHX)</td><td><b>Devin Booker</b></td><td class="num">35</td><td class="num">26 <span class="note">(+1)</span></td><td class="num">3 <span class="note">(-0)</span></td><td class="num">5 <span class="note">(+0)</span></td></tr>
+<tr><td>01 Nov (LAC)</td><td><b>Darius Garland</b></td><td class="num">33</td><td class="num">15 <span class="note">(-6)</span></td><td class="num">0 <span class="note">(-2)</span></td><td class="num">7 <span class="note">(+0)</span></td></tr>
+<tr><td>01 Nov (LAC)</td><td><b>Kobe Sanders</b></td><td class="num">30</td><td class="num">16 <span class="note">(+6)</span></td><td class="num">3 <span class="note">(+0)</span></td><td class="num">0 <span class="note">(-2)</span></td></tr>
+<tr><td>30 Oct (LAL)</td><td><b>Austin Reaves</b></td><td class="num">37</td><td class="num">21 <span class="note">(-2)</span></td><td class="num">4 <span class="note">(+1)</span></td><td class="num">5 <span class="note">(+0)</span></td></tr>
+<tr><td>30 Oct (LAL)</td><td><b>Matisse Thybulle</b></td><td class="num">28</td><td class="num">10 <span class="note">(+2)</span></td><td class="num">3 <span class="note">(+1)</span></td><td class="num">0 <span class="note">(-1)</span></td></tr>
+<tr><td>28 Oct (MIN)</td><td><b>LaMelo Ball</b></td><td class="num">28</td><td class="num">8 <span class="note">(-9)</span></td><td class="num">3 <span class="note">(-0)</span></td><td class="num">8 <span class="note">(+2)</span></td></tr>
+<tr><td>28 Oct (MIN)</td><td><b>Ayo Dosunmu</b></td><td class="num">32</td><td class="num">17 <span class="note">(+1)</span></td><td class="num">3 <span class="note">(-2)</span></td><td class="num">4 <span class="note">(-0)</span></td></tr>
+<tr><td>26 Oct (DEN)</td><td><b>Christian Braun</b></td><td class="num">34</td><td class="num">9 <span class="note">(-6)</span></td><td class="num">4 <span class="note">(+0)</span></td><td class="num">2 <span class="note">(-0)</span></td></tr>
+<tr><td>26 Oct (DEN)</td><td><b>Jamal Murray</b></td><td class="num">36</td><td class="num">19 <span class="note">(-6)</span></td><td class="num">6 <span class="note">(+1)</span></td><td class="num">8 <span class="note">(+2)</span></td></tr>
+</table></div>
+<div class="scroll"><table><tr><th></th><th>Bet</th><th>Book</th><th>Price</th><th>Model</th><th>Market</th><th>Honest fair</th><th>EV</th><th>Take at</th></tr>
+<tr><td><span class="badge C">C</span></td><td><b>19+ pts</b><br><span class="note">hit 3/8 this season, 12/69 last</span></td><td>sportsbet</td><td class="num">$6.50</td><td class="num">$3.31</td><td class="num">$7.13</td><td class="num"><b>$5.63</b></td><td class="num"><span class="ev pos">+15%</span></td><td class="num"><span class="take">$6.20</span></td></tr>
+<tr><td><span class="badge C">C</span></td><td><b>SGM 16p/3r</b> <span class="chip">SGM version</span><br><span class="note">hit 1/8 this season, 8/69 last</span></td><td>sportsbet</td><td class="num">est. $6.66</td><td class="num">$4.03</td><td class="num">$8.45</td><td class="num"><b>$6.75</b></td><td class="num"><span class="ev neg">-1%</span></td><td class="num"><span class="take">$7.42</span></td></tr>
+</table></div></div>
+<div class="spot"><div class="spot-head"><div><h3>Davion Mitchell <span class="chip">MIA vs GSW</span> <span class="chip">spread +4.5</span></h3><div class="chips"><span class="chip ">proj</span></div></div><div class="conf"><div class="lbl">confidence 0.25 (model weight vs market)</div><div class="bar"><i style="width:71%"></i></div></div></div><ul>
+<li>No lineup angle: projection vs price. GSW vs guards: pts -0%, reb +1%, ast +0%; pace -0%</li>
+</ul><div class="chips"><span class="chip opp">GSW vs guards</span><span class="chip ">pts -0%</span><span class="chip ">reb +1%</span><span class="chip ">ast +0%</span></div>
+<div class="proj"><div class="stat"><div class="v">35</div><div class="l">minutes (29–42)</div></div><div class="stat"><div class="v">14.3</div><div class="l">points</div></div><div class="stat"><div class="v">3.5</div><div class="l">rebounds · 6.2 chances/36 at 58%</div></div><div class="stat"><div class="v">7.8</div><div class="l">assists · 15.6 potential/36 at 51%</div></div></div><p class="note">Projection from recent games with tonight&#x27;s lineup.</p>
+<p class="note"><b>Last 5 games (any lineup)</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>
+<tr><td>04 Nov vs LAC</td><td class="num"><b>43</b></td><td class="num">11</td><td class="num">2</td><td class="num">10</td><td class="num">21</td><td class="num">9</td></tr>
+<tr><td>02 Nov vs LAL</td><td class="num"><b>29</b></td><td class="num">15</td><td class="num">0</td><td class="num">7</td><td class="num">13</td><td class="num"></td></tr>
+<tr><td>30 Oct vs IND</td><td class="num"><b>35</b></td><td class="num">15</td><td class="num">6</td><td class="num">11</td><td class="num">17</td><td class="num">7</td></tr>
+<tr><td>28 Oct vs ATL</td><td class="num"><b>34</b></td><td class="num">10</td><td class="num">1</td><td class="num">10</td><td class="num">14</td><td class="num">4</td></tr>
+<tr><td>26 Oct vs DAL</td><td class="num"><b>33</b></td><td class="num">21</td><td class="num">0</td><td class="num">2</td><td class="num">9</td><td class="num"></td></tr>
+</table></div>
+<p class="note"><b>Games that match tonight, this season (recent games with tonight&#x27;s lineup)</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>
+<tr><td>04 Nov vs LAC</td><td class="num"><b>43</b></td><td class="num">11</td><td class="num">2</td><td class="num">10</td><td class="num">21</td><td class="num">9</td></tr>
+<tr><td>02 Nov vs LAL</td><td class="num"><b>29</b></td><td class="num">15</td><td class="num">0</td><td class="num">7</td><td class="num">13</td><td class="num"></td></tr>
+<tr><td>30 Oct vs IND</td><td class="num"><b>35</b></td><td class="num">15</td><td class="num">6</td><td class="num">11</td><td class="num">17</td><td class="num">7</td></tr>
+<tr><td>28 Oct vs ATL</td><td class="num"><b>34</b></td><td class="num">10</td><td class="num">1</td><td class="num">10</td><td class="num">14</td><td class="num">4</td></tr>
+<tr><td>26 Oct vs DAL</td><td class="num"><b>33</b></td><td class="num">21</td><td class="num">0</td><td class="num">2</td><td class="num">9</td><td class="num"></td></tr>
+<tr><td>24 Oct vs CHA</td><td class="num"><b>37</b></td><td class="num">22</td><td class="num">1</td><td class="num">10</td><td class="num">17</td><td class="num">6</td></tr>
+</table></div>
+<p class="note"><b>Guards vs GSW, its last 5 games</b> (vs their own averages): <span class="chip warn">pts -2.1</span> <span class="chip ">reb +0.3</span> <span class="chip good">ast +0.6</span> <span class="note">· a handful of games is mostly noise; the opponent factor above is the tested number</span></p>
+<div class="scroll"><table class="games"><tr><th>Game</th><th>Player</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th></tr>
+<tr><td>02 Nov (PHX)</td><td><b>Jalen Green</b></td><td class="num">36</td><td class="num">11 <span class="note">(-2)</span></td><td class="num">8 <span class="note">(+5)</span></td><td class="num">8 <span class="note">(+5)</span></td></tr>
+<tr><td>02 Nov (PHX)</td><td><b>Devin Booker</b></td><td class="num">35</td><td class="num">26 <span class="note">(+1)</span></td><td class="num">3 <span class="note">(-0)</span></td><td class="num">5 <span class="note">(+0)</span></td></tr>
+<tr><td>01 Nov (LAC)</td><td><b>Darius Garland</b></td><td class="num">33</td><td class="num">15 <span class="note">(-6)</span></td><td class="num">0 <span class="note">(-2)</span></td><td class="num">7 <span class="note">(+0)</span></td></tr>
+<tr><td>01 Nov (LAC)</td><td><b>Kobe Sanders</b></td><td class="num">30</td><td class="num">16 <span class="note">(+6)</span></td><td class="num">3 <span class="note">(+0)</span></td><td class="num">0 <span class="note">(-2)</span></td></tr>
+<tr><td>30 Oct (LAL)</td><td><b>Austin Reaves</b></td><td class="num">37</td><td class="num">21 <span class="note">(-2)</span></td><td class="num">4 <span class="note">(+1)</span></td><td class="num">5 <span class="note">(+0)</span></td></tr>
+<tr><td>30 Oct (LAL)</td><td><b>Matisse Thybulle</b></td><td class="num">28</td><td class="num">10 <span class="note">(+2)</span></td><td class="num">3 <span class="note">(+1)</span></td><td class="num">0 <span class="note">(-1)</span></td></tr>
+<tr><td>28 Oct (MIN)</td><td><b>LaMelo Ball</b></td><td class="num">28</td><td class="num">8 <span class="note">(-9)</span></td><td class="num">3 <span class="note">(-0)</span></td><td class="num">8 <span class="note">(+2)</span></td></tr>
+<tr><td>28 Oct (MIN)</td><td><b>Ayo Dosunmu</b></td><td class="num">32</td><td class="num">17 <span class="note">(+1)</span></td><td class="num">3 <span class="note">(-2)</span></td><td class="num">4 <span class="note">(-0)</span></td></tr>
+<tr><td>26 Oct (DEN)</td><td><b>Christian Braun</b></td><td class="num">34</td><td class="num">9 <span class="note">(-6)</span></td><td class="num">4 <span class="note">(+0)</span></td><td class="num">2 <span class="note">(-0)</span></td></tr>
+<tr><td>26 Oct (DEN)</td><td><b>Jamal Murray</b></td><td class="num">36</td><td class="num">19 <span class="note">(-6)</span></td><td class="num">6 <span class="note">(+1)</span></td><td class="num">8 <span class="note">(+2)</span></td></tr>
+</table></div>
+<div class="scroll"><table><tr><th></th><th>Bet</th><th>Book</th><th>Price</th><th>Model</th><th>Market</th><th>Honest fair</th><th>EV</th><th>Take at</th></tr>
+<tr><td><span class="badge C">C</span></td><td><b>9+ ast</b><br><span class="note">hit 5/8 this season, 18/70 last</span></td><td>sportsbet</td><td class="num">$3.20</td><td class="num">$2.75</td><td class="num">$2.86</td><td class="num"><b>$2.83</b></td><td class="num"><span class="ev pos">+13%</span></td><td class="num"><span class="take">$3.11</span></td></tr>
+</table></div></div>
+<div class="spot"><div class="spot-head"><div><h3>Collin Gillespie <span class="chip">PHX vs ORL</span> <span class="chip">spread -1.5</span></h3><div class="chips"><span class="chip ">proj</span></div></div><div class="conf"><div class="lbl">confidence 0.25 (model weight vs market)</div><div class="bar"><i style="width:71%"></i></div></div></div><ul>
+<li>No lineup angle: projection vs price. ORL vs guards: pts +0%, reb -0%, ast -1%; pace -0%</li>
+</ul><div class="chips"><span class="chip opp">ORL vs guards</span><span class="chip ">pts +0%</span><span class="chip ">reb -0%</span><span class="chip ">ast -1%</span></div>
+<div class="proj"><div class="stat"><div class="v">25</div><div class="l">minutes (18–32)</div></div><div class="stat"><div class="v">6.7</div><div class="l">points</div></div><div class="stat"><div class="v">3.7</div><div class="l">rebounds · 8.8 chances/36 at 60%</div></div><div class="stat"><div class="v">4.4</div><div class="l">assists · 11.1 potential/36 at 57%</div></div></div><p class="note">Projection from recent games with tonight&#x27;s lineup.</p>
+<p class="note"><b>Last 5 games (any lineup)</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>
+<tr><td>04 Nov vs POR</td><td class="num"><b>23</b></td><td class="num">2</td><td class="num">3</td><td class="num">2</td><td class="num">5</td><td class="num">6</td></tr>
+<tr><td>02 Nov vs GSW</td><td class="num"><b>24</b></td><td class="num">3</td><td class="num">1</td><td class="num">2</td><td class="num">5</td><td class="num">6</td></tr>
+<tr><td>30 Oct vs DEN</td><td class="num"><b>33</b></td><td class="num">16</td><td class="num">3</td><td class="num">10</td><td class="num">21</td><td class="num">8</td></tr>
+<tr><td>26 Oct vs OKC</td><td class="num"><b>23</b></td><td class="num">9</td><td class="num">1</td><td class="num">2</td><td class="num">5</td><td class="num">6</td></tr>
+<tr><td>24 Oct vs GSW</td><td class="num"><b>28</b></td><td class="num">11</td><td class="num">4</td><td class="num">9</td><td class="num">9</td><td class="num">5</td></tr>
+</table></div>
+<p class="note"><b>Games that match tonight, this season (recent games with tonight&#x27;s lineup)</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>
+<tr><td>04 Nov vs POR</td><td class="num"><b>23</b></td><td class="num">2</td><td class="num">3</td><td class="num">2</td><td class="num">5</td><td class="num">6</td></tr>
+<tr><td>02 Nov vs GSW</td><td class="num"><b>24</b></td><td class="num">3</td><td class="num">1</td><td class="num">2</td><td class="num">5</td><td class="num">6</td></tr>
+<tr><td>30 Oct vs DEN</td><td class="num"><b>33</b></td><td class="num">16</td><td class="num">3</td><td class="num">10</td><td class="num">21</td><td class="num">8</td></tr>
+<tr><td>21 Oct vs POR</td><td class="num"><b>21</b></td><td class="num">0</td><td class="num">1</td><td class="num">2</td><td class="num">2</td><td class="num">5</td></tr>
+</table></div>
+<p class="note"><b>Guards vs ORL, its last 5 games</b> (vs their own averages): <span class="chip warn">pts -1.0</span> <span class="chip good">reb +0.5</span> <span class="chip ">ast -0.5</span> <span class="note">· a handful of games is mostly noise; the opponent factor above is the tested number</span></p>
+<div class="scroll"><table class="games"><tr><th>Game</th><th>Player</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th></tr>
+<tr><td>02 Nov (WAS)</td><td><b>Bilal Coulibaly</b></td><td class="num">33</td><td class="num">7 <span class="note">(-1)</span></td><td class="num">1 <span class="note">(-2)</span></td><td class="num">2 <span class="note">(+1)</span></td></tr>
+<tr><td>02 Nov (WAS)</td><td><b>Trae Young</b></td><td class="num">34</td><td class="num">15 <span class="note">(-5)</span></td><td class="num">3 <span class="note">(-0)</span></td><td class="num">9 <span class="note">(-0)</span></td></tr>
+<tr><td>01 Nov (BOS)</td><td><b>Payton Pritchard</b></td><td class="num">27</td><td class="num">7 <span class="note">(-6)</span></td><td class="num">7 <span class="note">(+4)</span></td><td class="num">3 <span class="note">(-1)</span></td></tr>
+<tr><td>01 Nov (BOS)</td><td><b>Derrick White</b></td><td class="num">34</td><td class="num">12 <span class="note">(-1)</span></td><td class="num">2 <span class="note">(-1)</span></td><td class="num">2 <span class="note">(-3)</span></td></tr>
+<tr><td>30 Oct (TOR)</td><td><b>Immanuel Quickley</b></td><td class="num">37</td><td class="num">17 <span class="note">(-0)</span></td><td class="num">6 <span class="note">(+2)</span></td><td class="num">8 <span class="note">(+2)</span></td></tr>
+<tr><td>30 Oct (TOR)</td><td><b>Ja&#x27;Kobe Walter</b></td><td class="num">32</td><td class="num">9 <span class="note">(-2)</span></td><td class="num">3 <span class="note">(-1)</span></td><td class="num">1 <span class="note">(-2)</span></td></tr>
+<tr><td>28 Oct (TOR)</td><td><b>Immanuel Quickley</b></td><td class="num">29</td><td class="num">16 <span class="note">(-1)</span></td><td class="num">3 <span class="note">(-0)</span></td><td class="num">7 <span class="note">(+1)</span></td></tr>
+<tr><td>28 Oct (TOR)</td><td><b>Ja&#x27;Kobe Walter</b></td><td class="num">28</td><td class="num">14 <span class="note">(+3)</span></td><td class="num">5 <span class="note">(+1)</span></td><td class="num">2 <span class="note">(-0)</span></td></tr>
+<tr><td>25 Oct (NYK)</td><td><b>Mikal Bridges</b></td><td class="num">35</td><td class="num">6 <span class="note">(-1)</span></td><td class="num">5 <span class="note">(+2)</span></td><td class="num">1 <span class="note">(-1)</span></td></tr>
+<tr><td>25 Oct (NYK)</td><td><b>Josh Hart</b></td><td class="num">35</td><td class="num">13 <span class="note">(+4)</span></td><td class="num">8 <span class="note">(+1)</span></td><td class="num">2 <span class="note">(-2)</span></td></tr>
+</table></div>
+<div class="scroll"><table><tr><th></th><th>Bet</th><th>Book</th><th>Price</th><th>Model</th><th>Market</th><th>Honest fair</th><th>EV</th><th>Take at</th></tr>
+<tr><td><span class="badge C">C</span></td><td><b>7+ ast</b><br><span class="note">hit 2/6 this season, 15/80 last</span></td><td>sportsbet</td><td class="num">$7.50</td><td class="num">$5.30</td><td class="num">$7.60</td><td class="num"><b>$6.85</b></td><td class="num"><span class="ev pos">+9%</span></td><td class="num"><span class="take">$7.54</span></td></tr>
+</table></div></div>
+<p class="foot">Personal model, public data (NBA.com box scores and tracking, official injury reports, The Odds API). Gamble responsibly · Gambling Help 1800 858 858 · BetStop betstop.gov.au</p></main></body></html>

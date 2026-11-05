@@ -97,6 +97,81 @@ def _why(a, b):
     return why(a, b)
 
 
+def _spot_html(a: dict) -> list[str]:
+    """One spot card: situation, projection, last 5, matching games, opponent comps, bets."""
+    H = []
+    s = a["sim_means"]
+    chips = []
+    for x in a["sits"]:
+        k = KIND.get(x["kind"], ("", x["kind"]))
+        chips.append(f'<span class="chip {k[0]}">{k[1]}</span>')
+    if a.get("own_p", 0) >= 0.2:
+        chips.append(f'<span class="chip warn">His own P(sits) {a["own_p"]:.0%} · void if out</span>')
+    for n, p in a.get("unc", {}).items():
+        chips.append(f'<span class="chip warn">{esc(n)} P(sits) {p:.0%}</span>')
+    H.append(f'<div class="spot"><div class="spot-head"><div><h3>{esc(a["name"])} <span class="chip">{esc(a["team"])} vs {esc(a["opp"])}</span>'
+             + (f' <span class="chip">spread {a["spread"]:+.1f}</span>' if a["spread"] is not None else "")
+             + f'</h3><div class="chips">{"".join(chips)}</div></div>'
+             f'<div class="conf"><div class="lbl">confidence {a["conf"]:.2f} (model weight vs market)</div>'
+             f'<div class="bar"><i style="width:{min(a["conf"] / 0.35, 1) * 100:.0f}%"></i></div></div></div><ul>')
+    for x in a["sits"]:
+        H.append(f"<li>{esc(x['text'])}</li>")
+    H.append(f'</ul><div class="chips">{_opp_chips(a)}</div>')
+    lo, hi = a["min_p10_90"]
+    H.append('<div class="proj">'
+             f'<div class="stat"><div class="v">{s["minutes"]:.0f}</div><div class="l">minutes ({lo:.0f}–{hi:.0f})</div></div>'
+             f'<div class="stat"><div class="v">{s["pts"]:.1f}</div><div class="l">points</div></div>'
+             f'<div class="stat"><div class="v">{s["reb"]:.1f}</div><div class="l">rebounds · {a["rc36"]:.1f} chances/36 at {a["cr"]:.0%}</div></div>'
+             f'<div class="stat"><div class="v">{s["ast"]:.1f}</div><div class="l">assists · {a["pot36"]:.1f} potential/36 at {a["ca"]:.0%}</div></div></div>'
+             f'<p class="note">Projection from {esc(a["why_sample"] or "his baseline")}.</p>')
+    def games_table(df, title):
+        rows = df.select("game_date", "opponent", "minutes", "pts", "reb", "ast", "potential_ast", "reb_chances").rows()
+        H.append(f'<p class="note"><b>{title}</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th>'
+                 '<th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>')
+        for d, o, mi, p_, r, x, pa, rc in rows[::-1]:
+            H.append(f'<tr><td>{d:%d %b} vs {esc(o)}</td><td class="num"><b>{mi}</b></td><td class="num">{p_}</td><td class="num">{r}</td>'
+                     f'<td class="num">{x}</td><td class="num">{"" if pa is None else pa}</td><td class="num">{"" if rc is None else rc}</td></tr>')
+        H.append("</table></div>")
+
+    if a.get("last5") is not None and a["last5"].height:
+        games_table(a["last5"], "Last 5 games (any lineup)")
+    if a["sample"] is not None and a["sample"].height:
+        from nba_ladders.spots import SEASON
+
+        this = a["sample"].filter(a["sample"]["season_id"] == SEASON)
+        n_last = a["sample"].height - this.height
+        extra = f" · plus {n_last} last-season games used in the projection, not shown" if n_last else ""
+        if this.height:
+            games_table(this.tail(6), f"Games that match tonight, this season ({esc(a['why_sample'].split(' (')[0])}){extra}")
+        elif n_last:
+            H.append(f'<p class="note">No game this season matches tonight\'s lineup; the projection uses {n_last} last-season games.</p>')
+    oc = a.get("opp_comps") or {}
+    if oc.get("rows"):
+        dd = oc["diff"]
+        col = lambda v: "good" if v >= 0.5 else "warn" if v <= -0.5 else ""
+        H.append(f'<p class="note"><b>{esc(oc["label"].capitalize())} vs {esc(a["opp"])}, its last 5 games</b> (vs their own averages): '
+                 + " ".join(f'<span class="chip {col(dd[s])}">{lab} {dd[s]:+.1f}</span>' for s, lab in (("pts", "pts"), ("reb", "reb"), ("ast", "ast")))
+                 + ' <span class="note">· a handful of games is mostly noise; the opponent factor above is the tested number</span></p>')
+        H.append('<div class="scroll"><table class="games"><tr><th>Game</th><th>Player</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th></tr>')
+        for d, tm, nm, mi, p_, r, x, dp, dr, dx in oc["rows"]:
+            sg = lambda v: f' <span class="note">({v:+.0f})</span>'
+            H.append(f'<tr><td>{d:%d %b} ({esc(tm)})</td><td><b>{esc(nm)}</b></td><td class="num">{mi}</td>'
+                     f'<td class="num">{p_}{sg(dp)}</td><td class="num">{r}{sg(dr)}</td><td class="num">{x}{sg(dx)}</td></tr>')
+        H.append("</table></div>")
+    H.append('<div class="scroll"><table><tr><th></th><th>Bet</th><th>Book</th><th>Price</th><th>Model</th><th>Market</th>'
+             '<th>Honest fair</th><th>EV</th><th>Take at</th></tr>')
+    for b in a["bets"]:
+        book = b["book"].replace("_au", "")
+        flag = ' <span class="chip warn">check live</span>' if b.get("outlier") else (' <span class="chip">SGM version</span>' if b.get("alt") else "")
+        H.append(f'<tr><td><span class="badge {b["grade"]}">{b["grade"]}</span></td><td><b>{"SGM " if b["kind"] == "SGM" else ""}{esc(b["bet"])}</b>{flag}<br><span class="note">{esc(b.get("hist", ""))}</span></td>'
+                 f'<td>{book}</td><td class="num">{"est. " if b["kind"] == "SGM" else ""}${b["price"]:.2f}</td>'
+                 f'<td class="num">${1 / b["p_model"]:.2f}</td><td class="num">${1 / b["p_mkt"]:.2f}</td>'
+                 f'<td class="num"><b>${1 / b["p"]:.2f}</b></td><td class="num">{_ev(b["ev"])}</td>'
+                 f'<td class="num"><span class="take">${b["take_at"]:.2f}</span></td></tr>')
+    H.append("</table></div></div>")
+    return H
+
+
 def render_html(res: dict, cond: list[dict]) -> str:
     day = res["day"]
     unfiled = sorted(res["teams"] - res["filed"])
@@ -128,7 +203,11 @@ def render_html(res: dict, cond: list[dict]) -> str:
     from nba_ladders.spots import card_bets
 
     card = card_bets(res, cond=cond)
-    H.append('<h2>The card: 5 tips</h2><div class="card-list">')
+    H.append('<h2>The card: 5 tips</h2>')
+    if len(card) < 3:
+        H.append(f'<p class="note">Only {len(card)} tip{"s" * (len(card) != 1)} clear the bar tonight. The next best are in '
+                 f'<b>{day.isoformat()}-next-best.html</b> (same folder).</p>')
+    H.append('<div class="card-list">')
     for a, b in card:
         sg = next((x for x in a["bets"] if x["kind"] == "SGM" and x is not b), None)
         kinds = "".join(f'<span class="chip {KIND[x["kind"]][0]}">{KIND[x["kind"]][1]}</span>' for x in a["sits"] if x["kind"] in KIND)
@@ -165,75 +244,52 @@ def render_html(res: dict, cond: list[dict]) -> str:
     # spots
     H.append("<h2>Spots</h2>")
     for a in res["spots"]:
-        s = a["sim_means"]
-        chips = []
-        for x in a["sits"]:
-            k = KIND.get(x["kind"], ("", x["kind"]))
-            chips.append(f'<span class="chip {k[0]}">{k[1]}</span>')
-        if a.get("own_p", 0) >= 0.2:
-            chips.append(f'<span class="chip warn">His own P(sits) {a["own_p"]:.0%} · void if out</span>')
-        for n, p in a.get("unc", {}).items():
-            chips.append(f'<span class="chip warn">{esc(n)} P(sits) {p:.0%}</span>')
-        H.append(f'<div class="spot"><div class="spot-head"><div><h3>{esc(a["name"])} <span class="chip">{esc(a["team"])} vs {esc(a["opp"])}</span>'
-                 + (f' <span class="chip">spread {a["spread"]:+.1f}</span>' if a["spread"] is not None else "")
-                 + f'</h3><div class="chips">{"".join(chips)}</div></div>'
-                 f'<div class="conf"><div class="lbl">confidence {a["conf"]:.2f} (model weight vs market)</div>'
-                 f'<div class="bar"><i style="width:{min(a["conf"] / 0.35, 1) * 100:.0f}%"></i></div></div></div><ul>')
-        for x in a["sits"]:
-            H.append(f"<li>{esc(x['text'])}</li>")
-        H.append(f'</ul><div class="chips">{_opp_chips(a)}</div>')
-        lo, hi = a["min_p10_90"]
-        H.append('<div class="proj">'
-                 f'<div class="stat"><div class="v">{s["minutes"]:.0f}</div><div class="l">minutes ({lo:.0f}–{hi:.0f})</div></div>'
-                 f'<div class="stat"><div class="v">{s["pts"]:.1f}</div><div class="l">points</div></div>'
-                 f'<div class="stat"><div class="v">{s["reb"]:.1f}</div><div class="l">rebounds · {a["rc36"]:.1f} chances/36 at {a["cr"]:.0%}</div></div>'
-                 f'<div class="stat"><div class="v">{s["ast"]:.1f}</div><div class="l">assists · {a["pot36"]:.1f} potential/36 at {a["ca"]:.0%}</div></div></div>'
-                 f'<p class="note">Projection from {esc(a["why_sample"] or "his baseline")}.</p>')
-        def games_table(df, title):
-            rows = df.select("game_date", "opponent", "minutes", "pts", "reb", "ast", "potential_ast", "reb_chances").rows()
-            H.append(f'<p class="note"><b>{title}</b></p><div class="scroll"><table class="games"><tr><th>Game</th><th>Min</th><th>Pts</th>'
-                     '<th>Reb</th><th>Ast</th><th>Pot ast</th><th>Reb ch</th></tr>')
-            for d, o, mi, p_, r, x, pa, rc in rows[::-1]:
-                H.append(f'<tr><td>{d:%d %b} vs {esc(o)}</td><td class="num"><b>{mi}</b></td><td class="num">{p_}</td><td class="num">{r}</td>'
-                         f'<td class="num">{x}</td><td class="num">{"" if pa is None else pa}</td><td class="num">{"" if rc is None else rc}</td></tr>')
-            H.append("</table></div>")
+        H += _spot_html(a)
+    H.append('<p class="foot">Personal model, public data (NBA.com box scores and tracking, official injury reports, The Odds API). '
+             'Gamble responsibly · Gambling Help 1800 858 858 · BetStop betstop.gov.au</p></main></body></html>')
+    return "\n".join(H)
 
-        if a.get("last5") is not None and a["last5"].height:
-            games_table(a["last5"], "Last 5 games (any lineup)")
-        if a["sample"] is not None and a["sample"].height:
-            from nba_ladders.spots import SEASON
 
-            this = a["sample"].filter(a["sample"]["season_id"] == SEASON)
-            n_last = a["sample"].height - this.height
-            extra = f" · plus {n_last} last-season games used in the projection, not shown" if n_last else ""
-            if this.height:
-                games_table(this.tail(6), f"Games that match tonight, this season ({esc(a['why_sample'].split(' (')[0])}){extra}")
-            elif n_last:
-                H.append(f'<p class="note">No game this season matches tonight\'s lineup; the projection uses {n_last} last-season games.</p>')
-        oc = a.get("opp_comps") or {}
-        if oc.get("rows"):
-            dd = oc["diff"]
-            col = lambda v: "good" if v >= 0.5 else "warn" if v <= -0.5 else ""
-            H.append(f'<p class="note"><b>{esc(oc["label"].capitalize())} vs {esc(a["opp"])}, its last 5 games</b> (vs their own averages): '
-                     + " ".join(f'<span class="chip {col(dd[s])}">{lab} {dd[s]:+.1f}</span>' for s, lab in (("pts", "pts"), ("reb", "reb"), ("ast", "ast")))
-                     + ' <span class="note">· a handful of games is mostly noise; the opponent factor above is the tested number</span></p>')
-            H.append('<div class="scroll"><table class="games"><tr><th>Game</th><th>Player</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th></tr>')
-            for d, tm, nm, mi, p_, r, x, dp, dr, dx in oc["rows"]:
-                sg = lambda v: f' <span class="note">({v:+.0f})</span>'
-                H.append(f'<tr><td>{d:%d %b} ({esc(tm)})</td><td><b>{esc(nm)}</b></td><td class="num">{mi}</td>'
-                         f'<td class="num">{p_}{sg(dp)}</td><td class="num">{r}{sg(dr)}</td><td class="num">{x}{sg(dx)}</td></tr>')
-            H.append("</table></div>")
-        H.append('<div class="scroll"><table><tr><th></th><th>Bet</th><th>Book</th><th>Price</th><th>Model</th><th>Market</th>'
-                 '<th>Honest fair</th><th>EV</th><th>Take at</th></tr>')
-        for b in a["bets"]:
-            book = b["book"].replace("_au", "")
-            flag = ' <span class="chip warn">check live</span>' if b.get("outlier") else (' <span class="chip">SGM version</span>' if b.get("alt") else "")
-            H.append(f'<tr><td><span class="badge {b["grade"]}">{b["grade"]}</span></td><td><b>{"SGM " if b["kind"] == "SGM" else ""}{esc(b["bet"])}</b>{flag}<br><span class="note">{esc(b.get("hist", ""))}</span></td>'
-                     f'<td>{book}</td><td class="num">{"est. " if b["kind"] == "SGM" else ""}${b["price"]:.2f}</td>'
-                     f'<td class="num">${1 / b["p_model"]:.2f}</td><td class="num">${1 / b["p_mkt"]:.2f}</td>'
-                     f'<td class="num"><b>${1 / b["p"]:.2f}</b></td><td class="num">{_ev(b["ev"])}</td>'
-                     f'<td class="num"><span class="take">${b["take_at"]:.2f}</span></td></tr>')
-        H.append("</table></div></div>")
+def render_next_html(res: dict, card: list, picks: list) -> str:
+    """Secondary doc for thin nights: the card's tips, then the next best to make at least 3."""
+    from nba_ladders.spots import MIN_TIPS, PRIMARY
+
+    day = res["day"]
+    need = MIN_TIPS - len(card)
+    H = ['<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
+         f'<title>Next Best {day}</title><style>{CSS}</style></head><body><main>',
+         (f'<h1>Next best · {day:%a %d %b}</h1><p class="sub">Only {len(card)} tip{"s" * (len(card) != 1)} cleared the card tonight. '
+         f'These are the next {need} to make {MIN_TIPS}, plus reserves in case a price has moved.</p>'),
+         ('<div class="panel"><p class="note" style="margin:0">These are a step below card quality. Stake them smaller than the card: '
+         '<b>0.25u</b>, or 0.5u for the IF bets once the player is confirmed out. A negative EV means the price is just under our honest fair. '
+         'Take those only at the <span class="take">take at</span> price or better. "No lineup angle" means a projection against the price, '
+         'without a teammate change behind it.</p></div>'),
+         '<h2>On the card</h2><div class="card-list">']
+    for a, b in card:
+        H.append(f'<div class="row"><span class="badge {b.get("grade", "C")}">{b.get("grade", "C")}</span><div class="who"><b>{esc(a["name"])}</b>'
+                 f'<small>{esc(a["team"])} vs {esc(a["opp"])}</small></div><div class="betcol">{_bet_html(b)}</div>'
+                 f'<div class="why">{esc(_why(a, b))}</div></div>')
+    H.append("</div>")
+    for title, rows in (("Next best", picks[:need]), ("Reserves", picks[need:])):
+        if not rows:
+            continue
+        H.append(f'<h2>{title}</h2><div class="card-list">')
+        for i, (a, b) in enumerate(rows, 1):
+            angle = any(x["kind"] in PRIMARY for x in a["sits"])
+            tag = ('<span class="chip warn">Only if ' + esc(b["if_sits"]) + '</span>' if b.get("if_sits")
+                   else '<span class="chip role">Lineup angle</span>' if angle else '<span class="chip">No lineup angle</span>')
+            if b["ev"] < 0:
+                tag += '<span class="chip warn">Just under fair: take-at price only</span>'
+            H.append(f'<div class="row"><span class="badge C">{i}</span><div class="who"><b>{esc(a["name"])}</b>'
+                     f'<small>{esc(a["team"])} vs {esc(a["opp"])} · stake 0.25u</small><div class="chips">{tag}</div></div>'
+                     f'<div class="betcol">{_bet_html(b)}</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
+        H.append("</div>")
+    H.append("<h2>The detail</h2>")
+    seen = set()
+    for a, _ in picks:
+        if a["name"] not in seen and "sim_means" in a:
+            seen.add(a["name"])
+            H += _spot_html(a)
     H.append('<p class="foot">Personal model, public data (NBA.com box scores and tracking, official injury reports, The Odds API). '
              'Gamble responsibly · Gambling Help 1800 858 858 · BetStop betstop.gov.au</p></main></body></html>')
     return "\n".join(H)

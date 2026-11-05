@@ -62,6 +62,8 @@ SGM_FACTOR = 0.90  # builder ≈ this x product of the book's legs (user's slips
 LEG_MIN_P = 0.50  # each SGM leg live on its own
 SGM_MIN_EV = 0.08
 CARD_N = 5
+MIN_TIPS = 3  # fewer card tips than this: write a "next best" doc to make it up
+NEXT_FLOOR = -0.08  # next-best pool: closest-to-fair bets down to this honest EV
 LEG_MIN = {"pts": 8, "reb": 3, "ast": 3}
 SGM_BOOKS = ("betr_au", "sportsbet")
 SINGLE_RANGE = (2.5, 10.0)
@@ -428,7 +430,7 @@ def plausible(a: dict, legs) -> bool:
     return hr is None or hr >= PLAUSIBLE
 
 
-def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float) -> list[dict]:
+def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float = 0.0) -> list[dict]:
     stats = {s.get("stat") for s in a["sits"] if s.get("stat") in ("ast", "reb")}
     focus = stats or {"pts", "reb", "ast"}
     out = []
@@ -442,7 +444,7 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float) -> list[dict]:
             (pm, hist_lab), pk = anchored(a, sim, [(st, k)]), mk[(st, k)]
             ph = pk + c * (pm - pk)
             ev = price * ph - 1
-            if ev >= 0:
+            if ev >= floor:
                 out.append({"kind": "single", "lean": ev < MIN_EV, "bet": f"{k}+ {st}", "book": bk, "price": price, "p_model": pm, "p_mkt": pk, "hist": hist_lab,
                             "p": ph, "ev": ev, "take_at": 1.10 / ph, "outlier": price * pk / 1.0 > OUTLIER})
     # SGMs from one book's ladder
@@ -469,7 +471,7 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float) -> list[dict]:
                     pk = float(np.prod([mk[x] for x in lg])) * rho
                     ph = pk + c * (pj - pk)
                     ev = est * ph - 1
-                    if ev >= 0.0:  # below SGM_MIN_EV it's shown as the spot's SGM version, not a card bet
+                    if ev >= floor:  # below SGM_MIN_EV it's shown as the spot's SGM version, not a card bet
                         out.append({"kind": "SGM", "alt": ev < SGM_MIN_EV, "hist": hist_lab, "bet": "/".join(f"{k}{s[0]}" for s, k in lg), "book": bk, "price": est,
                                     "p_model": pj, "p_mkt": pk, "p": ph, "ev": ev, "take_at": 1.10 / ph, "outlier": False,
                                     "legs": " × ".join(f"${med[x]:.2f}" for x in lg)})
@@ -540,7 +542,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
         if pid is not None:
             status[pid] = (r["status"], _p_sit(r), r["reason"] or "")
     id_name = {**pid_name, **{("mpg", p): v for p, v in mpg.items()}, **{("grp", p): v for p, v in grp.items()}}
-    spots, leans, looked, evaluated = [], [], 0, []
+    spots, leans, near, looked, evaluated = [], [], [], 0, []
     for team, m in teams.items():
         opp = next(x for x in m.split("@") if x != team)
         roster = [p for p, t in team_now.items() if t == team and mpg.get(p, 0) >= ROT_MPG]
@@ -566,8 +568,26 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             a = analyse(pid, pid_name.get(pid, str(pid)), team, opp, g, last, out_t, unc, id_name,
                         ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl, opp_tab, gme)
             forced = include is not None and a is not None and a["name"] in include
-            if a is None or (not {x["kind"] for x in a["sits"]} & PRIMARY and not forced):
-                continue  # a 3-game volume spike alone regressed (replay: -40%); it only supports a real spot
+            if a is None:
+                continue
+            if not {x["kind"] for x in a["sits"]} & PRIMARY and not forced:
+                # a 3-game volume spike alone regressed (replay: -40%); it only supports a real spot.
+                # These players go to the next-best pool only (projection vs price, no lineup angle).
+                a["opp_line"] = weakness_line(opp, gme, day)
+                a["opp_comps"] = opp_comps(cur, grp, opp, gme)
+                a["unc"] = {pid_name.get(p, str(p)): v for p, v in unc.items()}
+                a["sits"] = a["sits"] + [{"kind": "proj", "text": "No lineup angle: projection vs price. " + a["opp_line"]}]
+                c = max(CONF_MIN, confidence(a, sum(unc.values()), team in filed) - 0.10 * own_p - 0.05)
+                a["own_p"] = own_p
+                sim = simulate(a)
+                bs = [b for b in bets_for(a, sim, *market_probs(odds, a["name"]), c, floor=NEXT_FLOOR) if not b.get("outlier")]
+                if bs:
+                    a.update(conf=c, sim_means={k: float(v.mean()) for k, v in sim.items()},
+                             min_p10_90=(float(np.percentile(sim["minutes"], 10)), float(np.percentile(sim["minutes"], 90))), bets=bs)
+                    for b in bs:
+                        b["grade"] = "C"
+                    near.append(a)
+                continue
             a["opp_line"] = weakness_line(opp, grp.get(pid, "W"), day)
             a["opp_comps"] = opp_comps(cur, grp, opp, grp.get(pid, "W"))
             a["unc"] = {pid_name.get(p, str(p)): v for p, v in unc.items()}
@@ -592,7 +612,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
                 leans.append(a)
     spots.sort(key=lambda a: -max(b["ev"] * a["conf"] for b in a["bets"]))
     leans.sort(key=lambda a: -max(b["ev"] for b in a["bets"]))
-    return {"day": day, "spots": spots, "leans": leans, "evaluated": evaluated, "report_time": str(rep["report_time"].max()), "filed": filed, "teams": set(teams),
+    return {"day": day, "spots": spots, "leans": leans, "near": near, "evaluated": evaluated, "report_time": str(rep["report_time"].max()), "filed": filed, "teams": set(teams),
             "snapshot": odds["snapshot"].max() if odds.height else None, "looked": looked, "status": status,
             "pid_name": pid_name, "team_now": team_now, "mpg": mpg}
 
@@ -642,6 +662,36 @@ def card_bets(res: dict, n: int = CARD_N, cond: list | None = None) -> list[tupl
             card.append((a, {**b, "if_sits": f"{c['player']} sits ({c['p']:.0%})"}))
             have.add(a["name"])
     return card
+
+
+def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2) -> list[tuple[dict, dict]]:
+    """When the card has fewer than MIN_TIPS: the best of the rest, one per player, by honest EV.
+    Pool: spots and leans not on the card, conditional bets, and players with no lineup angle
+    (projection vs price only). Returns the picks needed to reach MIN_TIPS plus a few reserves."""
+    need = MIN_TIPS - len(card)
+    if need <= 0:
+        return []
+    have = {a["name"] for a, _ in card}
+    pool = []
+    for a in res["spots"] + res.get("leans", []) + res.get("near", []):
+        for b in a["bets"]:
+            if not b.get("outlier") and b["ev"] >= NEXT_FLOOR:
+                pool.append((a, b))
+    for c in cond or []:
+        for a, b in c["bets"]:
+            pool.append((a, {**b, "if_sits": f"{c['player']} sits ({c['p']:.0%})"}))
+    # a real angle beats a bare projection at the same EV
+    angle = lambda a: any(x["kind"] in PRIMARY for x in a["sits"])
+    pool.sort(key=lambda ab: -(ab[1]["ev"] + (0.03 if angle(ab[0]) else 0)))
+    out = []
+    for a, b in pool:
+        if a["name"] in have:
+            continue
+        have.add(a["name"])
+        out.append((a, b))
+        if len(out) >= need + reserves:
+            break
+    return out
 
 
 def _why(a: dict, b: dict) -> str:
@@ -826,6 +876,14 @@ def main() -> None:
     from nba_ladders.spots_html import render_html
 
     out.with_suffix(".html").write_text(render_html(res, cond))
+    card = card_bets(res, cond=cond)
+    nb = next_best(res, card, cond)
+    if nb:
+        from nba_ladders.spots_html import render_next_html
+
+        nxt = out.with_name(f"{args.date.isoformat()}-next-best.html")
+        nxt.write_text(render_next_html(res, card, nb))
+        print(f"card has {len(card)} tips: next best -> {nxt.name}: " + "; ".join(f"{a['name']} {b['bet']} ${b['price']:.2f} EV {b['ev']:+.0%}" for a, b in nb))
     save(res, cond)
     print(md[:3000])
     print(f"wrote {out} and .html")
