@@ -1,0 +1,162 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spots 2026-11-06</title><style>
+:root{--bg:#f4f5f2;--card:#fff;--ink:#1b1e23;--muted:#646b76;--line:#e1e4e8;--soft:#f6f7f9;
+--a:#18794e;--a-bg:#dff3e8;--b:#2457c5;--b-bg:#e3ebfb;--c:#5d6470;--c-bg:#eceef1;
+--role:#6a3fc1;--role-bg:#efe8fb;--bounce:#a05a00;--bounce-bg:#fcefd9;--opp:#0f7b80;--opp-bg:#ddf3f3;
+--warn:#a33a1f;--warn-bg:#fbe7e1;--good:#18794e;--bad:#b42318;--accent:#2457c5}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121418;--card:#1c1f25;--ink:#e8eaed;--muted:#9aa2ad;
+--line:#2d323a;--soft:#232730;--a:#5fd39a;--a-bg:#17322a;--b:#8fb0ff;--b-bg:#1d2a45;--c:#a7aeb8;--c-bg:#2a2f37;
+--role:#b99bff;--role-bg:#2c2440;--bounce:#f3b860;--bounce-bg:#3a2c16;--opp:#6fd6da;--opp-bg:#163536;--warn:#ff9a7f;
+--warn-bg:#3c211b;--good:#5fd39a;--bad:#ff8a80;--accent:#8fb0ff}}
+:root[data-theme=dark]{--bg:#121418;--card:#1c1f25;--ink:#e8eaed;--muted:#9aa2ad;--line:#2d323a;--soft:#232730;--a:#5fd39a;
+--a-bg:#17322a;--b:#8fb0ff;--b-bg:#1d2a45;--c:#a7aeb8;--c-bg:#2a2f37;--role:#b99bff;--role-bg:#2c2440;--bounce:#f3b860;
+--bounce-bg:#3a2c16;--opp:#6fd6da;--opp-bg:#163536;--warn:#ff9a7f;--warn-bg:#3c211b;--good:#5fd39a;--bad:#ff8a80;--accent:#8fb0ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:26px 16px 64px}
+h1{font-size:26px;margin:0;letter-spacing:-.01em}h2{font-size:18px;margin:34px 0 12px}h3{margin:0;font-size:17px}
+.sub{color:var(--muted);margin:4px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:600;background:var(--soft);color:var(--muted);white-space:nowrap}
+.chip.role{background:var(--role-bg);color:var(--role)}.chip.bounce{background:var(--bounce-bg);color:var(--bounce)}
+.chip.opp{background:var(--opp-bg);color:var(--opp)}.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.good{background:var(--a-bg);color:var(--a)}
+.badge{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;font-weight:800;font-size:15px}
+.badge.A{background:var(--a-bg);color:var(--a)}.badge.B{background:var(--b-bg);color:var(--b)}.badge.C{background:var(--c-bg);color:var(--c)}
+details.how{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:18px}
+details.how summary{cursor:pointer;font-weight:600}details.how p{color:var(--muted);margin:8px 0 0}
+.card-list{display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:44px minmax(0,1.3fr) minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:center;
+background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.row .who b{font-size:15.5px}.row .who small{display:block;color:var(--muted)}
+.bet{font-weight:700;font-size:16px}.bet small{font-weight:500;color:var(--muted);font-size:13px}
+.nums{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;color:var(--muted);margin-top:3px}
+.nums b{color:var(--ink)}.take{color:var(--accent);font-weight:800}
+.ev{font-weight:800}.ev.pos{color:var(--good)}.ev.neg{color:var(--bad)}
+.sgm{font-size:13px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+.why{font-size:13.5px;color:var(--ink)}
+.projline{font-size:13px;margin-top:5px;padding:4px 8px;border-radius:7px;background:var(--soft);color:var(--ink);font-weight:600}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.panel.warn{border-color:var(--warn);background:var(--warn-bg)}
+.cond{display:grid;gap:10px}.cond .panel h3{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+ul{margin:8px 0 0;padding-left:18px}li{margin:3px 0}
+.spot{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0}
+.spot-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.conf{min-width:170px}.conf .lbl{font-size:12px;color:var(--muted)}.bar{height:7px;border-radius:5px;background:var(--soft);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.proj{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 6px}
+.stat{background:var(--soft);border-radius:10px;padding:8px 10px}.stat .v{font-size:20px;font-weight:800}.stat .l{font-size:12px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:6px 0 0}
+.scroll{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:600}td.num{font-variant-numeric:tabular-nums}
+.games td{color:var(--muted)}.games td b{color:var(--ink)}
+.foot{color:var(--muted);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:760px){.row{grid-template-columns:40px minmax(0,1fr)}.row>.betcol,.row>.why{grid-column:1/-1}.proj{grid-template-columns:repeat(2,1fr)}}
+</style></head><body><main>
+<h1>Spots · Fri 06 Nov</h1><p class="sub">US Eastern slate · situation-first · honest prices</p>
+<div class="chips"><span class="chip">Injury report 2026-11-06 03:45:00 ET</span><span class="chip">Odds 20261106T084106Z</span><span class="chip">139 players checked · 0 spots</span><span class="chip good">Live record (1 slate, card + triggered ifs): 2/4 (expected 0.9) · +9.5u at 1u</span><span class="chip">Replay (in-sample, 3 slates): 9/28 · +12.6u</span></div>
+<details class="how"><summary>How to read this</summary><p>A spot needs a reason the player is different tonight: a <b>role change</b> from tonight's lineup (his own games without those teammates, this season and last) or a <b>bounce</b> (normal volume, conversion well below his career rate). Opposition is shown on every spot and is in the projection. <b>Fair and EV are honest</b>: they start from the market's real probability (alt overs hit ~93% of implied at $1.25, ~77% at $9) and move toward the model only by the confidence bar. SGM prices are builder estimates (0.9× the AU-median legs): take only at the <span class="take">take at</span> price or better. Grades: A = lineup role spot with strong evidence; B = solid; C = thin.</p></details>
+<h2>The card: 5 tips</h2>
+<p class="note">Only 0 firm tips clear the bar tonight. The next best are in <b>2026-11-06-next-best.html</b> (same folder).</p>
+<div class="card-list">
+<div class="row"><span class="badge B">IF</span><div class="who"><b>Neemias Queta</b><small>BOS vs CHA · stake 0.5u · only if he sits</small><div class="chips"><span class="chip warn">Only if Jayson Tatum sits (30%)</span><span class="chip role">Role change</span></div></div><div class="betcol"><div class="bet">12+ reb <small>Sportsbet · $7.50</small></div><div class="nums"><span>fair <b>$6.19</b></span><span>EV <span class="ev pos">+21%</span></span><span>take at <span class="take">$6.81</span></span><span>hit 4/16 in games like tonight · hit 1/8 this season, 13/76 last</span></div><div class="projline">Exp 22 min (13–31) · 8.8p / 7.7r / 1.6a · 12+ reb: 16% chance (fair $6.19)</div></div><div class="why">Jayson Tatum out (usually plays): +0.8 min vs his normal-lineup games (7 games without them)<div class="chips"><span class="chip opp">CHA vs bigs</span><span class="chip ">pts -2%</span><span class="chip warn">reb -8%</span><span class="chip ">ast +1%</span></div></div></div>
+<div class="row"><span class="badge B">IF</span><div class="who"><b>Derrick White</b><small>BOS vs CHA · stake 0.5u · only if he sits</small><div class="chips"><span class="chip warn">Only if Payton Pritchard sits (55%)</span><span class="chip role">Role change</span></div></div><div class="betcol"><div class="bet">8+ ast <small>Sportsbet · $7.75</small></div><div class="nums"><span>fair <b>$6.55</b></span><span>EV <span class="ev pos">+18%</span></span><span>take at <span class="take">$7.20</span></span><span>hit 1/8 this season, 15/77 last (old role)</span></div><div class="projline">Exp 36 min (28–45) · 15.3p / 4.4r / 5.4a · 8+ ast: 15% chance (fair $6.55)</div></div><div class="why">Payton Pritchard out (usually plays): +6.0 min vs his normal-lineup games (no game without them yet)<div class="chips"><span class="chip opp">CHA vs guards</span><span class="chip ">pts -1%</span><span class="chip warn">reb -3%</span><span class="chip ">ast -1%</span></div></div></div>
+<div class="row"><span class="badge B">IF</span><div class="who"><b>Kyshawn George</b><small>WAS vs ATL · stake 0.5u · only if he sits</small><div class="chips"><span class="chip warn">Only if Anthony Davis sits (55%)</span><span class="chip role">Role change</span></div></div><div class="betcol"><div class="bet">20+ pts <small>Sportsbet · $3.70</small></div><div class="nums"><span>fair <b>$3.25</b></span><span>EV <span class="ev pos">+14%</span></span><span>take at <span class="take">$3.57</span></span><span>hit 4/8 this season, 11/48 last (old role)</span></div><div class="projline">Exp 33 min (27–39) · 18.9p / 6.3r / 4.5a · 20+ pts: 31% chance (fair $3.25)</div></div><div class="why">Anthony Davis, Justin Champagnie out (usually plays): +3.1 min vs his normal-lineup games (no game without them yet)<div class="chips"><span class="chip opp">ATL vs wings</span><span class="chip good">pts +2%</span><span class="chip good">reb +2%</span><span class="chip good">ast +3%</span></div></div></div>
+</div>
+<h2>Spots waiting for prices</h2><p class="note">Real lineup spots in games where the books haven't posted player props yet. Re-run once they're up; until then, a rung is a bet only at the <span class="take">bet at</span> price or better (the honest EV test, assuming the book prices like the market usually does).</p><div class="cond">
+<div class="panel"><h3>Jaylen Clark <span class="chip">MIN vs NOP</span><span class="chip role">Role change</span></h3><p class="note">Anthony Edwards out (usually plays): +6.0 min vs his normal-lineup games (4 games without them)</p><div class="projline">Exp 10 min (1–18) · 3.5p / 1.8r / 0.8a</div><div class="scroll"><table><tr><th>Rung</th><th>Our chance</th><th>Model fair</th><th>Bet at</th><th>History</th></tr>
+<tr><td><b>8+ pts</b></td><td class="num">20%</td><td class="num">$5.09</td><td class="num"><span class="take">$8.10+</span></td><td class="note">hit 2/5 in games like tonight · hit 2/8 this season, 14/68 last</td></tr>
+<tr><td><b>3+ reb</b></td><td class="num">23%</td><td class="num">$4.37</td><td class="num"><span class="take">$6.90+</span></td><td class="note">hit 1/5 in games like tonight · hit 1/8 this season, 19/68 last</td></tr>
+</table></div></div>
+<div class="panel"><h3>Trey Lyles <span class="chip">MIN vs NOP</span><span class="chip role">Role change</span></h3><p class="note">Anthony Edwards out (usually plays): +2.2 min vs his normal-lineup games (4 games without them)</p><div class="projline">Exp 16 min (11–21) · 5.6p / 3.7r / 0.9a</div><div class="scroll"><table><tr><th>Rung</th><th>Our chance</th><th>Model fair</th><th>Bet at</th><th>History</th></tr>
+<tr><td><b>8+ pts</b></td><td class="num">34%</td><td class="num">$2.98</td><td class="num"><span class="take">$4.50+</span></td><td class="note">hit 2/5 in games like tonight · hit 3/9 this season</td></tr>
+<tr><td><b>10+ pts</b></td><td class="num">26%</td><td class="num">$3.85</td><td class="num"><span class="take">$6.05+</span></td><td class="note">hit 2/5 in games like tonight · hit 2/9 this season</td></tr>
+<tr><td><b>3+ reb</b></td><td class="num">69%</td><td class="num">$1.45</td><td class="num"><span class="take">$1.90+</span></td><td class="note">hit 3/5 in games like tonight · hit 5/9 this season</td></tr>
+<tr><td><b>5+ reb</b></td><td class="num">30%</td><td class="num">$3.31</td><td class="num"><span class="take">$5.15+</span></td><td class="note">hit 1/5 in games like tonight · hit 3/9 this season</td></tr>
+</table></div></div>
+<div class="panel"><h3>Ayo Dosunmu <span class="chip">MIN vs NOP</span><span class="chip role">Role change</span></h3><p class="note">Anthony Edwards out (usually plays): +3.1 min vs his normal-lineup games (4 games without them)</p><div class="projline">Exp 29 min (24–35) · 15.9p / 4.4r / 4.6a</div><div class="scroll"><table><tr><th>Rung</th><th>Our chance</th><th>Model fair</th><th>Bet at</th><th>History</th></tr>
+<tr><td><b>15+ pts</b></td><td class="num">74%</td><td class="num">$1.36</td><td class="num"><span class="take">$1.75+</span></td><td class="note">hit 5/5 in games like tonight · hit 6/9 this season, 36/69 last</td></tr>
+<tr><td><b>18+ pts</b></td><td class="num">51%</td><td class="num">$1.96</td><td class="num"><span class="take">$2.70+</span></td><td class="note">hit 4/5 in games like tonight · hit 3/9 this season, 25/69 last</td></tr>
+<tr><td><b>20+ pts</b></td><td class="num">27%</td><td class="num">$3.66</td><td class="num"><span class="take">$5.80+</span></td><td class="note">hit 2/5 in games like tonight · hit 2/9 this season, 14/69 last</td></tr>
+<tr><td><b>5+ reb</b></td><td class="num">49%</td><td class="num">$2.04</td><td class="num"><span class="take">$2.80+</span></td><td class="note">hit 3/5 in games like tonight · hit 5/9 this season, 16/69 last</td></tr>
+<tr><td><b>7+ reb</b></td><td class="num">32%</td><td class="num">$3.09</td><td class="num"><span class="take">$4.70+</span></td><td class="note">hit 3/5 in games like tonight · hit 4/9 this season, 7/69 last</td></tr>
+<tr><td><b>5+ ast</b></td><td class="num">40%</td><td class="num">$2.51</td><td class="num"><span class="take">$3.65+</span></td><td class="note">hit 2/5 in games like tonight · hit 3/9 this season, 21/69 last</td></tr>
+<tr><td><b>7+ ast</b></td><td class="num">22%</td><td class="num">$4.45</td><td class="num"><span class="take">$7.00+</span></td><td class="note">hit 2/5 in games like tonight · hit 2/9 this season, 10/69 last</td></tr>
+</table></div></div>
+<div class="panel"><h3>Bones Hyland <span class="chip">MIN vs NOP</span><span class="chip role">Role change</span></h3><p class="note">Anthony Edwards out (usually plays): +3.4 min vs his normal-lineup games (4 games without them)</p><div class="projline">Exp 11 min (6–17) · 6.9p / 1.6r / 2.2a</div><div class="scroll"><table><tr><th>Rung</th><th>Our chance</th><th>Model fair</th><th>Bet at</th><th>History</th></tr>
+<tr><td><b>8+ pts</b></td><td class="num">58%</td><td class="num">$1.72</td><td class="num"><span class="take">$2.35+</span></td><td class="note">hit 4/5 in games like tonight · hit 4/9 this season, 35/71 last</td></tr>
+<tr><td><b>10+ pts</b></td><td class="num">50%</td><td class="num">$2.02</td><td class="num"><span class="take">$2.75+</span></td><td class="note">hit 4/5 in games like tonight · hit 4/9 this season, 27/71 last</td></tr>
+<tr><td><b>12+ pts</b></td><td class="num">38%</td><td class="num">$2.65</td><td class="num"><span class="take">$3.90+</span></td><td class="note">hit 3/5 in games like tonight · hit 3/9 this season, 21/71 last</td></tr>
+<tr><td><b>15+ pts</b></td><td class="num">21%</td><td class="num">$4.79</td><td class="num"><span class="take">$7.55+</span></td><td class="note">hit 2/5 in games like tonight · hit 2/9 this season, 13/71 last</td></tr>
+<tr><td><b>18+ pts</b></td><td class="num">19%</td><td class="num">$5.39</td><td class="num"><span class="take">$8.65+</span></td><td class="note">hit 2/5 in games like tonight · hit 2/9 this season, 11/71 last</td></tr>
+<tr><td><b>3+ ast</b></td><td class="num">63%</td><td class="num">$1.59</td><td class="num"><span class="take">$2.15+</span></td><td class="note">hit 5/5 in games like tonight · hit 5/9 this season, 33/71 last</td></tr>
+<tr><td><b>5+ ast</b></td><td class="num">17%</td><td class="num">$5.77</td><td class="num"><span class="take">$9.55+</span></td><td class="note">hit 1/5 in games like tonight · hit 1/9 this season, 14/71 last</td></tr>
+</table></div></div>
+<div class="panel"><h3>Scoot Henderson <span class="chip">POR vs LAL</span><span class="chip role">Role change</span></h3><p class="note">Ja Morant out (usually plays): +3.0 min vs his normal-lineup games (3 games without them)</p><div class="projline">Exp 22 min (16–28) · 9.4p / 2.5r / 2.0a</div><div class="scroll"><table><tr><th>Rung</th><th>Our chance</th><th>Model fair</th><th>Bet at</th><th>History</th></tr>
+<tr><td><b>10+ pts</b></td><td class="num">41%</td><td class="num">$2.46</td><td class="num"><span class="take">$3.55+</span></td><td class="note">hit 1/3 in games like tonight · hit 2/7 this season, 24/30 last</td></tr>
+<tr><td><b>12+ pts</b></td><td class="num">32%</td><td class="num">$3.16</td><td class="num"><span class="take">$4.85+</span></td><td class="note">hit 1/3 in games like tonight · hit 2/7 this season, 18/30 last</td></tr>
+<tr><td><b>3+ reb</b></td><td class="num">40%</td><td class="num">$2.52</td><td class="num"><span class="take">$3.70+</span></td><td class="note">hit 1/3 in games like tonight · hit 2/7 this season, 18/30 last</td></tr>
+<tr><td><b>3+ ast</b></td><td class="num">19%</td><td class="num">$5.25</td><td class="num"><span class="take">$8.40+</span></td><td class="note">hit 0/3 in games like tonight · hit 1/7 this season, 22/30 last</td></tr>
+</table></div></div>
+<div class="panel"><h3>Toumani Camara <span class="chip">POR vs LAL</span><span class="chip role">Role change</span></h3><p class="note">Ja Morant out (usually plays): +2.9 min vs his normal-lineup games (3 games without them)</p><div class="projline">Exp 28 min (23–33) · 12.5p / 4.1r / 1.5a</div><div class="scroll"><table><tr><th>Rung</th><th>Our chance</th><th>Model fair</th><th>Bet at</th><th>History</th></tr>
+<tr><td><b>10+ pts</b></td><td class="num">68%</td><td class="num">$1.47</td><td class="num"><span class="take">$1.95+</span></td><td class="note">hit 2/3 in games like tonight · hit 6/7 this season, 59/82 last</td></tr>
+<tr><td><b>12+ pts</b></td><td class="num">46%</td><td class="num">$2.19</td><td class="num"><span class="take">$3.10+</span></td><td class="note">hit 1/3 in games like tonight · hit 5/7 this season, 49/82 last</td></tr>
+<tr><td><b>15+ pts</b></td><td class="num">20%</td><td class="num">$5.03</td><td class="num"><span class="take">$8.00+</span></td><td class="note">hit 0/3 in games like tonight · hit 2/7 this season, 35/82 last</td></tr>
+<tr><td><b>5+ reb</b></td><td class="num">37%</td><td class="num">$2.73</td><td class="num"><span class="take">$4.05+</span></td><td class="note">hit 1/3 in games like tonight · hit 1/7 this season, 45/82 last</td></tr>
+</table></div></div>
+<div class="panel"><h3>Tyrese Proctor <span class="chip">CLE vs PHI</span><span class="chip role">Role change</span></h3><p class="note">Jaylon Tyson out (usually plays): +3.1 min vs his normal-lineup games (2 games without them)</p><div class="projline">Exp 14 min (8–19) · 5.8p / 2.8r / 1.9a</div><div class="scroll"><table><tr><th>Rung</th><th>Our chance</th><th>Model fair</th><th>Bet at</th><th>History</th></tr>
+<tr><td><b>8+ pts</b></td><td class="num">58%</td><td class="num">$1.73</td><td class="num"><span class="take">$3.40+</span></td><td class="note">hit 3/3 in games like tonight · hit 3/7 this season, 15/50 last</td></tr>
+<tr><td><b>10+ pts</b></td><td class="num">30%</td><td class="num">$3.32</td><td class="num"><span class="take">$7.75+</span></td><td class="note">hit 2/3 in games like tonight · hit 2/7 this season, 11/50 last</td></tr>
+<tr><td><b>3+ reb</b></td><td class="num">61%</td><td class="num">$1.63</td><td class="num"><span class="take">$3.10+</span></td><td class="note">hit 2/3 in games like tonight · hit 3/7 this season, 5/50 last</td></tr>
+<tr><td><b>3+ ast</b></td><td class="num">38%</td><td class="num">$2.64</td><td class="num"><span class="take">$6.10+</span></td><td class="note">hit 1/3 in games like tonight · hit 2/7 this season, 11/50 last</td></tr>
+</table></div></div>
+<div class="panel"><h3>Micah Peavy <span class="chip">OKC vs MEM</span><span class="chip role">Role change</span></h3><p class="note">Jaylin Williams out (usually plays): +2.0 min vs his normal-lineup games (no game without them yet)</p><div class="projline">Exp 14 min (3–25) · 3.6p / 3.0r / 0.8a</div><div class="scroll"><table><tr><th>Rung</th><th>Our chance</th><th>Model fair</th><th>Bet at</th><th>History</th></tr>
+<tr><td><b>3+ reb</b></td><td class="num">51%</td><td class="num">$1.95</td><td class="num"><span class="take">$5.15+</span></td><td class="note">hit 2/4 this season, 20/61 last (old role)</td></tr>
+</table></div></div>
+</div>
+<h2>Key questionable players: the bet if they miss</h2><div class="cond">
+<div class="panel"><h3>Jayson Tatum <span class="chip">BOS · 35 min/g</span><span class="chip warn">P(sits) 30%</span></h3><p class="note">Carry-forward: missed last game but not on tonight&#x27;s report (missed 1), P(sits) 30%</p>
+<ul>
+<li>If he misses: <b>Neemias Queta</b> <b>12+ reb</b> Sportsbet $7.50 · fair $6.19 · EV <span class="ev pos">+21%</span> · take at <span class="take">$6.81</span> · <span class="note">Jayson Tatum out (usually plays): +0.8 min vs his normal-lineup games (7 games without them)</span></li>
+<li>If he misses: <b>Neemias Queta</b> <b>2+ ast</b> Sportsbet $2.59 · fair $2.45 · EV <span class="ev pos">+6%</span> · take at <span class="take">$2.70</span> · <span class="note">Jayson Tatum out (usually plays): +0.8 min vs his normal-lineup games (7 games without them)</span></li>
+</ul>
+</div>
+<div class="panel"><h3>Scottie Barnes <span class="chip">TOR · 33 min/g</span><span class="chip warn">P(sits) 55%</span></h3><p class="note">Injury/Illness-LeftAdductor/Groin Soreness/Tightness</p>
+<p class="note">No bet clears if he misses: thin evidence for his teammates without him, or the market has already moved.</p>
+</div>
+<div class="panel"><h3>Anthony Davis <span class="chip">WAS · 33 min/g</span><span class="chip warn">P(sits) 55%</span></h3><p class="note">Injury/Illness-RightAnkleSprain</p>
+<ul>
+<li>If he misses: <b>Kyshawn George</b> <b>20+ pts</b> Sportsbet $3.70 · fair $3.25 · EV <span class="ev pos">+14%</span> · take at <span class="take">$3.57</span> · <span class="note">Anthony Davis, Justin Champagnie out (usually plays): +3.1 min vs his normal-lineup games (no game without them yet)</span></li>
+<li>If he misses: <b>Kyshawn George</b> <b>8+ reb</b> Sportsbet $7.75 · fair $7.29 · EV <span class="ev pos">+6%</span> · take at <span class="take">$8.02</span> · <span class="note">Anthony Davis, Justin Champagnie out (usually plays): +3.1 min vs his normal-lineup games (no game without them yet)</span></li>
+</ul>
+</div>
+<div class="panel"><h3>Trey Murphy III <span class="chip">NOP · 33 min/g</span><span class="chip warn">P(sits) 30%</span></h3><p class="note">Carry-forward: missed last game but not on tonight&#x27;s report (missed 1), P(sits) 30%</p>
+<p class="note">No bet clears if he misses: thin evidence for his teammates without him, or the market has already moved.</p>
+</div>
+<div class="panel"><h3>Jalen Johnson <span class="chip">ATL · 33 min/g</span><span class="chip warn">P(sits) 55%</span></h3><p class="note">Injury/Illness-LeftAnkleSprain</p>
+<p class="note">No bet clears if he misses: thin evidence for his teammates without him, or the market has already moved.</p>
+</div>
+<div class="panel"><h3>Dennis Schröder <span class="chip">CHA · 30 min/g</span><span class="chip warn">P(sits) 55%</span></h3><p class="note">Injury/Illness-LeftSoreness</p>
+<p class="note">No bet clears if he misses: thin evidence for his teammates without him, or the market has already moved.</p>
+</div>
+<div class="panel"><h3>Moussa Diabaté <span class="chip">CHA · 29 min/g</span><span class="chip warn">P(sits) 55%</span></h3><p class="note">Injury/Illness-RightQuadriceps Tendinopathy</p>
+<p class="note">No bet clears if he misses: thin evidence for his teammates without him, or the market has already moved.</p>
+</div>
+<div class="panel"><h3>Peyton Watson <span class="chip">CLE · 28 min/g</span><span class="chip warn">P(sits) 55%</span></h3><p class="note">Injury/Illness-RightHamstringInjury Management</p>
+<p class="note">No bet clears if he misses: thin evidence for his teammates without him, or the market has already moved.</p>
+</div>
+<div class="panel"><h3>Payton Pritchard <span class="chip">BOS · 27 min/g</span><span class="chip warn">P(sits) 55%</span></h3><p class="note">Injury/Illness-RightEyeAbrasion</p>
+<ul>
+<li>If he misses: <b>Derrick White</b> <b>8+ ast</b> Sportsbet $7.75 · fair $6.55 · EV <span class="ev pos">+18%</span> · take at <span class="take">$7.20</span> · <span class="note">Payton Pritchard out (usually plays): +6.0 min vs his normal-lineup games (no game without them yet)</span></li>
+<li>If he misses: <b>Derrick White</b> <b>20+ pts</b> Sportsbet $4.65 · fair $4.22 · EV <span class="ev pos">+10%</span> · take at <span class="take">$4.64</span> · <span class="note">Payton Pritchard out (usually plays): +6.0 min vs his normal-lineup games (no game without them yet)</span></li>
+</ul>
+</div>
+<div class="panel"><h3>Jaren Jackson Jr. <span class="chip">UTA · 26 min/g</span><span class="chip warn">P(sits) 30%</span></h3><p class="note">Carry-forward: missed last game but not on tonight&#x27;s report (missed 4), P(sits) 30%</p>
+<p class="note">No bet clears if he misses: thin evidence for his teammates without him, or the market has already moved.</p>
+</div>
+<div class="panel"><h3>Jarrett Allen <span class="chip">CLE · 25 min/g</span><span class="chip warn">P(sits) 55%</span></h3><p class="note">Injury/Illness-RightKneeContusion</p>
+<p class="note">No bet clears if he misses: thin evidence for his teammates without him, or the market has already moved.</p>
+</div>
+</div>
+<h2>Spots</h2>
+<p class="foot">Personal model, public data (NBA.com box scores and tracking, official injury reports, The Odds API). Gamble responsibly · Gambling Help 1800 858 858 · BetStop betstop.gov.au</p></main></body></html>

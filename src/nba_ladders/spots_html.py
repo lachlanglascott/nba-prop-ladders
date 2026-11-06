@@ -215,8 +215,9 @@ def render_html(res: dict, cond: list[dict]) -> str:
 
     card = card_bets(res, cond=cond)
     H.append('<h2>The card: 5 tips</h2>')
-    if len(card) < 3:
-        H.append(f'<p class="note">Only {len(card)} tip{"s" * (len(card) != 1)} clear the bar tonight. The next best are in '
+    firm = sum(not b.get("if_sits") for _, b in card)
+    if firm < 3:
+        H.append(f'<p class="note">Only {firm} firm tip{"s" * (firm != 1)} clear the bar tonight. The next best are in '
                  f'<b>{day.isoformat()}-next-best.html</b> (same folder).</p>')
     H.append('<div class="card-list">')
     for a, b in card:
@@ -231,6 +232,23 @@ def render_html(res: dict, cond: list[dict]) -> str:
                  f'<div class="betcol">{_bet_html(b)}{_proj(a, b)}' + (f'<div class="sgm">SGM version: {_bet_html(sg, big=False)}</div>' if sg else "")
                  + f'</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
     H.append("</div>")
+    wait = res.get("waiting", [])
+    if wait:
+        H.append('<h2>Spots waiting for prices</h2><p class="note">Real lineup spots in games where the books haven\'t posted '
+                 'player props yet. Re-run once they\'re up; until then, a rung is a bet only at the <span class="take">bet at</span> '
+                 'price or better (the honest EV test, assuming the book prices like the market usually does).</p><div class="cond">')
+        for a in sorted(wait, key=lambda a: -a["conf"]):
+            s, (lo, hi) = a["sim_means"], a["min_p10_90"]
+            kinds = "".join(f'<span class="chip {KIND[x["kind"]][0]}">{KIND[x["kind"]][1]}</span>' for x in a["sits"] if x["kind"] in KIND)
+            H.append(f'<div class="panel"><h3>{esc(a["name"])} <span class="chip">{esc(a["team"])} vs {esc(a["opp"])}</span>{kinds}</h3>'
+                     f'<p class="note">{esc("; ".join(x["text"] for x in a["sits"]))}</p>'
+                     f'<div class="projline">Exp {s["minutes"]:.0f} min ({lo:.0f}–{hi:.0f}) · {s["pts"]:.1f}p / {s["reb"]:.1f}r / {s["ast"]:.1f}a</div>'
+                     '<div class="scroll"><table><tr><th>Rung</th><th>Our chance</th><th>Model fair</th><th>Bet at</th><th>History</th></tr>')
+            for r in a["ladder"]:
+                H.append(f'<tr><td><b>{esc(r["bet"])}</b></td><td class="num">{r["p_model"]:.0%}</td><td class="num">${r["fair"]:.2f}</td>'
+                         f'<td class="num"><span class="take">${r["bet_at"]:.2f}+</span></td><td class="note">{esc(r["hist"])}</td></tr>')
+            H.append("</table></div></div>")
+        H.append("</div>")
     if cond:
         H.append('<h2>Key questionable players: the bet if they miss</h2><div class="cond">')
         for c in cond:
@@ -266,10 +284,11 @@ def render_next_html(res: dict, card: list, picks: list) -> str:
     from nba_ladders.spots import MIN_TIPS, PRIMARY
 
     day = res["day"]
-    need = MIN_TIPS - len(card)
+    firm = sum(not b.get("if_sits") for _, b in card)
+    need = MIN_TIPS - firm
     H = ['<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
          f'<title>Next Best {day}</title><style>{CSS}</style></head><body><main>',
-         (f'<h1>Next best · {day:%a %d %b}</h1><p class="sub">Only {len(card)} tip{"s" * (len(card) != 1)} cleared the card tonight. '
+         (f'<h1>Next best · {day:%a %d %b}</h1><p class="sub">Only {firm} firm tip{"s" * (firm != 1)} cleared the card tonight{" (the rest are IF bets that may not trigger)" if firm < len(card) else ""}. '
          f'These are the next {need} to make {MIN_TIPS}, plus reserves in case a price has moved.</p>'),
          ('<div class="panel"><p class="note" style="margin:0">These are a step below card quality. Stake them smaller than the card: '
          '<b>0.25u</b>, or 0.5u for the IF bets once the player is confirmed out. A negative EV means the price is just under our honest fair. '

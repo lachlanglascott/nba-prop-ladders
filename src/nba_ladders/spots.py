@@ -43,7 +43,7 @@ from nba_ladders.sources.nba_stats import get_player_index
 from nba_ladders.sources.odds_api import load_cached
 
 SEASON = "22026"
-ROT_MPG = 20.0  # teammates whose absence changes a lineup
+ROT_MPG = 16.0  # teammates whose absence changes a lineup (was 20: missed Yves Missi 19.5, Isaiah Stewart 18.3 as starters/backup bigs)
 LINEUP_MPG = 12.0  # wider net for "was the rest of the lineup the same?" (Horford 18.7, B. Williams 17.4: Will Richard 2 Nov)
 EXTRA_OUT_W = 0.5  # a matching game counts this much less per extra teammate missing then who plays tonight
 KEY_MPG = 24.0  # a "key" absence for role spots
@@ -75,6 +75,7 @@ OPP_W_PTS = 1.5  # 2025-26 test: Poisson deviance best with the points factor at
 # 2025-26 decile test: extreme opponents play out bigger than predicted for guards' rebounds (slope 1.28;
 # HOU vs guards 2026-27 raw -12% vs -7% modelled), about right for assists and other rebounds (1.04-1.06)
 OPP_W_REB_G = 1.3
+KEY_SHARE = 0.3  # (was 0.5: dropped Edwards after 5 missed of 9) an absence is 'new' if he played this share of this season's games (else his teammates' roles already reflect it)
 PRIMARY = {"role", "bounce"}  # spot types that stand on their own
 ROLE_MIN, ROLE_VOL = 2.0, 1.15
 ROLE_VOL_GAMES = 5  # a volume-only role spot (no extra minutes) needs this many matching games (Clingan, Gobert)  # a role spot needs +2 min or +15% volume vs his normal-lineup games
@@ -189,7 +190,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
         return None
     absent_sets = [set(a) for a in g["absent"].to_list()]
     played_share = {m: sum(m not in a for a in absent_sets) / len(absent_sets) for m in tonight_out}
-    key_new = {m for m in tonight_out if played_share[m] >= 0.5}
+    key_new = {m for m in tonight_out if played_share[m] >= KEY_SHARE}
     sits = []
     base_mask = np.array([not (key_new & a) for a in absent_sets])
     if key_new:
@@ -511,6 +512,38 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
     return main
 
 
+BETR_RUNGS = {"pts": (8, 10, 12, 15, 18, 20, 25), "reb": (3, 5, 7, 10, 12), "ast": (3, 5, 7, 10)}
+
+
+def min_price(pm: float, c: float, ev: float = MIN_EV) -> float | None:
+    """Lowest price at which the honest EV clears `ev`, before the market is known: the honest
+    chance is the market's real chance at that price moved c of the way to the model."""
+    for x in np.arange(1.30, 15.01, 0.05):
+        r = market_ratio(x) / x
+        if x * (r + c * (pm - r)) >= 1 + ev:
+            return float(x)
+    return None
+
+
+def ladder_now(a: dict, sim: dict, c: float) -> list[dict]:
+    """Rungs worth checking when his props post: model chance (anchored to matching games) and the
+    price that would make it a bet. Only the stats the situation drives (all for a role change)."""
+    stats = {s.get("stat") for s in a["sits"] if s.get("stat") in ("ast", "reb")} or set(BETR_RUNGS)
+    out = []
+    for st in ("pts", "reb", "ast"):
+        if st not in stats:
+            continue
+        for k in BETR_RUNGS[st]:
+            if not plausible(a, [(st, k)]):
+                continue
+            pm, lab = anchored(a, sim, [(st, k)])
+            if 0.12 <= pm <= 0.75:
+                mp = min_price(pm, c)
+                if mp is not None and mp <= SINGLE_RANGE[1]:
+                    out.append({"bet": f"{k}+ {st}", "p_model": pm, "fair": 1 / pm, "bet_at": mp, "hist": lab})
+    return out
+
+
 def grade(ev: float, c: float, kinds: set | None = None, outlier: bool = False) -> str:
     """A needs a lineup role / backup / emerging potentials spot; conversion bounces and minutes trends cap at B."""
     if outlier:
@@ -562,7 +595,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
         if pid is not None:
             status[pid] = (r["status"], _p_sit(r), r["reason"] or "")
     id_name = {**pid_name, **{("mpg", p): v for p, v in mpg.items()}, **{("grp", p): v for p, v in grp.items()}}
-    spots, leans, near, looked, evaluated = [], [], [], 0, []
+    spots, leans, near, waiting, looked, evaluated = [], [], [], [], 0, []
     for team, m in teams.items():
         opp = next(x for x in m.split("@") if x != team)
         roster = [p for p, t in team_now.items() if t == team and mpg.get(p, 0) >= ROT_MPG]
@@ -632,9 +665,13 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
                 spots.append(a)
             elif any(b.get("lean") for b in bs):
                 leans.append(a)
+            elif not mk:  # a real spot, but the books haven't posted his props yet
+                a["ladder"] = ladder_now(a, sim, c)
+                if a["ladder"]:
+                    waiting.append(a)
     spots.sort(key=lambda a: -max(b["ev"] * a["conf"] for b in a["bets"]))
     leans.sort(key=lambda a: -max(b["ev"] for b in a["bets"]))
-    return {"day": day, "spots": spots, "leans": leans, "near": near, "evaluated": evaluated, "report_time": str(rep["report_time"].max()), "filed": filed, "teams": set(teams),
+    return {"day": day, "spots": spots, "leans": leans, "near": near, "waiting": waiting, "evaluated": evaluated, "report_time": str(rep["report_time"].max()), "filed": filed, "teams": set(teams),
             "snapshot": odds["snapshot"].max() if odds.height else None, "looked": looked, "status": status,
             "pid_name": pid_name, "team_now": team_now, "mpg": mpg}
 
@@ -690,7 +727,7 @@ def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2
     """When the card has fewer than MIN_TIPS: the best of the rest, one per player, by honest EV.
     Pool: spots and leans not on the card, conditional bets, and players with no lineup angle
     (projection vs price only). Returns the picks needed to reach MIN_TIPS plus a few reserves."""
-    need = MIN_TIPS - len(card)
+    need = MIN_TIPS - sum(not b.get("if_sits") for _, b in card)  # IF bets may not trigger: they don't count
     if need <= 0:
         return []
     have = {a["name"] for a, _ in card}
@@ -760,6 +797,13 @@ def render(res: dict, cond: list[dict]) -> str:
             continue
         L.append(f"| **{'Lean' if b.get('lean') else b['grade']}** | {'0.25u' if b.get('lean') else STAKE[b['grade']]} | **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | {proj_line(a, b)} | "
                  f"{_fmt_bet(sg) if sg else '—'} | {_why(a, b)}" + (f"; {a['opp_line']}" if a.get('opp_line') else "") + " |")
+    if res.get("waiting"):
+        L += ["", "## Spots waiting for prices (props not posted yet)", ""]
+        for a in sorted(res["waiting"], key=lambda a: -a["conf"]):
+            s = a["sim_means"]
+            L.append(f"- **{a['name']}** ({a['team']} vs {a['opp']}): {'; '.join(x['text'] for x in a['sits'])}. "
+                     f"Exp {s['minutes']:.0f} min · {s['pts']:.1f}p / {s['reb']:.1f}r / {s['ast']:.1f}a. Bet at: "
+                     + ", ".join(f"{r['bet']} {r['p_model']:.0%} → ${r['bet_at']:.2f}+" for r in a["ladder"]))
     shop = [(a, b) for a in res["spots"] for b in a["bets"] if b.get("outlier")]
     if shop:
         L += ["", "## Prices far longer than other books (check they're live before betting)", ""]

@@ -26,8 +26,12 @@ def main() -> None:
         frames.append(df)
 
     out = config.DATA_PROCESSED / "player_games.parquet"
-    pl.concat(frames).write_parquet(out)
-    print(f"wrote {out}")
+    new = pl.concat(frames)
+    if out.exists():  # keep seasons not pulled this run (pulling one season used to drop the rest)
+        old = pl.read_parquet(out)
+        new = pl.concat([old.filter(~pl.col("season_id").is_in(new["season_id"].unique().implode())), new], how="diagonal_relaxed")
+    new.sort("season_id", "game_date").write_parquet(out)
+    print(f"wrote {out} ({new['season_id'].n_unique()} seasons)")
 
 
 if __name__ == "__main__":
