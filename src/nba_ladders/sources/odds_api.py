@@ -308,7 +308,7 @@ def main() -> None:
     s.add_argument("--regions", default=None, help="instead of --bookmakers, e.g. us,au")
     s.add_argument("--bookmakers", default=",".join(DEFAULT_BOOKMAKERS))
     s.add_argument("--markets", default=",".join(DEFAULT_MARKETS))
-    s.add_argument("--max-credits", type=int, default=40)
+    s.add_argument("--max-credits", type=int, default=100)  # 9+ games x 7 credits: 40 silently dropped games 6-9
     s.add_argument("--max-events", type=int, default=20)
     s.add_argument("--within-hours", type=float, default=36.0, help="every game tipping within this window")
     h = sub.add_parser("historical", help="props as of a past time (paid plans only)")
