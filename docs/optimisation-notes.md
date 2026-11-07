@@ -4,6 +4,7 @@ Running log of what the live slates taught us and what changed. Newest first. Li
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
 ## 7 Nov (after 6 Nov results): record 6/19, +8.8u, honest expected 5.0
+- **No 3+ rebound or assist singles (8 Nov, your call):** reb/ast singles start at 4+ (Wendell Carter 3+ ast was on the card). SGM legs can still use 3s.
 - **Star filter back on (8 Nov):** you preferred second-tier players only once Harden and Mobley reached the card. Stars can still be priced on request.
 - *(7 Nov, reverted)* **Star filter removed** (20+ ppg last season were skipped; Sengun on a tear wasn't even looked at).
   Tested on 6 and 7 Nov: the 6 Nov card was unchanged; 7 Nov gains Franz Wagner 8+ reb (A, Suggs out). Guard:

@@ -72,6 +72,7 @@ NEXT_FLOOR = -0.08  # next-best pool: closest-to-fair bets down to this honest E
 LEG_MIN = {"pts": 8, "reb": 3, "ast": 3}
 SGM_BOOKS = ("betr_au", "sportsbet")
 SINGLE_RANGE = (2.5, 10.0)
+SINGLE_MIN_LINE = 4  # reb/ast singles start at 4+
 SGM_RANGE = (3.5, 15.0)
 FREED_CAP = 6.0  # minutes: the rough share-of-freed-minutes estimate when there's no game without them
 OPP_W_PTS = 1.5  # 2025-26 test: Poisson deviance best with the points factor at 1.5x weight (reb, ast: 1x)
@@ -484,6 +485,8 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
         for (st, k), price in books.get(bk, {}).items():
             if "+" in st or not (SINGLE_RANGE[0] <= price <= SINGLE_RANGE[1]) or st not in focus or (st, k) not in mk:
                 continue  # combined-stat rungs: build them as SGM legs instead
+            if st in ("reb", "ast") and k < SINGLE_MIN_LINE:
+                continue  # user, 8 Nov: no 3+ reb / 3+ ast singles (Wendell Carter 3+ ast); SGM legs can still use 3s
             if not plausible(a, [(st, k)]):
                 continue
             (pm, hist_lab), pk = anchored(a, sim, [(st, k)]), mk[(st, k)]
