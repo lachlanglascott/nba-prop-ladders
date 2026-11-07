@@ -38,6 +38,7 @@ background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1
 .ev{font-weight:800}.ev.pos{color:var(--good)}.ev.neg{color:var(--bad)}
 .sgm{font-size:13px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
 .why{font-size:13.5px;color:var(--ink)}
+ul.also{margin:4px 0 0;padding-left:16px}ul.also li{margin:2px 0}
 .projline{font-size:13px;margin-top:5px;padding:4px 8px;border-radius:7px;background:var(--soft);color:var(--ink);font-weight:600}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .panel.warn{border-color:var(--warn);background:var(--warn-bg)}
@@ -93,13 +94,17 @@ def _opp_chips(a):
 
 
 def _proj(a, b):
-    from nba_ladders.spots import also_bet, proj_line
+    from nba_ladders.spots import also_bets, kelly, proj_line
 
     s = proj_line(a, b)
-    x = also_bet(a, b)
-    also = (f'<div class="sgm">Also: <b>{esc(x["bet"])}</b> {x["book"].replace("_au", "")} ${x["price"]:.2f} · '
-            f'{x["p"]:.0%} chance · fair ${1 / x["p"]:.2f} · EV {_ev(x["ev"])}</div>') if x else ""
-    return (f'<div class="projline">{esc(s)}</div>' if s else "") + also
+    xs = also_bets(a, b)
+    also = ""
+    if xs:
+        also = ('<div class="sgm"><b>His other stats</b> (best rung each, fair or better):<ul class="also">'
+                + "".join(f'<li><b>{esc(x["bet"])}</b> {x["book"].replace("_au", "")} ${x["price"]:.2f} · {x["p"]:.0%} chance · '
+                          f'fair ${1 / x["p"]:.2f} · EV {_ev(x["ev"])} · Kelly {kelly(x):.1%}'
+                          + (' <span class="chip">≈ fair, skip</span>' if x["ev"] < 0.04 else "") + "</li>" for x in xs) + "</ul></div>")
+    return (f'<div class="projline">{esc(s)} · Kelly {kelly(b):.1%}</div>' if s else "") + also
 
 
 def _why(a, b):

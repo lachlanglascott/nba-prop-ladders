@@ -508,8 +508,8 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
     # singles (single-stat and combined rungs) at the user's books
     for bk in SGM_BOOKS:
         for (st, k), price in books.get(bk, {}).items():
-            if "+" in st or not (SINGLE_RANGE[0] <= price <= SINGLE_RANGE[1]) or st not in focus or (st, k) not in mk:
-                continue  # combined-stat rungs: build them as SGM legs instead
+            if "+" in st or not (SINGLE_RANGE[0] <= price <= SINGLE_RANGE[1]) or (st, k) not in mk:
+                continue  # combined-stat rungs: build them as SGM legs instead; other stats are priced for the "also" list
             if st in ("reb", "ast") and k < SINGLE_MIN_LINE:
                 continue  # user, 8 Nov: no 3+ reb / 3+ ast singles (Wendell Carter 3+ ast); SGM legs can still use 3s
             if not plausible(a, [(st, k)]):
@@ -518,7 +518,7 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
             ph = pk + c * (pm - pk)
             ev = price * ph - 1
             if ev >= floor:
-                out.append({"kind": "single", "lean": ev < MIN_EV, "bet": f"{k}+ {st}", "book": bk, "price": price, "p_model": pm, "p_mkt": pk, "hist": hist_lab,
+                out.append({"kind": "single", "focus": st in focus, "lean": ev < MIN_EV, "bet": f"{k}+ {st}", "book": bk, "price": price, "p_model": pm, "p_mkt": pk, "hist": hist_lab,
                             "p": ph, "ev": ev, "take_at": 1.10 / ph, "outlier": price * pk / 1.0 > OUTLIER})
     # SGMs from one book's ladder
     for bk in SGM_BOOKS:
@@ -555,6 +555,8 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
         if shape not in seen:
             seen.add(shape)
             best.append(b)
+    a["by_stat"] = [b for b in best if b["kind"] == "single"]  # best rung per stat, every stat (the "also" list)
+    best = [b for b in best if b["kind"] == "SGM" or b.get("focus", True)]  # the spot's own bets: the stats its angle drives
     main = [b for b in best if not b.get("alt") and not b.get("lean")][:4]
     if not main:  # no bet clears the bar: keep the best lean for the card's filler
         main = [b for b in best if b.get("lean")][:1]
@@ -847,15 +849,27 @@ def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2
     return out
 
 
+def kelly(b: dict) -> float:
+    """Full-Kelly stake as a share of bankroll (stake a fraction of it: the honest p is still an estimate)."""
+    return max((b["p"] * b["price"] - 1) / (b["price"] - 1), 0.0)
+
+
+def also_bets(a: dict, b: dict) -> list[dict]:
+    """His other +EV singles, best rung per other stat, by Kelly growth (Traore 4+ reb: also his pts / ast)."""
+    pool = a.get("by_stat") or [x for x in a["bets"] if x["kind"] == "single"]
+    legs = set(stat_of(b).split("/")) if b["kind"] != "SGM" else set()
+    return sorted((x for x in pool if not x.get("outlier") and x["ev"] >= 0 and stat_of(x) not in legs | {stat_of(b)}),
+                  key=lambda x: -growth(x))
+
+
 def also_bet(a: dict, b: dict) -> dict | None:
-    """His best single in a different stat (shown under the tip: 'also 20+ pts $3.70')."""
-    return next((x for x in sorted(a["bets"], key=lambda x: -growth(x)) if x["kind"] == "single" and not x.get("outlier")
-                 and stat_of(x) != stat_of(b) and x["ev"] >= MIN_EV), None)
+    xs = also_bets(a, b)
+    return xs[0] if xs else None
 
 
 def _also_md(a: dict, b: dict) -> str:
-    x = also_bet(a, b)
-    return f" · also **{x['bet']}** ${x['price']:.2f} ({x['p']:.0%}, EV {x['ev']:+.0%})" if x else ""
+    return "".join(f" · also **{x['bet']}** ${x['price']:.2f} ({x['p']:.0%}, EV {x['ev']:+.0%}{', ≈ fair' if x['ev'] < MIN_EV else ''}, "
+                   f"Kelly {kelly(x):.1%})" for x in also_bets(a, b))
 
 
 def proj_line(a: dict, b: dict) -> str:
