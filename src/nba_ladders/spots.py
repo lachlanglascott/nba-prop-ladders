@@ -64,6 +64,8 @@ SGM_FACTOR = 0.90  # builder ≈ this x product of the book's legs (user's slips
 LEG_MIN_P = 0.50  # each SGM leg live on its own
 SGM_MIN_EV = 0.08
 CARD_N = 5
+PER_GAME = 2  # card tips per game (6 Nov: 4 CHA tips, CHA lost by 39, all four lost)
+DOG_CAP, DOG_SPREAD = 1, 8.5  # at most this many from a team that's an underdog by this much (blowout = minutes cut)
 MIN_TIPS = 3  # fewer card tips than this: write a "next best" doc to make it up
 NEXT_FLOOR = -0.08  # next-best pool: closest-to-fair bets down to this honest EV
 LEG_MIN = {"pts": 8, "reb": 3, "ast": 3}
@@ -77,6 +79,7 @@ OPP_W_PTS = 1.5  # 2025-26 test: Poisson deviance best with the points factor at
 OPP_W_REB_G = 1.3
 KEY_SHARE = 0.3  # (was 0.5: dropped Edwards after 5 missed of 9) an absence is 'new' if he played this share of this season's games (else his teammates' roles already reflect it)
 PRIMARY = {"role", "bounce"}  # spot types that stand on their own
+EST_CONF = 0.15  # confidence cap when the role is estimated, not measured
 ROLE_MIN, ROLE_VOL = 2.0, 1.15
 ROLE_VOL_GAMES = 5  # a volume-only role spot (no extra minutes) needs this many matching games (Clingan, Gobert)  # a role spot needs +2 min or +15% volume vs his normal-lineup games
 BOUNCE_GAP, BOUNCE_VOL = 0.18, 6.0  # conversion this far under career, on 6+ chances a game, over 5+ games
@@ -365,6 +368,8 @@ def confidence(a: dict, unc_team: float, filed: bool) -> float:
         c -= 0.04
     kinds = {x["kind"] for x in a["sits"]}
     cap = CONF_MAX if "role" in kinds and a["n_comp"] >= 3 else 0.30
+    if a["key_new"] and a["n_comp"] == 0:
+        cap = EST_CONF  # minutes guessed (no game without them yet): live 2/11 vs model 4.5 expected, 6 Nov
     return float(np.clip(c, CONF_MIN, cap))
 
 
@@ -448,6 +453,15 @@ def plausible(a: dict, legs) -> bool:
     if a["proj_min"] - a["base_min"] >= BIG_ROLE_MIN:
         return True
     hr, _ = hit_rate(a, legs)
+    h = a.get("hist")
+    if h is not None and not h.is_empty():  # 0 for 6+ this season: last season doesn't rescue it (Clingan 4+ ast: 0/8, 16/77)
+        cur = h.filter(pl.col("season_id") == SEASON)
+        if cur.height >= 6:
+            hit = pl.lit(True)
+            for s, k in legs:
+                hit = hit & (pl.sum_horizontal([pl.col(x) for x in s.split("+")]) >= k)
+            if not cur.select(hit.alias("h"))["h"].any():
+                return False
     return hr is None or hr >= PLAUSIBLE
 
 
@@ -659,8 +673,11 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             a.update(conf=c, sim_means={k: float(v.mean()) for k, v in sim.items()},
                      min_p10_90=(float(np.percentile(sim["minutes"], 10)), float(np.percentile(sim["minutes"], 90))), bets=bs)
             kinds = {x["kind"] + ("-vol" if x["kind"] == "emerging" and x.get("stat") in ("ast", "reb") else "") for x in a["sits"]}
+            est = bool(a["key_new"]) and a["n_comp"] == 0 and "role" in kinds
             for b in bs:
                 b["grade"] = grade(b["ev"], c, kinds, b.get("outlier", False))
+                if est and b["grade"] in "AB":
+                    b["grade"] = "C"  # estimated role (no game without them yet): live 2/11, model expected 4.5
             if any(not b.get("alt") and not b.get("lean") for b in bs):
                 spots.append(a)
             elif any(b.get("lean") for b in bs):
@@ -704,14 +721,23 @@ def card_bets(res: dict, n: int = CARD_N, cond: list | None = None) -> list[tupl
     """Top n tips: one per spot (grade, then honest EV); filled with leans, then the best
     'if X sits' bets (labelled), if fewer qualify."""
     ok = lambda b: not b.get("outlier") and not b.get("alt") and not b.get("lean")
-    card = [(a, next(b for b in a["bets"] if ok(b))) for a in res["spots"] if any(ok(b) for b in a["bets"])]
-    card = sorted(card, key=lambda ab: ("ABC".index(ab[1]["grade"]), -ab[1]["ev"]))[:n]
+    ranked = [(a, next(b for b in a["bets"] if ok(b))) for a in res["spots"] if any(ok(b) for b in a["bets"])]
+    ranked = sorted(ranked, key=lambda ab: ("ABC".index(ab[1]["grade"]), -ab[1]["ev"]))
     for a in res.get("leans", []):
-        if len(card) >= n:
-            break
         b = next((x for x in a["bets"] if x.get("lean") and not x.get("outlier")), None)
         if b is not None:
-            card.append((a, b))
+            ranked.append((a, b))
+    card, per_game, per_dog = [], {}, {}
+    for a, b in ranked:  # one game's tips share one blowout risk: cap them
+        if len(card) >= n:
+            break
+        game = frozenset((a["team"], a["opp"]))
+        dog = a.get("spread") is not None and a["spread"] >= DOG_SPREAD
+        if per_game.get(game, 0) >= PER_GAME or (dog and per_dog.get(a["team"], 0) >= DOG_CAP):
+            continue
+        per_game[game] = per_game.get(game, 0) + 1
+        per_dog[a["team"]] = per_dog.get(a["team"], 0) + dog
+        card.append((a, b))
     have = {a["name"] for a, _ in card}
     extra = sorted(((c, a, b) for c in (cond or []) for a, b in c["bets"]), key=lambda x: -x[2]["ev"])
     for c, a, b in extra:
@@ -727,7 +753,7 @@ def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2
     """When the card has fewer than MIN_TIPS: the best of the rest, one per player, by honest EV.
     Pool: spots and leans not on the card, conditional bets, and players with no lineup angle
     (projection vs price only). Returns the picks needed to reach MIN_TIPS plus a few reserves."""
-    need = MIN_TIPS - sum(not b.get("if_sits") for _, b in card)  # IF bets may not trigger: they don't count
+    need = MIN_TIPS - sum(not b.get("if_sits") and not b.get("lean") for _, b in card)  # IF bets may not trigger and leans are filler: neither counts
     if need <= 0:
         return []
     have = {a["name"] for a, _ in card}
@@ -921,7 +947,7 @@ def record(upto: date, live: bool = True) -> dict | None:
         if "if_sits" not in g.columns:
             g = g.with_columns(pl.lit(None, dtype=pl.String).alias("if_sits"))
         g = g.filter(pl.col("hit").is_not_null(), pl.col("card") | pl.col("if_sits").is_not_null())
-        rows.append(g.select("day", "price", "p", "hit"))
+        rows.append(g.unique(["day", "player", "bet"], keep="first").select("day", "price", "p", "hit"))  # one bet two triggers (Poeltl: Barnes or Quickley) counts once
     if not rows:
         return None
     a = pl.concat(rows)

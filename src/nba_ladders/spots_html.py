@@ -215,7 +215,7 @@ def render_html(res: dict, cond: list[dict]) -> str:
 
     card = card_bets(res, cond=cond)
     H.append('<h2>The card: 5 tips</h2>')
-    firm = sum(not b.get("if_sits") for _, b in card)
+    firm = sum(not b.get("if_sits") and not b.get("lean") for _, b in card)
     if firm < 3:
         H.append(f'<p class="note">Only {firm} firm tip{"s" * (firm != 1)} clear the bar tonight. The next best are in '
                  f'<b>{day.isoformat()}-next-best.html</b> (same folder).</p>')
@@ -284,11 +284,11 @@ def render_next_html(res: dict, card: list, picks: list) -> str:
     from nba_ladders.spots import MIN_TIPS, PRIMARY
 
     day = res["day"]
-    firm = sum(not b.get("if_sits") for _, b in card)
+    firm = sum(not b.get("if_sits") and not b.get("lean") for _, b in card)
     need = MIN_TIPS - firm
     H = ['<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
          f'<title>Next Best {day}</title><style>{CSS}</style></head><body><main>',
-         (f'<h1>Next best · {day:%a %d %b}</h1><p class="sub">Only {firm} firm tip{"s" * (firm != 1)} cleared the card tonight{" (the rest are IF bets that may not trigger)" if firm < len(card) else ""}. '
+         (f'<h1>Next best · {day:%a %d %b}</h1><p class="sub">Only {firm} firm tip{"s" * (firm != 1)} cleared the card tonight{" (the rest are leans or IF bets that may not trigger)" if firm < len(card) else ""}. '
          f'These are the next {need} to make {MIN_TIPS}, plus reserves in case a price has moved.</p>'),
          ('<div class="panel"><p class="note" style="margin:0">These are a step below card quality. Stake them smaller than the card: '
          '<b>0.25u</b>, or 0.5u for the IF bets once the player is confirmed out. A negative EV means the price is just under our honest fair. '
