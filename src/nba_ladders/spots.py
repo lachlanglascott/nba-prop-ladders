@@ -465,6 +465,15 @@ def plausible(a: dict, legs) -> bool:
     return hr is None or hr >= PLAUSIBLE
 
 
+def growth(b: dict) -> float:
+    """Kelly growth per bet: ranks edge against the chance of landing (raw EV favours long prices).
+    George 6 Nov: 8+ reb $7.75 (+24%, 16%) and 20+ pts $3.70 (+14%, 31%) are near-equal here, so
+    both are shown (best per stat), not one picked; he scored 33."""
+    p, x = b["p"], b["price"]
+    f = max((p * x - 1) / (x - 1), 0.0)
+    return float(p * np.log1p(f * (x - 1)) + (1 - p) * np.log1p(-f)) if f > 0 else float(b["ev"]) * 1e-3
+
+
 def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float = 0.0) -> list[dict]:
     stats = {s.get("stat") for s in a["sits"] if s.get("stat") in ("ast", "reb")}
     focus = stats or {"pts", "reb", "ast"}
@@ -510,7 +519,7 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
                         out.append({"kind": "SGM", "alt": ev < SGM_MIN_EV, "hist": hist_lab, "bet": "/".join(f"{k}{s[0]}" for s, k in lg), "book": bk, "price": est,
                                     "p_model": pj, "p_mkt": pk, "p": ph, "ev": ev, "take_at": 1.10 / ph, "outlier": False,
                                     "legs": " × ".join(f"${med[x]:.2f}" for x in lg)})
-    out.sort(key=lambda b: -b["ev"])
+    out.sort(key=lambda b: -growth(b))
     best, seen = [], set()
     for b in out:  # best per kind+shape
         shape = b["kind"] + "".join(ch for ch in b["bet"] if ch.isalpha() or ch == "+")
@@ -693,6 +702,24 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             "pid_name": pid_name, "team_now": team_now, "mpg": mpg}
 
 
+def stat_of(b: dict) -> str:
+    return b["bet"] if b["kind"] == "SGM" else b["bet"].split("+ ")[1]
+
+
+def _one_per_player(bets: list, per_player: int = 2) -> list:
+    """Each player's best bet per stat (up to per_player), by Kelly growth, so one player's long
+    rungs don't crowd out the others and his points don't hide behind his rebounds."""
+    out, seen, count = [], set(), {}
+    for a, b in sorted(bets, key=lambda ab: -growth(ab[1])):
+        key = (a["name"], stat_of(b))
+        if key in seen or count.get(a["name"], 0) >= per_player:
+            continue
+        seen.add(key)
+        count[a["name"]] = count.get(a["name"], 0) + 1
+        out.append((a, b))
+    return out
+
+
 def conditional(day: date, base: dict) -> list[dict]:
     """For each Questionable rotation player (P(sits) 25-70%): spots that only exist if he sits."""
     out = []
@@ -705,7 +732,7 @@ def conditional(day: date, base: dict) -> list[dict]:
         new = [(a, b) for a in alt["spots"] if a["team"] == team for b in a["bets"]
                if (a["name"], b["bet"]) not in have and not b.get("alt") and not b.get("outlier") and b["ev"] >= MIN_EV]
         out.append({"player": base["pid_name"].get(pid, str(pid)), "team": team, "p": p, "reason": reason,
-                    "mpg": base["mpg"].get(pid, 0.0), "bets": sorted(new, key=lambda ab: -ab[1]["ev"])[:3]})
+                    "mpg": base["mpg"].get(pid, 0.0), "bets": _one_per_player(new)[:4]})
     out.sort(key=lambda c: -c["mpg"])
     return out
 
@@ -722,7 +749,7 @@ def card_bets(res: dict, n: int = CARD_N, cond: list | None = None) -> list[tupl
     'if X sits' bets (labelled), if fewer qualify."""
     ok = lambda b: not b.get("outlier") and not b.get("alt") and not b.get("lean")
     ranked = [(a, next(b for b in a["bets"] if ok(b))) for a in res["spots"] if any(ok(b) for b in a["bets"])]
-    ranked = sorted(ranked, key=lambda ab: ("ABC".index(ab[1]["grade"]), -ab[1]["ev"]))
+    ranked = sorted(ranked, key=lambda ab: ("ABC".index(ab[1]["grade"]), -growth(ab[1])))
     for a in res.get("leans", []):
         b = next((x for x in a["bets"] if x.get("lean") and not x.get("outlier")), None)
         if b is not None:
@@ -739,7 +766,7 @@ def card_bets(res: dict, n: int = CARD_N, cond: list | None = None) -> list[tupl
         per_dog[a["team"]] = per_dog.get(a["team"], 0) + dog
         card.append((a, b))
     have = {a["name"] for a, _ in card}
-    extra = sorted(((c, a, b) for c in (cond or []) for a, b in c["bets"]), key=lambda x: -x[2]["ev"])
+    extra = sorted(((c, a, b) for c in (cond or []) for a, b in c["bets"]), key=lambda x: -growth(x[2]))
     for c, a, b in extra:
         if len(card) >= n:
             break
@@ -767,7 +794,7 @@ def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2
             pool.append((a, {**b, "if_sits": f"{c['player']} sits ({c['p']:.0%})"}))
     # a real angle beats a bare projection at the same EV
     angle = lambda a: any(x["kind"] in PRIMARY for x in a["sits"])
-    pool.sort(key=lambda ab: -(ab[1]["ev"] + (0.03 if angle(ab[0]) else 0)))
+    pool.sort(key=lambda ab: -growth(ab[1]) * (1.3 if angle(ab[0]) else 1.0))
     out = []
     for a, b in pool:
         if a["name"] in have:
@@ -777,6 +804,17 @@ def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2
         if len(out) >= need + reserves:
             break
     return out
+
+
+def also_bet(a: dict, b: dict) -> dict | None:
+    """His best single in a different stat (shown under the tip: 'also 20+ pts $3.70')."""
+    return next((x for x in sorted(a["bets"], key=lambda x: -growth(x)) if x["kind"] == "single" and not x.get("outlier")
+                 and stat_of(x) != stat_of(b) and x["ev"] >= MIN_EV), None)
+
+
+def _also_md(a: dict, b: dict) -> str:
+    x = also_bet(a, b)
+    return f" · also **{x['bet']}** ${x['price']:.2f} ({x['p']:.0%}, EV {x['ev']:+.0%})" if x else ""
 
 
 def proj_line(a: dict, b: dict) -> str:
@@ -818,10 +856,10 @@ def render(res: dict, cond: list[dict]) -> str:
     for a, b in card:
         sg = next((x for x in a["bets"] if x["kind"] == "SGM" and x is not b), None)
         if b.get("if_sits"):
-            L.append(f"| **If** | 0.5u | **{a['name']}** ({a['team']} vs {a['opp']}) | **only if {b['if_sits']}**: {_fmt_bet(b)} | {proj_line(a, b)} | — | "
+            L.append(f"| **If** | 0.5u | **{a['name']}** ({a['team']} vs {a['opp']}) | **only if {b['if_sits']}**: {_fmt_bet(b)} | {proj_line(a, b)}{_also_md(a, b)} | — | "
                      f"{_why(a, b)} |")
             continue
-        L.append(f"| **{'Lean' if b.get('lean') else b['grade']}** | {'0.25u' if b.get('lean') else STAKE[b['grade']]} | **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | {proj_line(a, b)} | "
+        L.append(f"| **{'Lean' if b.get('lean') else b['grade']}** | {'0.25u' if b.get('lean') else STAKE[b['grade']]} | **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | {proj_line(a, b)}{_also_md(a, b)} | "
                  f"{_fmt_bet(sg) if sg else '—'} | {_why(a, b)}" + (f"; {a['opp_line']}" if a.get('opp_line') else "") + " |")
     if res.get("waiting"):
         L += ["", "## Spots waiting for prices (props not posted yet)", ""]

@@ -93,10 +93,13 @@ def _opp_chips(a):
 
 
 def _proj(a, b):
-    from nba_ladders.spots import proj_line
+    from nba_ladders.spots import also_bet, proj_line
 
     s = proj_line(a, b)
-    return f'<div class="projline">{esc(s)}</div>' if s else ""
+    x = also_bet(a, b)
+    also = (f'<div class="sgm">Also: <b>{esc(x["bet"])}</b> {x["book"].replace("_au", "")} ${x["price"]:.2f} · '
+            f'{x["p"]:.0%} chance · fair ${1 / x["p"]:.2f} · EV {_ev(x["ev"])}</div>') if x else ""
+    return (f'<div class="projline">{esc(s)}</div>' if s else "") + also
 
 
 def _why(a, b):

@@ -217,3 +217,14 @@ def test_lineup_weights_extra_absences_count_less():
     out = _lineup_weights(s, pid=5, tonight_in={2, 3}, id_name={2: "Horford", 3: "Williams"})
     assert out["lw"].to_list() == [1.0, EXTRA_OUT_W ** 2, 1.0]  # 9 isn't playing tonight: same lineup
     assert out["also_out"].to_list() == ["", "Horford, Williams", ""]
+
+
+def test_conditional_keeps_best_bet_per_stat():
+    from nba_ladders.spots import _one_per_player
+
+    a = {"name": "Kyshawn George"}
+    reb = {"kind": "single", "bet": "8+ reb", "p": 0.16, "price": 7.75, "ev": 0.24}
+    reb2 = {"kind": "single", "bet": "7+ reb", "p": 0.22, "price": 5.0, "ev": 0.10}
+    pts = {"kind": "single", "bet": "20+ pts", "p": 0.31, "price": 3.70, "ev": 0.147}
+    got = [b["bet"] for _, b in _one_per_player([(a, reb), (a, reb2), (a, pts)])]
+    assert set(got) == {"8+ reb", "20+ pts"}  # his points no longer hide behind his rebounds
