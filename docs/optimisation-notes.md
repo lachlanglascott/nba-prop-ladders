@@ -4,6 +4,10 @@ Running log of what the live slates taught us and what changed. Newest first. Li
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
 ## 7 Nov (after 6 Nov results): record 6/19, +8.8u, honest expected 5.0
+- **Star filter removed** (20+ ppg last season were skipped; Sengun on a tear wasn't even looked at).
+  Tested on 6 and 7 Nov: the 6 Nov card was unchanged; 7 Nov gains Franz Wagner 8+ reb (A, Suggs out). Guard:
+  a star with no lineup angle gets half weight in the next-best ranking, so Wembanyama and Sengun don't push out
+  second-tier plays (Clingan, Dybantsa).
 - **Bet choice ranked by raw EV favoured long prices.** Kyshawn George (if Davis sits): 8+ reb $7.75
   (+24%, 16% chance) was shown over 20+ pts $3.70 (+14%, 31%); he scored 33. Klay 19+ over 17+
   (5 Nov) was the same thing. Kelly growth rates the George pair about equal, so **show both**:

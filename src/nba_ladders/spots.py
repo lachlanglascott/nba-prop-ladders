@@ -48,7 +48,7 @@ LINEUP_MPG = 12.0  # wider net for "was the rest of the lineup the same?" (Horfo
 EXTRA_OUT_W = 0.5  # a matching game counts this much less per extra teammate missing then who plays tonight
 KEY_MPG = 24.0  # a "key" absence for role spots
 CAND_MPG = 15.0  # players considered (recent minutes)
-STAR_PPG = 20.0  # last season: stars are left out (sharply priced)
+STAR_PPG = 20.0  # last season: a "star" (sharply priced). In the slate since 7 Nov; with no lineup angle they rank behind the second tier
 OUT_P = 0.70  # P(sits) at which a teammate counts as out tonight
 SAFE_P = 0.60  # the player himself: P(sits) below this (props are void if he doesn't play; uncertainty costs confidence)
 # Market calibration: actual hit rate / implied probability by price, 664k Sportsbet ladder rungs 2024-26
@@ -66,6 +66,7 @@ SGM_MIN_EV = 0.08
 CARD_N = 5
 PER_GAME = 2  # card tips per game (6 Nov: 4 CHA tips, CHA lost by 39, all four lost)
 DOG_CAP, DOG_SPREAD = 1, 8.5  # at most this many from a team that's an underdog by this much (blowout = minutes cut)
+STAR_NO_ANGLE = 0.5  # next-best weight for a star with no lineup angle (Wembanyama/Sengun pushed out Clingan/Dybantsa)
 MIN_TIPS = 3  # fewer card tips than this: write a "next best" doc to make it up
 NEXT_FLOOR = -0.08  # next-best pool: closest-to-fair bets down to this honest EV
 LEG_MIN = {"pts": 8, "reb": 3, "ast": 3}
@@ -633,8 +634,6 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             own_p = status.get(pid, ("", 0, ""))[1]
             if own_p >= SAFE_P:
                 continue
-            if last_ppg.get(pid, 0) >= STAR_PPG and not (include and pid_name.get(pid) in include):
-                continue
             looked += 1
             g = gt.filter(pl.col("player_id") == pid, pl.col("team") == team)
             last = trk_last.filter(pl.col("player_id") == pid)
@@ -646,6 +645,8 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             a = analyse(pid, pid_name.get(pid, str(pid)), team, opp, g, last, out_t, unc, id_name,
                         ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl, opp_tab, gme, t_in)
             forced = include is not None and a is not None and a["name"] in include
+            if a is not None:
+                a["star"] = last_ppg.get(pid, 0) >= STAR_PPG  # stars are in, but a star with no angle ranks behind the second tier
             if a is None:
                 continue
             if not {x["kind"] for x in a["sits"]} & PRIMARY and not forced:
@@ -794,7 +795,8 @@ def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2
             pool.append((a, {**b, "if_sits": f"{c['player']} sits ({c['p']:.0%})"}))
     # a real angle beats a bare projection at the same EV
     angle = lambda a: any(x["kind"] in PRIMARY for x in a["sits"])
-    pool.sort(key=lambda ab: -growth(ab[1]) * (1.3 if angle(ab[0]) else 1.0))
+    weight = lambda a: 1.3 if angle(a) else STAR_NO_ANGLE if a.get("star") else 1.0
+    pool.sort(key=lambda ab: -growth(ab[1]) * weight(ab[0]))
     out = []
     for a, b in pool:
         if a["name"] in have:
