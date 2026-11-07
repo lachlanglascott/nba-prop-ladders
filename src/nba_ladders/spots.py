@@ -48,7 +48,7 @@ LINEUP_MPG = 12.0  # wider net for "was the rest of the lineup the same?" (Horfo
 EXTRA_OUT_W = 0.5  # a matching game counts this much less per extra teammate missing then who plays tonight
 KEY_MPG = 24.0  # a "key" absence for role spots
 CAND_MPG = 15.0  # players considered (recent minutes)
-STAR_PPG = 20.0  # last season: a "star" (sharply priced). In the slate since 7 Nov; with no lineup angle they rank behind the second tier
+STAR_PPG = 20.0  # last season: stars are left out (sharply priced; tried back in 7 Nov, user preferred them out 8 Nov)
 OUT_P = 0.70  # P(sits) at which a teammate counts as out tonight
 SAFE_P = 0.60  # the player himself: P(sits) below this (props are void if he doesn't play; uncertainty costs confidence)
 # Market calibration: actual hit rate / implied probability by price, 664k Sportsbet ladder rungs 2024-26
@@ -634,6 +634,8 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             own_p = status.get(pid, ("", 0, ""))[1]
             if own_p >= SAFE_P:
                 continue
+            if last_ppg.get(pid, 0) >= STAR_PPG and not (include and pid_name.get(pid) in include):
+                continue  # stars out (user, 8 Nov: Harden/Mobley on the card); `include` still prices them on request
             looked += 1
             g = gt.filter(pl.col("player_id") == pid, pl.col("team") == team)
             last = trk_last.filter(pl.col("player_id") == pid)
