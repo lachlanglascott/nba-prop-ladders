@@ -25,7 +25,7 @@ that match tonight, price honestly against the market, and build bets in the use
 
 import argparse
 import json
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from itertools import combinations, product
 
 import numpy as np
@@ -177,6 +177,20 @@ def _wmean(df: pl.DataFrame, col: str, w: np.ndarray) -> float:
     return float(np.sum(df[col].to_numpy() * w) / np.sum(w))
 
 
+ESTABLISHED = 3  # a teammate out this many straight games is part of the current lineup
+K_OLD = 1.0  # pseudo-games of his old-lineup minutes kept in the projection (keeps 4-game samples honest)
+
+
+def _streak(absent_sets: list, m: int) -> int:
+    """How many of his most recent games teammate m has missed in a row."""
+    n = 0
+    for a in reversed(absent_sets):
+        if m not in a:
+            break
+        n += 1
+    return n
+
+
 def _lineup_weights(sample: pl.DataFrame, pid: int, tonight_in: set | None, id_name: dict) -> pl.DataFrame:
     """Each matching game's weight and who else was missing then but plays tonight."""
     extra = [sorted(set(a) & (tonight_in or set()) - {pid}) for a in sample["absent_wide"].to_list()]
@@ -237,7 +251,18 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
         sample, why = None, ""
     else:
         sample, why = _lineup_weights(comp.tail(6), pid, tonight_in, id_name), "recent games with tonight's lineup"
-    proj_min, pot36, rc36, pts36, n_comp = base_min, b_pot, b_rc, b_pts, 0
+    # the role he's in now: teammates out 3+ straight games are the established lineup, so the projection
+    # shrinks toward his games in that setup, not the old lineup (Kenrich Williams 7 Nov: 7/6/7 min in
+    # October with Holmgren/J. Williams/Wallace playing vs 24-31 since; shrinking to 6.7 gave 11.5)
+    p_min, p_pot, p_rc, p_pts = base_min, b_pot, b_rc, b_pts
+    est = {m for m in key_new if _streak(absent_sets, m) >= ESTABLISHED}
+    if est:
+        cur_role = g.filter(pl.Series([est <= a and not ((key_new - est) & a) for a in absent_sets])).tail(8)
+        if cur_role.height >= 2:
+            p_min = float(cur_role["minutes"].mean())
+            p_pot, p_rc, p_pts = (per36_blend(cur_role, "potential_ast", last_pot), per36_blend(cur_role, "reb_chances", last_rc),
+                                  per36_blend(cur_role, "pts", last_pts))
+    proj_min, pot36, rc36, pts36, n_comp = p_min, p_pot, p_rc, p_pts, 0
     if sample is not None and sample.height:
         lw = sample["lw"].to_numpy()
         w = _weights(sample.height) * lw
@@ -247,7 +272,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
         n_comp = round(float(lw[this_s].sum() + 0.5 * lw[~this_s].sum()))  # effective games: extra absences count less
         k = 3.0  # pseudo-games of baseline
         s_min = _wmean(sample, "minutes", w)
-        proj_min = (s_min * w.sum() + base_min * k) / (w.sum() + k)
+        proj_min = (s_min * w.sum() + p_min * k + base_min * K_OLD) / (w.sum() + k + K_OLD)
         stat_of = {"potential_ast": "ast", "reb_chances": "reb", "pts": "pts"}
 
         def blend36(col, prior):
@@ -259,7 +284,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
             of = np.array([(opp_tab or {}).get(o, {}).get(stat_of[col], 1.0) for o in d["opponent"].to_list()])
             v = float(np.sum(d[col].to_numpy() / of * ww) / np.sum(d["minutes"].to_numpy() * ww) * 36)
             return v if prior is None else (v * ww.sum() + prior * k) / (ww.sum() + k)
-        pot36, rc36, pts36 = blend36("potential_ast", b_pot), blend36("reb_chances", b_rc), blend36("pts", b_pts)
+        pot36, rc36, pts36 = blend36("potential_ast", p_pot), blend36("reb_chances", p_rc), blend36("pts", p_pts)
     elif key_new:  # no game yet without them: a share of the freed minutes, mostly to the same position
         mine = id_name.get(("grp", pid), "W")
         freed = sum(id_name.get(("mpg", m), 30.0) * (0.25 if id_name.get(("grp", m), "W") == mine else 0.06) for m in key_new)
@@ -614,6 +639,13 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
     gf = group_factors(day)
     spreads = _spreads(day)
     odds = _odds(day)
+    # games already tipped when the odds were taken: prices are in-play, so no bets (DEN@IND 7 Nov)
+    started = set()
+    if odds.height:
+        snap = datetime.strptime(odds["snapshot"].max(), "%Y%m%dT%H%M%SZ").replace(tzinfo=UTC)
+        for ct, h, a_ in odds.select("commence_time", "home_team", "away_team").unique().iter_rows():
+            if datetime.fromisoformat(ct) <= snap:
+                started |= {TEAM_ABBR.get(h), TEAM_ABBR.get(a_)}
     filed = set(rep.filter(pl.col("status") != "Not submitted")["team"].drop_nulls()) - set(
         rep.filter(pl.col("status") == "Not submitted")["team"].drop_nulls())
     status = {}
@@ -624,6 +656,8 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
     id_name = {**pid_name, **{("mpg", p): v for p, v in mpg.items()}, **{("grp", p): v for p, v in grp.items()}}
     spots, leans, near, waiting, looked, evaluated = [], [], [], [], 0, []
     for team, m in teams.items():
+        if team in started:
+            continue
         opp = next(x for x in m.split("@") if x != team)
         roster = [p for p, t in team_now.items() if t == team and mpg.get(p, 0) >= ROT_MPG]
         out_t = {p for p in roster if status.get(p, ("", 0, ""))[1] >= OUT_P} | (extra_out or {}).get(team, set())

@@ -3,6 +3,16 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 8 Nov
+- **Projections anchored to a stale lineup (Kenrich Williams).** He's played 24/17/21/31/29/19 min since Holmgren,
+  J. Williams and Wallace went out, but his "normal lineup" games were October's 7/6/7. With Jaylin Williams newly out,
+  only 2 games matched and the shrink pulled him to 11.5 min. Fix: teammates out 3+ straight games are the
+  *established* lineup. The projection shrinks towards his games in that setup (3 pseudo-games), plus 1 pseudo-game
+  of the old lineup. Kenrich is now 22.6 min / 4.9 reb (market agrees, so no bet).
+  Replay of the live nights with the fix: card 4/13 (+0.9u, honest expected 3.9) vs actual 1/8 (−4.5u). It's in
+  hindsight (final reports), so it's a direction check, not proof.
+- **Games already tipped are excluded** (commence before the odds snapshot: DEN@IND was on the re-run card).
+
 ## 7 Nov (after 6 Nov results): record 6/19, +8.8u, honest expected 5.0
 - **No 3+ rebound or assist singles (8 Nov, your call):** reb/ast singles start at 4+ (Wendell Carter 3+ ast was on the card). SGM legs can still use 3s.
 - **Star filter back on (8 Nov):** you preferred second-tier players only once Harden and Mobley reached the card. Stars can still be priced on request.
