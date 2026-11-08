@@ -63,7 +63,12 @@ CONF_MIN, CONF_MAX = 0.08, 0.35
 SGM_FACTOR = 0.90  # fallback: builder ≈ this x product of the AU-median legs (when the book's own legs aren't listed)
 # Builder ≈ factor x product of THE SAME BOOK's legs, by shape (Black 7 Nov slips, bets/sgm_quotes.csv; provisional):
 # uneven (one leg <= $2, one >= $3): 1.08-1.28x (no correlation charged); even mid legs 0.95x; long legs (all >= $5) 0.78x
-def builder_factor(prices: list[float]) -> float:
+# P/R: builders DO charge the correlation (Ighodaro 10p/7r $7 = 0.75-0.80x legs; 8p/7r/3a $9 = 0.82-0.86x).
+def builder_factor(prices: list[float], stats: set | None = None) -> float:
+    if stats == {"pts", "reb"}:
+        return 0.78
+    if len(prices) >= 3:
+        return 0.84
     if min(prices) <= 2.0 and max(prices) >= 3.0:
         return 1.10
     if min(prices) >= 5.0:
@@ -78,14 +83,27 @@ RA_LIFT = {"steady": {(5, 5): 1.04, (6, 6): 1.13, (7, 5): 1.08, (5, 7): 1.10, (7
 VOLATILE_MIN_SD = 5.5  # minutes sd (his matching games) at which a player counts as volatile
 
 
+# P/R link in real games, bigs (6+ reb, 6-22 pts; 167 player-seasons 2023-26), keyed (pts, reb). Far stronger
+# than R/A when minutes swing (12p/10r 1.36, 18p/10r 1.55): the simulator has ~1.13-1.21 for Clingan.
+PR_LIFT = {"steady": {(8, 7): 1.05, (10, 7): 1.07, (12, 7): 1.08, (15, 7): 1.10, (8, 10): 1.07, (10, 10): 1.11,
+                      (12, 10): 1.14, (15, 10): 1.17, (18, 10): 1.20, (12, 12): 1.17, (20, 12): 1.32},
+           "volatile": {(8, 7): 1.15, (10, 7): 1.19, (12, 7): 1.23, (15, 7): 1.28, (8, 10): 1.22, (10, 10): 1.29,
+                        (12, 10): 1.36, (15, 10): 1.46, (18, 10): 1.55, (12, 12): 1.43, (20, 12): 1.85}}
+
+
 def ra_lift(a: dict, legs) -> float | None:
-    """Real-game R/A lift for a combo guard/wing on a 2-leg reb/ast SGM (nearest tabled combo)."""
+    """Real-game lift for a 2-leg combo: R/A for combo guards/wings, P/R for bigs (nearest tabled combo)."""
     d = dict(legs)
-    if set(d) != {"reb", "ast"}:
-        return None
-    r_, a_ = min(max(d["reb"], 5), 7), min(max(d["ast"], 5), 7)
-    key = min(RA_LIFT["steady"], key=lambda k: abs(k[0] - r_) + abs(k[1] - a_))
-    return RA_LIFT["volatile" if a.get("min_sd", 0) >= VOLATILE_MIN_SD else "steady"][key]
+    vol = "volatile" if a.get("min_sd", 0) >= VOLATILE_MIN_SD else "steady"
+    if set(d) == {"reb", "ast"} and a.get("combo_ra"):
+        r_, a_ = min(max(d["reb"], 5), 7), min(max(d["ast"], 5), 7)
+        key = min(RA_LIFT["steady"], key=lambda k: abs(k[0] - r_) + abs(k[1] - a_))
+        return RA_LIFT[vol][key]
+    if set(d) == {"pts", "reb"} and a.get("big"):
+        p_, r_ = min(max(d["pts"], 8), 20), min(max(d["reb"], 7), 12)
+        key = min(PR_LIFT["steady"], key=lambda k: abs(k[0] - p_) / 2 + abs(k[1] - r_))
+        return PR_LIFT[vol][key]
+    return None
 LEG_MIN_P = 0.50  # each SGM leg live on its own
 SGM_MIN_EV = 0.08
 CARD_N = 5
@@ -541,14 +559,20 @@ def _combo_ra(sim: dict) -> bool:
 
 
 RA_SHAPES = ((5, 5), (6, 5), (5, 6), (6, 6), (7, 5), (5, 7), (7, 7))
+PR_SHAPES = ((8, 7), (10, 7), (12, 7), (15, 7), (10, 10), (12, 10), (15, 10), (18, 10), (12, 12))  # the user's P/R combos
 
 
-def ra_ladder(a: dict, sim: dict, mk: dict, books: dict, c: float) -> list[dict]:
-    """R/A SGM ladder for a combo guard/wing: honest chance (sim, anchored, real-game R/A link) and, per book,
-    the builder estimate from its own legs. 'bet_at' is the builder price that clears MIN_EV."""
+def _big(sim: dict) -> bool:
+    """A big for the P/R ladder: projected 6+ rebounds."""
+    return float(sim["reb"].mean()) >= 6.0
+
+
+def ra_ladder(a: dict, sim: dict, mk: dict, books: dict, c: float, pr: bool = False) -> list[dict]:
+    """2-leg SGM ladder: R/A for a combo guard/wing, or P/R for a big (pr=True). Honest chance (sim, anchored,
+    real-game link) and, per book, the builder estimate from its own legs. 'bet_at' clears MIN_EV."""
     out = []
-    for r_, a_ in RA_SHAPES:
-        lg = [("reb", r_), ("ast", a_)]
+    for x_, y_ in (PR_SHAPES if pr else RA_SHAPES):
+        lg = [("pts", x_), ("reb", y_)] if pr else [("reb", x_), ("ast", y_)]
         if any(x not in mk for x in lg):
             continue
         pj, lab = anchored(a, sim, lg)
@@ -562,11 +586,12 @@ def ra_ladder(a: dict, sim: dict, mk: dict, books: dict, c: float) -> list[dict]
         for bk in SGM_BOOKS:
             own = [books.get(bk, {}).get(x) for x in lg]
             if all(own):
-                ests[bk] = builder_factor(own) * float(np.prod(own))
+                ests[bk] = builder_factor(own, {s for s, _ in lg}) * float(np.prod(own))
         ests = {bk: v for bk, v in ests.items() if v <= SGM_RANGE[1]}  # past $15 the builder factors aren't calibrated
         best = max(ests.items(), key=lambda kv: kv[1]) if ests else (None, None)
-        out.append({"bet": f"{r_}r/{a_}a", "p": ph, "fair": 1 / ph, "bet_at": (1 + MIN_EV) / ph, "book": best[0], "est": best[1],
-                    "ev": best[1] * ph - 1 if best[1] else None, "hist": lab})
+        out.append({"bet": f"{x_}p/{y_}r" if pr else f"{x_}r/{y_}a", "p": ph, "fair": 1 / ph, "bet_at": (1 + MIN_EV) / ph,
+                    "book": best[0], "est": best[1], "ev": best[1] * ph - 1 if best[1] else None, "hist": lab,
+                    "calibrated": True})
     return out
 
 
@@ -607,14 +632,14 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
                     if any(x not in med for x in lg):
                         continue
                     own = [bp.get(x) for x in lg]
-                    if all(own) and {s for s, _ in lg} == {"reb", "ast"}:  # R/A: own legs x shape factor (calibrated on R/A slips only)
-                        est = builder_factor(own) * float(np.prod(own))
+                    if all(own) and {s for s, _ in lg} in ({"reb", "ast"}, {"pts", "reb"}):  # R/A, P/R: own legs x shape factor
+                        est = builder_factor(own, {s for s, _ in lg}) * float(np.prod(own))
                     else:
                         est = SGM_FACTOR * float(np.prod([med[x] for x in lg]))
                     if not (SGM_RANGE[0] <= est <= SGM_RANGE[1]) or any(x not in mk for x in lg) or pj <= 0:
                         continue
                     rho = pj_raw / float(np.prod([_p(sim, [x]) for x in lg]))  # model's within-player correlation
-                    if a.get("combo_ra"):  # combo guard/wing: real games link R and A more than the sim for volatile minutes
+                    if len(lg) == 2:  # combo guard (R/A) or big (P/R): real games link the legs more than the sim when minutes swing
                         rho = max(rho, ra_lift(a, lg) or rho)
                     pk = float(np.prod([mk[x] for x in lg])) * rho
                     ph = pk + c * (pj - pk)
@@ -622,7 +647,7 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
                     if ev >= floor:  # below SGM_MIN_EV it's shown as the spot's SGM version, not a card bet
                         out.append({"kind": "SGM", "alt": ev < SGM_MIN_EV, "hist": hist_lab, "bet": "/".join(f"{k}{s[0]}" for s, k in lg), "book": bk, "price": est,
                                     "p_model": pj, "p_mkt": pk, "p": ph, "ev": ev, "take_at": 1.10 / ph, "outlier": False,
-                                    "legs": (" × ".join(f"${x:.2f}" for x in own) if all(own) and {s for s, _ in lg} == {"reb", "ast"}
+                                    "legs": (" × ".join(f"${x:.2f}" for x in own) if all(own) and {s for s, _ in lg} in ({"reb", "ast"}, {"pts", "reb"})
                                              else " × ".join(f"${med[x]:.2f}" for x in lg))})
     out.sort(key=lambda b: -rank(b))
     best, seen = [], set()
@@ -776,7 +801,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
                 c = max(CONF_MIN, confidence(a, sum(unc.values()), team in filed) - 0.10 * own_p - 0.05)
                 a["own_p"] = own_p
                 sim = simulate(a)
-                a["combo_ra"] = _combo_ra(sim)
+                a["combo_ra"], a["big"] = _combo_ra(sim), _big(sim)
                 bs = [b for b in bets_for(a, sim, *market_probs(odds, a["name"]), c, floor=NEXT_FLOOR) if not b.get("outlier")]
                 if bs:
                     a.update(conf=c, sim_means={k: float(v.mean()) for k, v in sim.items()},
@@ -791,7 +816,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             c = max(CONF_MIN, confidence(a, sum(unc.values()), team in filed) - 0.10 * own_p)
             a["own_p"] = own_p
             sim = simulate(a)
-            a["combo_ra"] = _combo_ra(sim)
+            a["combo_ra"], a["big"] = _combo_ra(sim), _big(sim)
             if forced:
                 a["sim"] = sim
                 a["mk_books"] = market_probs(odds, a["name"])
@@ -803,6 +828,8 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
                      min_p10_90=(float(np.percentile(sim["minutes"], 10)), float(np.percentile(sim["minutes"], 90))), bets=bs)
             if a["combo_ra"]:
                 a["ra_ladder"] = ra_ladder(a, sim, mk, books, c)
+            if a["big"]:
+                a["pr_ladder"] = ra_ladder(a, sim, mk, books, c, pr=True)
             kinds = {x["kind"] + ("-vol" if x["kind"] == "emerging" and x.get("stat") in ("ast", "reb") else "") for x in a["sits"]}
             est = bool(a["key_new"]) and a["n_comp"] == 0 and "role" in kinds
             for b in bs:
@@ -948,8 +975,9 @@ def also_bet(a: dict, b: dict) -> dict | None:
 
 
 def _also_md(a: dict, b: dict) -> str:
-    ra = sorted((r for r in a.get("ra_ladder") or [] if r["ev"] is not None and r["ev"] >= MIN_EV), key=lambda r: -r["ev"])[:3]
-    return "".join(f" · R/A **{r['bet']}** est ${r['est']:.2f} (fair ${r['fair']:.2f}, bet at ${r['bet_at']:.2f})" for r in ra) + "".join(f" · also **{x['bet']}** ${x['price']:.2f} ({x['p']:.0%}, EV {x['ev']:+.0%}{', ≈ fair' if x['ev'] < MIN_EV else ''}, "
+    ra = sorted((r for r in (a.get("ra_ladder") or []) + (a.get("pr_ladder") or []) if r["ev"] is not None and r["ev"] >= MIN_EV),
+                key=lambda r: -r["ev"])[:3]
+    return "".join(f" · SGM **{r['bet']}** est ${r['est']:.2f} (fair ${r['fair']:.2f}, bet at ${r['bet_at']:.2f})" for r in ra) + "".join(f" · also **{x['bet']}** ${x['price']:.2f} ({x['p']:.0%}, EV {x['ev']:+.0%}{', ≈ fair' if x['ev'] < MIN_EV else ''}, "
                    f"Kelly {kelly(x):.1%})" for x in also_bets(a, b))
 
 

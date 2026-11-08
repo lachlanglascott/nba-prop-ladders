@@ -242,5 +242,15 @@ def test_ra_lift_volatile_above_steady():
     from nba_ladders.spots import ra_lift
 
     legs = [("reb", 7), ("ast", 7)]
-    assert ra_lift({"min_sd": 7.0}, legs) > ra_lift({"min_sd": 4.0}, legs) > 1.0
-    assert ra_lift({"min_sd": 7.0}, [("pts", 15), ("ast", 5)]) is None
+    assert ra_lift({"min_sd": 7.0, "combo_ra": True}, legs) > ra_lift({"min_sd": 4.0, "combo_ra": True}, legs) > 1.0
+    assert ra_lift({"min_sd": 7.0, "combo_ra": True}, [("pts", 15), ("ast", 5)]) is None
+    pr = [("pts", 12), ("reb", 10)]
+    assert ra_lift({"min_sd": 7.5, "big": True}, pr) > 1.3 > ra_lift({"min_sd": 4.0, "big": True}, pr)  # Clingan-type swing
+    assert ra_lift({"min_sd": 7.5}, pr) is None  # not a big
+
+
+def test_builder_factor_pr_charges_correlation():
+    from nba_ladders.spots import builder_factor
+
+    assert 0.7 < builder_factor([3.3, 2.65], {"pts", "reb"}) < 0.85  # Ighodaro 10p/7r $7 vs legs $8.74
+    assert builder_factor([4.30, 1.61], {"reb", "ast"}) > 1.0  # uneven R/A unchanged

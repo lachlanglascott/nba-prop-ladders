@@ -3,6 +3,16 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 8 Nov late: P/R ladder for bigs
+- **Real games, bigs (6+ reb, 167 player-seasons): P and R link far more than R/A**: 12p/10r 1.14x steady / 1.36x volatile minutes,
+  18p/10r 1.20x / 1.55x. The simulator has ~1.13-1.21x for Clingan (minutes sd 7.5) → real-game table used for volatile bigs.
+- **But builders charge for it:** Ighodaro 10p/7r $7 = 0.75-0.80x the book's legs; 8p/7r/3a $9 = 0.82-0.86x. So P/R is about
+  fairly priced on correlation, and the value has to come from the spot (minutes/role the market hasn't caught). Builder factors:
+  P/R 0.78x, 3-leg 0.84x, uneven R/A 1.10x, even R/A 0.95x, long legs 0.80x. Okongwu 18p/10r $5 excluded (0.35x legs; the lines
+  probably moved after Jalen Johnson was ruled out).
+- P/R ladder on every big (projected 6+ reb) in a spot: 8/7 … 18/10, 12/12. Replay 4-7 Nov: +EV combos 2/13 (expected 2.2, +6.1u
+  on the two Poeltl hits). On expectation; track live.
+
 ## 8 Nov evening: your method review (high-variance players, ladders, R/A)
 - **Ladder tails as single bets are NOT mispriced in our favour** (two seasons, upper rungs $3-15): −13% to −21%
   blind across stat-dispersion terciles. High-dispersion far tails (2sd+) −19% vs low −29%: right direction, still negative.
