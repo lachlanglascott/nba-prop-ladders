@@ -3,7 +3,15 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
-## 8 Nov
+## 8 Nov (after 7 Nov): record 8/24, +11.0u, honest expected 6.4; card 3/13 vs 3.6
+- **Record bug:** save() flagged every spot's top bet as a card bet (7 Nov: 12 vs 5 shown). Fixed; 7 Nov saved file
+  corrected. Earlier nights were unaffected (5 or fewer spots).
+- **Blowouts:** 6 of the 10 card losses involved one (Camara 21 min, POR +5.5 lost by 22). TODO: test fatter blowout
+  tails for role players.
+- **Rare-line role bets:** Traore 4+ reb (1/8 this season) passed only through the minutes waiver; he scored 19.
+  TODO: under 15% own hit rate, prefer the near-fair alternative in a stat he produces.
+- Every tip now lists his other stats (best rung each, fair or better) with a Kelly stake.
+
 - **Projections anchored to a stale lineup (Kenrich Williams).** He's played 24/17/21/31/29/19 min since Holmgren,
   J. Williams and Wallace went out, but his "normal lineup" games were October's 7/6/7. With Jaylin Williams newly out,
   only 2 games matched and the shrink pulled him to 11.5 min. Fix: teammates out 3+ straight games are the

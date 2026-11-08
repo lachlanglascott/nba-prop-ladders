@@ -980,11 +980,12 @@ def render(res: dict, cond: list[dict]) -> str:
 
 def save(res: dict, cond: list[dict]) -> None:
     rows = []
+    shown = {(a["name"], b["bet"]) for a, b in card_bets(res, cond=cond) if not b.get("if_sits")}  # the tips actually on the card
     for a in res["spots"]:
         for i, b in enumerate(a["bets"]):
             rows.append({"day": res["day"], "player": a["name"], "team": a["team"], "kind": b["kind"], "bet": b["bet"],
                          "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
-                         "ev": b["ev"], "grade": b["grade"], "conf": a["conf"], "card": i == 0 and not b.get("alt"), "alt": bool(b.get("alt")),
+                         "ev": b["ev"], "grade": b["grade"], "conf": a["conf"], "card": (a["name"], b["bet"]) in shown, "alt": bool(b.get("alt")),
                          "situations": "; ".join(x["kind"] for x in a["sits"])})
     for c in cond:
         for a, b in c["bets"]:
