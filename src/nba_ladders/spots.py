@@ -547,6 +547,10 @@ def growth(b: dict) -> float:
 RARE_HR, RARE_W = 0.15, 0.5  # a line he hits under 15% of the time ranks at half weight (Traore 4+ reb 1/8, scored 19)
 
 
+def _rare(b: dict) -> bool:
+    return b.get("own_hr") is not None and b["own_hr"] < RARE_HR
+
+
 def rank(b: dict) -> float:
     """Ranking score: Kelly growth, halved for lines he rarely reaches (lean into what he's good at)."""
     hr = b.get("own_hr")
@@ -656,6 +660,9 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
         if shape not in seen:
             seen.add(shape)
             best.append(b)
+    for b in best:  # a line he rarely reaches is never a card tip, only filler (Sharpe 8+ ast: 2/9 this season, 0/62 last)
+        if b["kind"] == "single" and b.get("own_hr") is not None and b["own_hr"] < RARE_HR:
+            b["lean"] = True
     a["by_stat"] = [b for b in best if b["kind"] == "single"]  # best rung per stat, every stat (the "also" list)
     best = [b for b in best if b["kind"] == "SGM" or b.get("focus", True)]  # the spot's own bets: the stats its angle drives
     main = [b for b in best if not b.get("alt") and not b.get("lean")][:4]
@@ -900,7 +907,7 @@ def card_bets(res: dict, n: int = CARD_N, cond: list | None = None) -> list[tupl
     ranked = [(a, next(b for b in a["bets"] if ok(b))) for a in res["spots"] if any(ok(b) for b in a["bets"])]
     ranked = sorted(ranked, key=lambda ab: ("ABC".index(ab[1]["grade"]), -rank(ab[1])))
     for a in res.get("leans", []):
-        b = next((x for x in a["bets"] if x.get("lean") and not x.get("outlier")), None)
+        b = next((x for x in a["bets"] if x.get("lean") and not x.get("outlier") and not _rare(x)), None)
         if b is not None:
             ranked.append((a, b))
     card, per_game, per_dog = [], {}, {}
@@ -936,7 +943,7 @@ def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2
     pool = []
     for a in res["spots"] + res.get("leans", []) + res.get("near", []):
         for b in a["bets"]:
-            if not b.get("outlier") and b["ev"] >= NEXT_FLOOR:
+            if not b.get("outlier") and b["ev"] >= NEXT_FLOOR and not _rare(b):
                 pool.append((a, b))
     for c in cond or []:
         for a, b in c["bets"]:

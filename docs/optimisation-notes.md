@@ -4,6 +4,8 @@ Running log of what the live slates taught us and what changed. Newest first. Li
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
 ## 8 Nov late: P/R ladder for bigs
+- **Rare lines can't be card tips** (own hit rate < 15%): Sharpe 8+ ast (2/9, 0/62) reached the card because ranking only
+  penalised rare lines among a player's own bets. They're now leans (filler, 0.25u).
 - **Real games, bigs (6+ reb, 167 player-seasons): P and R link far more than R/A**: 12p/10r 1.14x steady / 1.36x volatile minutes,
   18p/10r 1.20x / 1.55x. The simulator has ~1.13-1.21x for Clingan (minutes sd 7.5) → real-game table used for volatile bigs.
 - **But builders charge for it:** Ighodaro 10p/7r $7 = 0.75-0.80x the book's legs; 8p/7r/3a $9 = 0.82-0.86x. So P/R is about
