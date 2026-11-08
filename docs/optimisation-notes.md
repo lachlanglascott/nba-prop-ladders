@@ -3,6 +3,21 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 8 Nov evening: your method review (high-variance players, ladders, R/A)
+- **Ladder tails as single bets are NOT mispriced in our favour** (two seasons, upper rungs $3-15): −13% to −21%
+  blind across stat-dispersion terciles. High-dispersion far tails (2sd+) −19% vs low −29%: right direction, still negative.
+- **R/A combos for guards/wings who do both (real games, 147 player-seasons): R and A land together more than independent**:
+  6r/6a 1.13x steady / 1.19x volatile minutes; 7r/7a 1.18x / 1.31x. The simulator's lift (1.05-1.20) is close
+  for steady players and under for volatile ones → the SGM link is now max(sim, real-game table) for combo players.
+- **Builder pricing (Black slips, bets/sgm_quotes.csv):** priced off the book's own legs. Uneven R/A combos (7r/5a, 5r/7a)
+  1.08-1.28x the legs (no correlation charged); 6r/6a 0.95x; 8r/8a 0.78x. Our estimates now match the slips
+  (7r/5a est $7.62 vs $7.50, 6r/6a $5.22 vs $5.25). Old estimate (0.9x median) under-priced the uneven ones.
+- **The SGM finder never offered uneven combos** (each leg had to be 50%+ alone) → new R/A ladder on every combo
+  guard/wing spot (5/5 … 7/7) with fair, bet-at and builder estimate; card tips show the best +EV combos.
+- **Rare lines rank at half weight** (own hit rate < 15%), to lean into what he's good at.
+- Replay 4-7 Nov (hindsight): R/A ladder +EV combos 4/23 (expected 3.3, +1.4u at builder estimates); uneven-only 1/10.
+  Too few to call. Keep logging builder quotes and grade the R/A ladder live.
+
 ## 8 Nov (after 7 Nov): record 8/24, +11.0u, honest expected 6.4; card 3/13 vs 3.6
 - **Record bug:** save() flagged every spot's top bet as a card bet (7 Nov: 12 vs 5 shown). Fixed; 7 Nov saved file
   corrected. Earlier nights were unaffected (5 or fewer spots).

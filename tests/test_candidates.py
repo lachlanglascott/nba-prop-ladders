@@ -228,3 +228,19 @@ def test_conditional_keeps_best_bet_per_stat():
     pts = {"kind": "single", "bet": "20+ pts", "p": 0.31, "price": 3.70, "ev": 0.147}
     got = [b["bet"] for _, b in _one_per_player([(a, reb), (a, reb2), (a, pts)])]
     assert set(got) == {"8+ reb", "20+ pts"}  # his points no longer hide behind his rebounds
+
+
+def test_builder_factor_by_shape():
+    from nba_ladders.spots import builder_factor
+
+    assert builder_factor([4.30, 1.61]) > 1.0  # uneven 7r/5a: Black slip $7.50 vs legs $6.92
+    assert builder_factor([2.5, 2.2]) < 1.0  # even 6r/6a: $5.25 vs $5.50
+    assert builder_factor([5.2, 5.2]) < 0.9  # long legs 8r/8a: $21 vs $27
+
+
+def test_ra_lift_volatile_above_steady():
+    from nba_ladders.spots import ra_lift
+
+    legs = [("reb", 7), ("ast", 7)]
+    assert ra_lift({"min_sd": 7.0}, legs) > ra_lift({"min_sd": 4.0}, legs) > 1.0
+    assert ra_lift({"min_sd": 7.0}, [("pts", 15), ("ast", 5)]) is None

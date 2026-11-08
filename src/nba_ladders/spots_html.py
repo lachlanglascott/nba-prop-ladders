@@ -104,6 +104,11 @@ def _proj(a, b):
                 + "".join(f'<li><b>{esc(x["bet"])}</b> {x["book"].replace("_au", "")} ${x["price"]:.2f} · {x["p"]:.0%} chance · '
                           f'fair ${1 / x["p"]:.2f} · EV {_ev(x["ev"])} · Kelly {kelly(x):.1%}'
                           + (' <span class="chip">≈ fair, skip</span>' if x["ev"] < 0.04 else "") + "</li>" for x in xs) + "</ul></div>")
+    ra = sorted((r for r in a.get("ra_ladder") or [] if r["ev"] is not None and r["ev"] >= 0.04), key=lambda r: -r["ev"])[:3]
+    if ra:
+        also += ('<div class="sgm"><b>R/A combos</b> (SGM, check the builder): '
+                 + " · ".join(f'<b>{esc(r["bet"])}</b> est ${r["est"]:.2f}, fair ${r["fair"]:.2f}, bet at <span class="take">${r["bet_at"]:.2f}</span>'
+                              for r in ra) + "</div>")
     return (f'<div class="projline">{esc(s)} · Kelly {kelly(b):.1%}</div>' if s else "") + also
 
 
@@ -164,6 +169,18 @@ def _spot_html(a: dict) -> list[str]:
             games_table(this.tail(6), f"Games that match tonight, this season ({esc(a['why_sample'].split(' (')[0])}){extra}")
         elif n_last:
             H.append(f'<p class="note">No game this season matches tonight\'s lineup; the projection uses {n_last} last-season games.</p>')
+    if a.get("ra_ladder"):
+        H.append('<p class="note"><b>Rebounds + assists ladder (SGM)</b>: he does both, so R and A rise together. '
+                 'Builders pay about independent odds on <b>uneven</b> combos (one easy leg, one hard), so those are where the value is. '
+                 'Take a combo only at the <span class="take">bet at</span> builder price or better.</p>'
+                 '<div class="scroll"><table class="games"><tr><th>Combo</th><th>Our chance</th><th>Fair</th><th>Bet at</th><th>Builder est.</th><th>EV at est.</th><th>History</th></tr>')
+        for r in a["ra_ladder"]:
+            est = f'${r["est"]:.2f} ({r["book"].replace("_au", "")})' if r["est"] else "—"
+            ev = _ev(r["ev"]) if r["ev"] is not None else ""
+            H.append(f'<tr><td><b>{esc(r["bet"])}</b></td><td class="num">{r["p"]:.0%}</td><td class="num">${r["fair"]:.2f}</td>'
+                     f'<td class="num"><span class="take">${r["bet_at"]:.2f}+</span></td><td class="num">{est}</td><td class="num">{ev}</td>'
+                     f'<td class="note">{esc(r["hist"])}</td></tr>')
+        H.append("</table></div>")
     oc = a.get("opp_comps") or {}
     if oc.get("rows"):
         dd = oc["diff"]
