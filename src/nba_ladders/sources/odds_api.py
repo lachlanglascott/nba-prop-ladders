@@ -34,8 +34,8 @@ SPORT = "basketball_nba"
 RAW_DIR = config.DATA_RAW / "odds_api"
 RESERVE = 50  # never let a run take the account below this many credits
 AU_BASE = "sportsbet"
-US_REFERENCE = ["fanduel", "draftkings", "fanatics"]
-AU_REFERENCE = ["tab", "dabble_au", "betr_au", "neds", "ladbrokes_au", "pointsbetau"]  # legs only (no SGM in API)
+US_REFERENCE = ["fanduel", "draftkings"]  # fanatics dropped for picklebet_au (keeps 10 books = 1 cost unit)
+AU_REFERENCE = ["tab", "dabble_au", "betr_au", "neds", "ladbrokes_au", "pointsbetau", "picklebet_au"]  # legs only (no SGM in API)
 DEFAULT_BOOKMAKERS = [AU_BASE, *AU_REFERENCE, *US_REFERENCE]  # <= 10 books = 1 region of cost
 DEFAULT_MARKETS = [
     "player_points_alternate", "player_rebounds_alternate", "player_assists_alternate",

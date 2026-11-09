@@ -113,7 +113,7 @@ STAR_NO_ANGLE = 0.5  # next-best weight for a star with no lineup angle (Wembany
 MIN_TIPS = 3  # fewer card tips than this: write a "next best" doc to make it up
 NEXT_FLOOR = -0.08  # next-best pool: closest-to-fair bets down to this honest EV
 LEG_MIN = {"pts": 8, "reb": 3, "ast": 3}
-SGM_BOOKS = ("betr_au", "sportsbet")
+SGM_BOOKS = ("betr_au", "sportsbet", "picklebet_au")  # the user's SGM books (Picklebet builder not calibrated yet)
 SINGLE_RANGE = (2.5, 10.0)
 SINGLE_MIN_LINE = 4  # reb/ast singles start at 4+
 SGM_RANGE = (3.5, 15.0)
@@ -220,6 +220,7 @@ def _wmean(df: pl.DataFrame, col: str, w: np.ndarray) -> float:
     return float(np.sum(df[col].to_numpy() * w) / np.sum(w))
 
 
+NEWS_MIN = 3.5  # minutes for start/bench news (a modest bump, not starter minutes)
 ESTABLISHED = 3  # a teammate out this many straight games is part of the current lineup
 K_OLD = 1.0  # pseudo-games of his old-lineup minutes kept in the projection (keeps 4-game samples honest)
 
@@ -444,7 +445,7 @@ def confidence(a: dict, unc_team: float, filed: bool) -> float:
 
 
 # ---------------------------------------------------------------- pricing and bets
-AU = ("sportsbet", "tab", "dabble_au", "betr_au", "neds", "ladbrokes_au", "pointsbetau")
+AU = ("sportsbet", "tab", "dabble_au", "betr_au", "neds", "ladbrokes_au", "pointsbetau", "picklebet_au")
 
 
 def market_probs(odds: pl.DataFrame, name: str) -> tuple[dict, dict]:
@@ -562,6 +563,7 @@ def _combo_ra(sim: dict) -> bool:
     return float(sim["reb"].mean()) >= 3.5 and float(sim["ast"].mean()) >= 3.5
 
 
+LEG_FLOOR = 0.20  # each combo leg needs this chance tonight (a hard 35-50% weak-leg rule failed on this week's 11 combos)
 RA_SHAPES = ((5, 5), (6, 5), (5, 6), (6, 6), (7, 5), (5, 7), (7, 7))
 PR_SHAPES = ((8, 7), (10, 7), (12, 7), (15, 7), (10, 10), (12, 10), (15, 10), (18, 10), (12, 12))  # the user's P/R combos
 
@@ -580,6 +582,10 @@ def ra_ladder(a: dict, sim: dict, mk: dict, books: dict, c: float, pr: bool = Fa
         if any(x not in mk for x in lg):
             continue
         pj, lab = anchored(a, sim, lg)
+        legp = [anchored(a, sim, [x])[0] for x in lg]
+        if min(legp) < LEG_FLOOR:
+            continue  # a lottery leg: the combo is only as good as it
+        strong = lg[int(np.argmax(legp))]
         rho = _p(sim, lg) / max(_p(sim, [lg[0]]) * _p(sim, [lg[1]]), 1e-9)
         rho = max(rho, ra_lift(a, lg) or rho)
         pk = mk[lg[0]] * mk[lg[1]] * rho
@@ -595,6 +601,7 @@ def ra_ladder(a: dict, sim: dict, mk: dict, books: dict, c: float, pr: bool = Fa
         best = max(ests.items(), key=lambda kv: kv[1]) if ests else (None, None)
         out.append({"bet": f"{x_}p/{y_}r" if pr else f"{x_}r/{y_}a", "p": ph, "fair": 1 / ph, "bet_at": (1 + MIN_EV) / ph,
                     "book": best[0], "est": best[1], "ev": best[1] * ph - 1 if best[1] else None, "hist": lab,
+                    "strong": f"{strong[1]}+ {strong[0]}", "strong_p": max(legp),
                     "calibrated": True})
     return out
 
@@ -722,8 +729,11 @@ STAKE = {"A": "1u", "B": "0.5u", "C": "0.25u"}
 
 
 # ---------------------------------------------------------------- the slate
-def build(day: date, extra_out: dict | None = None, include: set | None = None) -> dict:
-    """All spots for a day. extra_out: {team: {player_id}} to force absences (conditional cards)."""
+def build(day: date, extra_out: dict | None = None, include: set | None = None, news: dict | None = None) -> dict:
+    """All spots for a day. extra_out: {team: {player_id}} to force absences (conditional cards).
+    news: late lineup news the report doesn't have yet, {"out": [names], "start": [names], "bench": [names]}:
+    out = absent tonight; start/bench = +/-NEWS_MIN minutes (the same both ways: Richard started for 16 min,
+    Ziaire scored 17 off the bench)."""
     pg, trk = _frames(day)
     rep = _report(day, pg)
     idx = parse_player_index(get_player_index("2026-27"))
@@ -763,6 +773,17 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
         pid = key_pid.get(r["player_key"])
         if pid is not None:
             status[pid] = (r["status"], _p_sit(r), r["reason"] or "")
+    shift = {}
+    for kind, names in (news or {}).items():
+        for nm_ in names:
+            pid = key_pid.get(player_key(nm_))
+            if pid is None:
+                print(f"news: no player matching {nm_!r}")
+                continue
+            if kind == "out":
+                status[pid] = ("Out (news)", 1.0, "late lineup news")
+            else:
+                shift[pid] = NEWS_MIN if kind == "start" else -NEWS_MIN
     id_name = {**pid_name, **{("mpg", p): v for p, v in mpg.items()}, **{("grp", p): v for p, v in grp.items()}}
     spots, leans, near, waiting, looked, evaluated = [], [], [], [], 0, []
     for team, m in teams.items():
@@ -794,6 +815,11 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             a = analyse(pid, pid_name.get(pid, str(pid)), team, opp, g, last, out_t, unc, id_name,
                         ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl, opp_tab, gme, t_in)
             forced = include is not None and a is not None and a["name"] in include
+            if a is not None and pid in shift:
+                a["proj_min"] += shift[pid]
+                verb = "starting" if shift[pid] > 0 else "coming off the bench"
+                a["sits"].append({"kind": "role" if shift[pid] > 0 else "news", "news": True,
+                                  "text": f"{verb} tonight (lineup news): {shift[pid]:+.1f} min"})
             if a is not None:
                 a["star"] = last_ppg.get(pid, 0) >= STAR_PPG  # stars are in, but a star with no angle ranks behind the second tier
             if a is None:
@@ -804,7 +830,10 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
                 a["opp_line"] = weakness_line(opp, gme, day)
                 a["opp_comps"] = opp_comps(cur, grp, opp, gme)
                 a["unc"] = {pid_name.get(p, str(p)): v for p, v in unc.items()}
-                a["sits"] = a["sits"] + [{"kind": "proj", "text": "No lineup angle: projection vs price. " + a["opp_line"]}]
+                em = {x.get("stat") for x in a["sits"] if x["kind"] == "emerging"}
+                a["trend"] = "min" in em and bool(em & {"reb", "ast"})  # minutes AND chances up (Burries 8 Nov)
+                a["sits"] = a["sits"] + [{"kind": "proj", "text": ("Trend: minutes and chances both up. " if a["trend"] else
+                                                                   "No lineup angle: projection vs price. ") + a["opp_line"]}]
                 c = max(CONF_MIN, confidence(a, sum(unc.values()), team in filed) - 0.10 * own_p - 0.05)
                 a["own_p"] = own_p
                 sim = simulate(a)
@@ -838,7 +867,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
             if a["big"]:
                 a["pr_ladder"] = ra_ladder(a, sim, mk, books, c, pr=True)
             kinds = {x["kind"] + ("-vol" if x["kind"] == "emerging" and x.get("stat") in ("ast", "reb") else "") for x in a["sits"]}
-            est = bool(a["key_new"]) and a["n_comp"] == 0 and "role" in kinds
+            est = (bool(a["key_new"]) and a["n_comp"] == 0 and "role" in kinds) or (any(x["kind"] == "role" for x in a["sits"]) and all(x.get("news") for x in a["sits"] if x["kind"] == "role"))
             for b in bs:
                 b["grade"] = grade(b["ev"], c, kinds, b.get("outlier", False))
                 if est and b["grade"] in "AB":
@@ -853,7 +882,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None) 
                     waiting.append(a)
     spots.sort(key=lambda a: -max(b["ev"] * a["conf"] for b in a["bets"]))
     leans.sort(key=lambda a: -max(b["ev"] for b in a["bets"]))
-    return {"day": day, "spots": spots, "leans": leans, "near": near, "waiting": waiting, "evaluated": evaluated, "report_time": str(rep["report_time"].max()), "filed": filed, "teams": set(teams),
+    return {"day": day, "news": news, "spots": spots, "leans": leans, "near": near, "waiting": waiting, "evaluated": evaluated, "report_time": str(rep["report_time"].max()), "filed": filed, "teams": set(teams),
             "snapshot": odds["snapshot"].max() if odds.height else None, "looked": looked, "status": status,
             "pid_name": pid_name, "team_now": team_now, "mpg": mpg}
 
@@ -884,7 +913,7 @@ def conditional(day: date, base: dict) -> list[dict]:
         team = base["team_now"].get(pid)
         if team not in base["teams"] or not (0.15 <= p < OUT_P) or base["mpg"].get(pid, 0) < KEY_MPG:
             continue
-        alt = build(day, extra_out={team: {pid}})
+        alt = build(day, extra_out={team: {pid}}, news=base.get("news"))
         new = [(a, b) for a in alt["spots"] if a["team"] == team for b in a["bets"]
                if (a["name"], b["bet"]) not in have and not b.get("alt") and not b.get("outlier") and b["ev"] >= MIN_EV]
         out.append({"player": base["pid_name"].get(pid, str(pid)), "team": team, "p": p, "reason": reason,
@@ -950,7 +979,7 @@ def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2
             pool.append((a, {**b, "if_sits": f"{c['player']} sits ({c['p']:.0%})"}))
     # a real angle beats a bare projection at the same EV
     angle = lambda a: any(x["kind"] in PRIMARY for x in a["sits"])
-    weight = lambda a: 1.3 if angle(a) else STAR_NO_ANGLE if a.get("star") else 1.0
+    weight = lambda a: 1.3 if angle(a) else 1.2 if a.get("trend") else STAR_NO_ANGLE if a.get("star") else 1.0
     pool.sort(key=lambda ab: -growth(ab[1]) * weight(ab[0]))
     out = []
     for a, b in pool:
@@ -1109,6 +1138,13 @@ def save(res: dict, cond: list[dict]) -> None:
                          "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
                          "ev": b["ev"], "grade": "IF", "conf": a["conf"], "card": False, "alt": False,
                          "situations": "if " + c["player"] + " sits", "if_sits": c["player"]})
+    for a, b in next_best(res, card_bets(res, cond=cond), cond):  # graded too, so the trend category gets a live record
+        if b.get("if_sits"):
+            continue
+        rows.append({"day": res["day"], "player": a["name"], "team": a["team"], "kind": b["kind"], "bet": b["bet"],
+                     "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
+                     "ev": b["ev"], "grade": "NB", "conf": a["conf"], "card": False, "alt": False,
+                     "situations": "trend" if a.get("trend") else "; ".join(x["kind"] for x in a["sits"])})
     out = config.DATA_PROCESSED / "spots" / f"{res['day']}.parquet"
     out.parent.mkdir(parents=True, exist_ok=True)
     pl.DataFrame(rows, infer_schema_length=None).write_parquet(out)
@@ -1170,6 +1206,9 @@ def main() -> None:
     ap.add_argument("--date", type=date.fromisoformat, required=True)
     ap.add_argument("--grade", action="store_true")
     ap.add_argument("--no-conditional", action="store_true")
+    ap.add_argument("--out", nargs="*", default=[], help="late scratches the report doesn't have yet")
+    ap.add_argument("--start", nargs="*", default=[], help="starting tonight (news): +NEWS_MIN minutes")
+    ap.add_argument("--bench", nargs="*", default=[], help="coming off the bench (news): -NEWS_MIN minutes")
     args = ap.parse_args()
     if args.grade:
         g = grade_day(args.date)
@@ -1182,7 +1221,8 @@ def main() -> None:
                 print(f"{lab}: {d['hit'].sum()}/{d.height} hit | honest expected {d['p'].sum():.1f} | model {d['p_model'].sum():.1f} | "
                       f"market {d['p_mkt'].sum():.1f} | flat 1u {pnl:+.2f}u")
         return
-    res = build(args.date)
+    news = {k: v for k, v in (("out", args.out), ("start", args.start), ("bench", args.bench)) if v}
+    res = build(args.date, news=news or None)
     res["record"], res["replay"] = record(args.date), record(args.date, live=False)
     cond = [] if args.no_conditional else conditional(args.date, res)
     md = render(res, cond)

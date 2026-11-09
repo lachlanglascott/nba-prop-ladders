@@ -3,6 +3,22 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 9 Nov evening: your style → engine tweaks
+- **Your style** (bets you raised): late lineup news; singles on the player's strength in a new role or trend (Acuff, Burries,
+  Sharpe 3/3); uneven R/A combos (Black 2/4, +6.8u); P/R combos for bigs (Oso x2, Okongwu, Achiuwa 0/4, the points leg failed every time).
+- **Lineup-news switch:** `spots --start NAME --bench NAME --out NAME` → start/bench ±3.5 min (same both ways), out = absent.
+  A news-only role grades C. Conditionals inherit the news.
+- **Trend category** (minutes AND chances up over the last 3) labelled in next best, weight 1.2. Replay 4-8 Nov: 0 picks cleared
+  +4% (Burries was a trend but honest EV ~0%), so it rarely fires. Next-best picks are now saved and graded.
+- **Weak-leg rule REJECTED:** a 35-50% leg hit-rate rule dropped Black's and Poeltl's winners (old-role history), and tonight's
+  leg chances didn't separate wins from losses on 11 combos. Kept a 20% floor per leg instead, plus the strong-leg single
+  shown next to every combo.
+- **Picklebet in the odds feed** (`picklebet_au`, fanatics dropped to keep 10 books). Its ladders aren't confirmed yet
+  (props weren't posted at check time); Picklebet SGM builder uncalibrated.
+- **Open issue:** Achiuwa without Sabonis had 15 last-season games (~31 min), but the full-lineup weighting cut them to almost
+  nothing (late-season SAC had many absences) → projection 26.8 min; he played 36. Look at how lineup weights treat
+  tank-season samples.
+
 ## 9 Nov (after 8 Nov): record 10/28, +13.7u, honest expected 7.9; card 2/4
 - **Strength bets won, combos lost on the weaker leg:** Achiuwa 8+ reb (14) W but 10p/7r L (7 pts); Ausar 11 reb but 3 ast (7r/5a L);
   Keyonte 6r/6a one rebound short. Burries 8+ reb, Sharpe 5+ ast, Acuff 9+ ast all W. TODO: combo weak leg needs own hit rate ≥ 35%.

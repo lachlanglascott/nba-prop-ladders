@@ -254,3 +254,10 @@ def test_builder_factor_pr_charges_correlation():
 
     assert 0.7 < builder_factor([3.3, 2.65], {"pts", "reb"}) < 0.85  # Ighodaro 10p/7r $7 vs legs $8.74
     assert builder_factor([4.30, 1.61], {"reb", "ast"}) > 1.0  # uneven R/A unchanged
+
+
+def test_min_price_and_leg_floor_constants():
+    from nba_ladders.spots import LEG_FLOOR, NEWS_MIN
+
+    assert 0.15 <= LEG_FLOOR <= 0.25  # lottery legs out, not "weak stats" (that rule failed on 11 combos)
+    assert 3.0 <= NEWS_MIN <= 4.0  # start/bench news = a modest shift both ways

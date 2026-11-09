@@ -109,6 +109,7 @@ def _proj(a, b):
     if ra:
         also += ('<div class="sgm"><b>Combos</b> (SGM, check the builder): '
                  + " · ".join(f'<b>{esc(r["bet"])}</b> est ${r["est"]:.2f}, fair ${r["fair"]:.2f}, bet at <span class="take">${r["bet_at"]:.2f}</span>'
+                              f' (strong leg: {esc(r["strong"])} {r["strong_p"]:.0%})'
                               for r in ra) + "</div>")
     return (f'<div class="projline">{esc(s)} · Kelly {kelly(b):.1%}</div>' if s else "") + also
 
@@ -337,7 +338,8 @@ def render_next_html(res: dict, card: list, picks: list) -> str:
         for i, (a, b) in enumerate(rows, 1):
             angle = any(x["kind"] in PRIMARY for x in a["sits"])
             tag = ('<span class="chip warn">Only if ' + esc(b["if_sits"]) + '</span>' if b.get("if_sits")
-                   else '<span class="chip role">Lineup angle</span>' if angle else '<span class="chip">No lineup angle</span>')
+                   else '<span class="chip role">Lineup angle</span>' if angle
+                   else '<span class="chip opp">Trend: minutes + chances up</span>' if a.get("trend") else '<span class="chip">No lineup angle</span>')
             if b["ev"] < 0:
                 tag += '<span class="chip warn">Just under fair: take-at price only</span>'
             H.append(f'<div class="row"><span class="badge C">{i}</span><div class="who"><b>{esc(a["name"])}</b>'
