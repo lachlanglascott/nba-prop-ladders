@@ -3,6 +3,14 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 9 Nov night: lineup weights for tank-season samples
+- Extra absences now discount a matching game **by position overlap** (same position ×0.5, guard-wing ×0.65, wing-big ×0.75,
+  guard-big ×0.9) with a **0.25 floor**, replacing the flat 0.5 per absence (Achiuwa's 15 games had been weighted 0.03-0.13).
+- Last season's matching games use a **recency half-life of 8 games** (was 3, which made 15 games count like ~2).
+- Achiuwa without Sabonis: 26.8 → 27.4 min. Most of his 31-min games also had Keegan Murray (a big) and Cardwell out, so the
+  discount is partly justified; he played 36 on the night. Not tuned further on one game.
+- Card replay 4-8 Nov (hindsight, final reports): 8/23, +7.0u, honest expected 7.0. Traore 16+ pts (W) now beats his rare 4+ reb.
+
 ## 9 Nov evening: your style → engine tweaks
 - **Your style** (bets you raised): late lineup news; singles on the player's strength in a new role or trend (Acuff, Burries,
   Sharpe 3/3); uneven R/A combos (Black 2/4, +6.8u); P/R combos for bigs (Oso x2, Okongwu, Achiuwa 0/4, the points leg failed every time).
@@ -15,7 +23,7 @@ from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
   shown next to every combo.
 - **Picklebet in the odds feed** (`picklebet_au`, fanatics dropped to keep 10 books). Its ladders aren't confirmed yet
   (props weren't posted at check time); Picklebet SGM builder uncalibrated.
-- **Open issue:** Achiuwa without Sabonis had 15 last-season games (~31 min), but the full-lineup weighting cut them to almost
+- *(fixed 9 Nov, see below)* Achiuwa without Sabonis had 15 last-season games (~31 min), but the full-lineup weighting cut them to almost
   nothing (late-season SAC had many absences) → projection 26.8 min; he played 36. Look at how lineup weights treat
   tank-season samples.
 

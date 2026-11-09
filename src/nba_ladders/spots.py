@@ -211,6 +211,19 @@ def _weights(n: int, half: float = 3.0) -> np.ndarray:
     return 0.5 ** (np.arange(n)[::-1] / half)  # most recent last
 
 
+LAST_HALF = 8.0  # recency half-life (games) inside last season's matching games: 3 made 15 games count like ~2
+
+
+def _season_weights(season_ids: np.ndarray) -> np.ndarray:
+    """Recency weights for a matching sample (oldest first): this season half-life 3 games; last season counts half,
+    with a slower half-life so a long run of matching games (Achiuwa without Sabonis, 15) isn't reduced to two."""
+    this = season_ids == SEASON
+    w = np.empty(len(season_ids))
+    w[this] = _weights(int(this.sum()))
+    w[~this] = 0.5 * _weights(int((~this).sum()), LAST_HALF)
+    return w
+
+
 def _per36(df: pl.DataFrame, col: str) -> float | None:
     d = df.drop_nulls(col)
     return float(d[col].sum() / d["minutes"].sum() * 36) if d.height and d["minutes"].sum() > 0 else None
@@ -235,10 +248,21 @@ def _streak(absent_sets: list, m: int) -> int:
     return n
 
 
+# How much an extra absence (missing then, plays tonight) inflates his minutes, by position pair: a missing big frees a
+# big's minutes, a missing guard mostly a guard's. Achiuwa 8 Nov: his 15 games without Sabonis (late 2025-26, LaVine/Monk/
+# Hunter/Murray all out) were weighted 0.03-0.13 by a flat 0.5 per absence → projection 26.8 min; he played 36.
+EXTRA_OUT_BY_POS = {frozenset("G"): 0.5, frozenset("W"): 0.5, frozenset("B"): 0.5, frozenset("GW"): 0.65,
+                    frozenset("WB"): 0.75, frozenset("GB"): 0.9}
+LW_FLOOR = 0.25  # a matching game never counts for less than this
+
+
 def _lineup_weights(sample: pl.DataFrame, pid: int, tonight_in: set | None, id_name: dict) -> pl.DataFrame:
-    """Each matching game's weight and who else was missing then but plays tonight."""
+    """Each matching game's weight and who else was missing then but plays tonight (position-aware)."""
     extra = [sorted(set(a) & (tonight_in or set()) - {pid}) for a in sample["absent_wide"].to_list()]
-    return sample.with_columns(pl.Series("lw", [EXTRA_OUT_W ** len(e) for e in extra], dtype=pl.Float64),
+    me = id_name.get(("grp", pid), "W")
+    lw = [max(LW_FLOOR, float(np.prod([EXTRA_OUT_BY_POS.get(frozenset(me + id_name.get(("grp", m), "W")), EXTRA_OUT_W) for m in e])))
+          for e in extra]
+    return sample.with_columns(pl.Series("lw", lw, dtype=pl.Float64),
                                pl.Series("also_out", [", ".join(id_name.get(m, str(m)) for m in e) for e in extra], dtype=pl.Utf8))
 
 
@@ -309,9 +333,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
     proj_min, pot36, rc36, pts36, n_comp = p_min, p_pot, p_rc, p_pts, 0
     if sample is not None and sample.height:
         lw = sample["lw"].to_numpy()
-        w = _weights(sample.height) * lw
-        if last_comp is not None:  # last season counts half
-            w = w * np.where(sample["season_id"].to_numpy() == SEASON, 1.0, 0.5)
+        w = _season_weights(sample["season_id"].to_numpy()) * lw
         this_s = sample["season_id"].to_numpy() == SEASON
         n_comp = round(float(lw[this_s].sum() + 0.5 * lw[~this_s].sum()))  # effective games: extra absences count less
         k = 3.0  # pseudo-games of baseline
@@ -323,7 +345,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
             d = sample.drop_nulls(col)
             if not d.height:
                 return prior
-            ww = _weights(d.height) * np.where(d["season_id"].to_numpy() == SEASON, 1.0, 0.5) * d["lw"].to_numpy()
+            ww = _season_weights(d["season_id"].to_numpy()) * d["lw"].to_numpy()
             # remove each matching game's opponent effect, so tonight's opponent is applied to a neutral rate
             of = np.array([(opp_tab or {}).get(o, {}).get(stat_of[col], 1.0) for o in d["opponent"].to_list()])
             v = float(np.sum(d[col].to_numpy() / of * ww) / np.sum(d["minutes"].to_numpy() * ww) * 36)

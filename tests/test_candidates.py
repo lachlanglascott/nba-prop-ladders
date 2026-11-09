@@ -214,8 +214,11 @@ def test_lineup_weights_extra_absences_count_less():
     from nba_ladders.spots import EXTRA_OUT_W, _lineup_weights
 
     s = pl.DataFrame({"absent_wide": [[1], [1, 2, 3], [1, 9]]})
-    out = _lineup_weights(s, pid=5, tonight_in={2, 3}, id_name={2: "Horford", 3: "Williams"})
+    out = _lineup_weights(s, pid=5, tonight_in={2, 3}, id_name={2: "Horford", 3: "Williams", ("grp", 5): "W", ("grp", 2): "W", ("grp", 3): "W"})
     assert out["lw"].to_list() == [1.0, EXTRA_OUT_W ** 2, 1.0]  # 9 isn't playing tonight: same lineup
+    big = _lineup_weights(pl.DataFrame({"absent_wide": [[1, 2, 3, 4, 5]]}), pid=9, tonight_in={1, 2, 3, 4},
+                          id_name={("grp", 9): "B", ("grp", 1): "G", ("grp", 2): "G", ("grp", 3): "W", ("grp", 4): "W"})
+    assert 0.4 < big["lw"][0] < 0.5  # four guards/wings out barely inflates a big's minutes (Achiuwa)
     assert out["also_out"].to_list() == ["", "Horford, Williams", ""]
 
 
