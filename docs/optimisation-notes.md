@@ -3,6 +3,14 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 9 Nov (after 8 Nov): record 10/28, +13.7u, honest expected 7.9; card 2/4
+- **Strength bets won, combos lost on the weaker leg:** Achiuwa 8+ reb (14) W but 10p/7r L (7 pts); Ausar 11 reb but 3 ast (7r/5a L);
+  Keyonte 6r/6a one rebound short. Burries 8+ reb, Sharpe 5+ ast, Acuff 9+ ast all W. TODO: combo weak leg needs own hit rate ≥ 35%.
+- **Dosunmu without Edwards is a scorer:** 1/2/4 reb (21/26/26 pts) in his last 3. TODO: weight recent rebound chances more when the role is new.
+- **Bench news over-reaction:** pulled Ziaire 13+ pts; he scored 17 in 21 min. Rule: start/bench = ±3-4 min both ways; don't pull a tip
+  unless the price passes its take-at.
+- Paul Reed: 10 reb in 20 min straight after the "deferral, not luck" read. One game; keep watching.
+
 ## 8 Nov late: P/R ladder for bigs
 - **Rare lines can't be card tips** (own hit rate < 15%): Sharpe 8+ ast (2/9, 0/62) reached the card because ranking only
   penalised rare lines among a player's own bets. They're now leans (filler, 0.25u).
