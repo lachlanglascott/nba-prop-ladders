@@ -50,6 +50,17 @@ KEY_MPG = 24.0  # a "key" absence for role spots
 CAND_MPG = 15.0  # players considered (recent minutes)
 STAR_PPG = 20.0  # last season: stars are left out (sharply priced; tried back in 7 Nov, user preferred them out 8 Nov)
 OUT_P = 0.70  # P(sits) at which a teammate counts as out tonight
+# Minutes lost when he is on the report himself and plays, beyond normal drift (2025-26, 20+ mpg, vs his previous 10:
+# Questionable -2.15 / Probable -1.1 / Available -1.14 against -0.33 for all games; 14% lose 8+ min vs 9%).
+OWN_STATUS_MIN = {"Questionable": 1.8, "Probable": 0.8, "Available": 0.8}
+
+
+def own_status_cut(st: str, reason: str = "") -> float:
+    if "rest" in (reason or "").lower():  # a rest risk who plays is a normal game (measured on injury listings only)
+        return 0.0
+    return next((v for k, v in OWN_STATUS_MIN.items() if (st or "").startswith(k)), 0.0)
+
+
 SAFE_P = 0.60  # the player himself: P(sits) below this (props are void if he doesn't play; uncertainty costs confidence)
 # Market calibration: actual hit rate / implied probability by price, 664k Sportsbet ladder rungs 2024-26
 # (alt overs are priced short, more so at longer odds). Used to turn a price into the market's real probability.
@@ -847,6 +858,8 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
                 verb = "starting" if shift[pid] > 0 else "coming off the bench"
                 a["sits"].append({"kind": "role" if shift[pid] > 0 else "news", "news": True,
                                   "text": f"{verb} tonight (lineup news): {shift[pid]:+.1f} min"})
+            if a is not None and (cut := own_status_cut(*status.get(pid, ("", 0, ""))[::2])):
+                a["proj_min"] -= cut  # he plays through it, on fewer minutes (Allen 9 Nov: Q knee, 19 min vs 31)
             if a is not None:
                 a["star"] = last_ppg.get(pid, 0) >= STAR_PPG  # stars are in, but a star with no angle ranks behind the second tier
             if a is None:

@@ -264,3 +264,12 @@ def test_min_price_and_leg_floor_constants():
 
     assert 0.15 <= LEG_FLOOR <= 0.25  # lottery legs out, not "weak stats" (that rule failed on 11 combos)
     assert 3.0 <= NEWS_MIN <= 4.0  # start/bench news = a modest shift both ways
+
+
+def test_own_status_minutes_cut():
+    from nba_ladders.spots import own_status_cut
+
+    assert own_status_cut("Questionable") == 1.8
+    assert own_status_cut("Probable") == 0.8
+    assert own_status_cut("") == own_status_cut("Out") == 0.0
+    assert own_status_cut("Questionable", "B2B rest (not on report): sat 3 of 4 second nights") == 0.0

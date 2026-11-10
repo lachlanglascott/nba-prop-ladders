@@ -115,3 +115,20 @@ def test_backup_big_games_flags_starter_out(team):
     assert bg.filter(pl.col("starter_out"))["game_id"].to_list() == ["g3"]
     out = rung_rates(bg, ["starter_out"]).filter(pl.col("starter_out")).row(0, named=True)
     assert out["n"] == 1 and out["p10_10"] == 1.0 and out["p12_12"] == 1.0
+
+
+def test_refresh_same_day_refetches_stale_snapshot(tmp_path):
+    """AU mornings pull while US games are live; a later refresh that day must fetch again, not reuse it."""
+    import os
+    import time
+
+    fetch = FakeFetch()
+    d = date(2026, 11, 10)
+    get_league_gamelog("2026-27", refresh=True, raw_dir=tmp_path, fetch=fetch, today=d)
+    (old,) = tmp_path.iterdir()
+    stale = time.time() - 11 * 3600
+    os.utime(old, (stale, stale))
+    newer = get_league_gamelog("2026-27", refresh=True, raw_dir=tmp_path, fetch=fetch, today=d)
+    assert newer == {"call": 2}
+    assert json.loads(old.read_text()) == {"call": 1}  # append-only: the morning file is untouched
+    assert get_league_gamelog("2026-27", raw_dir=tmp_path, fetch=fetch, today=d) == {"call": 2}  # latest wins

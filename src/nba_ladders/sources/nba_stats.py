@@ -6,7 +6,7 @@ completed season is fetched once; the current season gets a new dated snapshot p
 
 import json
 import time
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import truststore
@@ -49,6 +49,9 @@ def _fetch_player_index(season: str) -> dict:
     return playerindex.PlayerIndex(season=season, timeout=60).get_dict()
 
 
+REFRESH_MAX_AGE = 3600  # seconds: a refresh reuses a snapshot younger than this
+
+
 def snapshot_path(season: str, season_type: str, as_of: date, raw_dir: Path = RAW_DIR) -> Path:
     slug = season_type.lower().replace(" ", "_")
     return raw_dir / f"{season}_{slug}_{as_of.isoformat()}.json"
@@ -67,8 +70,12 @@ def _cached(season, season_type, fetch, *, refresh, raw_dir, today) -> dict:
         return json.loads(existing.read_text())
 
     path = snapshot_path(season, season_type, today, raw_dir)
-    if path.exists():
-        return json.loads(path.read_text())
+    # reuse only a fresh snapshot: keyed by local date, an AU-morning pull (US games still live) would
+    # otherwise be reused all day (10 Nov 2026: 9 Nov ET games missing at 10pm AEDT)
+    if existing and existing.stem.startswith(path.stem) and time.time() - existing.stat().st_mtime < REFRESH_MAX_AGE:
+        return json.loads(existing.read_text())
+    if path.exists():  # append-only: a later same-day pull gets its own file (sorts after the plain date)
+        path = path.with_name(f"{path.stem}T{datetime.now():%H%M%S}.json")
 
     payload = fetch()
     raw_dir.mkdir(parents=True, exist_ok=True)

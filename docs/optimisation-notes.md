@@ -3,6 +3,18 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 10 Nov (after 9 Nov): card 0/5 (expected 1.4), IF 2/6 +2.4u; live 12/39, +11.1u, honest expected 10.8
+- **Own status costs minutes:** Allen (Q knee) 19 min vs 31 projected. 2025-26, 20+ mpg players who played: Questionable
+  −2.15 min vs previous 10 (all games −0.33), Probable/Available −1.1; 14% lost 8+ min (vs 9%) → `OWN_STATUS_MIN`
+  (Q 1.8, P/Available 0.8; rest listings excluded). Previously only confidence was cut.
+- **Strong-leg single vs combo, live:** combos 0/6 (exp 1.1, −6.0u), same-stat singles 1/6 (exp 2.0, −2.9u). Amen 9r/4a L
+  with 9 reb. Proposed: bounce spots lead with the single on the bounce stat (awaiting the user's call).
+- **50/50 star teammate:** Davis (55%) played, 44 pts; George had the minutes (35) but 2 ast. Watch: a role spot next to a
+  coin-flip star is really a conditional.
+- **Estimated role** (Thybulle, no game without Grimes) 23 vs 31 min: third miss; C grade size was right.
+- **Pull bug:** raw snapshots were keyed by local date, so the AU-morning pull (US games live) was reused all day →
+  refresh now refetches unless the snapshot is < 1 hour old (later same-day files get a time suffix; raw stays append-only).
+
 ## 10 Nov: per-minute volume in a new role (Dosunmu TODO) — answer: flatter, not more recent
 - Tested offline (`uv run python -m nba_ladders.rate_eval`): 21k games 2024-26 where a key teammate (24+ mpg) was out,
   predicting rebound chances / potential assists / points (count given actual minutes) from his earlier games without
