@@ -283,3 +283,24 @@ def test_lead_with_single_keeps_combos_listed():
     lean = {"kind": "single", "bet": "6+ ast", "lean": True}
     assert lead_with_single([sgm, lean, single]) == [single, sgm, lean]
     assert lead_with_single([sgm, lean]) == [sgm, lean]  # no firm single: the combo still leads
+
+
+def test_side_blowout_curves():
+    import numpy as np
+
+    from nba_ladders.blowout import side_base, side_shift
+
+    big_win, big_loss = np.array([22.0]), np.array([-22.0])
+    assert side_shift(big_win, 33)[0] < -3 and side_shift(big_loss, 33)[0] < -3  # starters sit either way
+    assert side_shift(big_loss, 14)[0] > side_shift(big_win, 14)[0]  # the losers' bench gets the garbage time
+    assert abs(side_base(14) - 1.0) < 0.3
+
+
+def test_price_plays_one_per_player_positive_ev():
+    from nba_ladders.spots import price_plays
+
+    bet = lambda name, ev, price=3.0: {"bet": "10+ reb", "kind": "single", "price": price, "p": (1 + ev) / price, "ev": ev, "own_hr": 0.4}
+    near = [{"name": "A", "bets": [bet("A", 0.10), bet("A", 0.20)]}, {"name": "B", "bets": [bet("B", 0.02)]},
+            {"name": "C", "bets": [bet("C", 0.15)]}, {"name": "D", "bets": [bet("D", 0.30)]}]
+    out = price_plays({"near": near}, card=[({"name": "D"}, {})])
+    assert [a["name"] for a, _ in out] == ["A", "C"]  # D is on the card, B is under +4%

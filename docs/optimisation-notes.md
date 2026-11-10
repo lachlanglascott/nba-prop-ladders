@@ -3,6 +3,17 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 10 Nov evening: price plays section; side-aware blowout minutes; singles lead
+- **Price plays (top 5)** on the slate: no-angle projection-vs-price bets, one per player, honest EV ≥ +4%, Kelly-ranked,
+  0.25u, graded as `PP`. 12-15 mpg players (backup bigs) now enter this pool only (spots still need 15+).
+- **Blowout minutes by side** (`blowout.CURVE_SIDE`, 69k player-games 2023-26): starters lose 2-6 min at 15+ either side;
+  the *winners'* 12-18 mpg bench does not gain (+1.0 close → +0.0-0.4 at 10-25); the losers' bench (+1.2-2.8) and the
+  deep bench (<12, both sides at 25+) do. The simulator draws a signed margin ~ N(−spread, 12.5).
+- **Card bet leads with the best firm single** on the spot's stats; combos stay listed (user call, 10 Nov). Replay 4-9 Nov:
+  same 9/28 hits, honest exp 7.9 → 8.4, P&L +7.9 → +5.9u (McDaniels' SGM win became a 20+ pts loss).
+- TODO: last season's matching games only count on the same team. Jaquez without Herro at MIA 2025-26 (47 games: 30.0 min
+  vs 25.5, 20+ pts 36% vs 18%) is invisible now that both are at MIL → match on the teammate, not the team.
+
 ## 10 Nov (after 9 Nov): card 0/5 (expected 1.4), IF 2/6 +2.4u; live 12/39, +11.1u, honest expected 10.8
 - **Own status costs minutes:** Allen (Q knee) 19 min vs 31 projected. 2025-26, 20+ mpg players who played: Questionable
   −2.15 min vs previous 10 (all games −0.33), Probable/Available −1.1; 14% lost 8+ min (vs 9%) → `OWN_STATUS_MIN`

@@ -48,6 +48,8 @@ LINEUP_MPG = 12.0  # wider net for "was the rest of the lineup the same?" (Horfo
 EXTRA_OUT_W = 0.5  # a matching game counts this much less per extra teammate missing then who plays tonight
 KEY_MPG = 24.0  # a "key" absence for role spots
 CAND_MPG = 15.0  # players considered (recent minutes)
+PRICE_MPG = 12.0  # 12-15 min players (backup bigs: Drummond 13) are priced too, for the price-play section only
+PRICE_N = 5  # price plays listed on the slate
 STAR_PPG = 20.0  # last season: stars are left out (sharply priced; tried back in 7 Nov, user preferred them out 8 Nov)
 OUT_P = 0.70  # P(sits) at which a teammate counts as out tonight
 # Minutes lost when he is on the report himself and plays, beyond normal drift (2025-26, 20+ mpg, vs his previous 10:
@@ -447,14 +449,13 @@ def opp_comps(cur: pl.DataFrame, grp: dict, opp: str, g: str, n: int = 5) -> dic
 
 def simulate(a: dict, n: int = N_SIM) -> dict:
     """Minutes (with the spread's blowout curve) then Poisson counts at the projected rates."""
-    from nba_ladders.blowout import CURVE, MID, SD_MARGIN, TYPICAL_SPREAD, role
+    from nba_ladders.blowout import SD_MARGIN, side_base, side_shift
     from nba_ladders.sim import draw_points
 
     m = RNG.normal(a["proj_min"], a["min_sd"], n)
-    if a["spread"] is not None:
-        curve = CURVE[role(a["proj_min"])]
-        base = np.interp(np.abs(RNG.normal(TYPICAL_SPREAD, SD_MARGIN, 20_000)), MID, curve).mean()
-        m = m + np.interp(np.abs(RNG.normal(abs(a["spread"]), SD_MARGIN, n)), MID, curve) - base
+    if a["spread"] is not None:  # margin ~ N(-spread, 12.5); shift by role and by winning/losing side (blowout.CURVE_SIDE)
+        margin = RNG.normal(-a["spread"], SD_MARGIN, n)
+        m = m + side_shift(margin, a["proj_min"]) - side_base(a["proj_min"])
     m = np.clip(m, 0, 48)
     r = a["rate"]
     return {"minutes": m, "ast": RNG.poisson(r["ast"] * m), "reb": RNG.poisson(r["reb"] * m),
@@ -843,7 +844,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
         t_in = {p for p in wide if p not in out_t and status.get(p, ("", 0, ""))[1] < SAFE_P}
         cands = cur.filter(pl.col("team") == team).group_by("player_id").agg(pl.col("minutes").tail(5).mean().alias("m5"))
         for pid, m5 in cands.iter_rows():
-            if team_now.get(pid) != team or m5 < CAND_MPG or pid in out_t:
+            if team_now.get(pid) != team or m5 < PRICE_MPG or pid in out_t:
                 continue
             own_p = status.get(pid, ("", 0, ""))[1]
             if own_p >= SAFE_P:
@@ -872,7 +873,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
                 a["star"] = last_ppg.get(pid, 0) >= STAR_PPG  # stars are in, but a star with no angle ranks behind the second tier
             if a is None:
                 continue
-            if not {x["kind"] for x in a["sits"]} & PRIMARY and not forced:
+            if (m5 < CAND_MPG or not {x["kind"] for x in a["sits"]} & PRIMARY) and not forced:
                 # a 3-game volume spike alone regressed (replay: -40%); it only supports a real spot.
                 # These players go to the next-best pool only (projection vs price, no lineup angle).
                 a["opp_line"] = weakness_line(opp, gme, day)
@@ -1009,6 +1010,22 @@ def card_bets(res: dict, n: int = CARD_N, cond: list | None = None) -> list[tupl
     return card
 
 
+def price_plays(res: dict, card: list, n: int = PRICE_N) -> list[tuple[dict, dict]]:
+    """Top n projection-vs-price bets with no lineup angle (the 'near' pool): one per player, honest EV >= MIN_EV,
+    not rare lines or price outliers, ranked by Kelly growth like the card. 0.25u each."""
+    have = {a["name"] for a, _ in card}
+    pool = sorted(((a, b) for a in res.get("near", []) for b in a["bets"]
+                   if not b.get("outlier") and b["ev"] >= MIN_EV and not _rare(b)), key=lambda ab: -growth(ab[1]))
+    out = []
+    for a, b in pool:
+        if a["name"] not in have:
+            have.add(a["name"])
+            out.append((a, b))
+        if len(out) >= n:
+            break
+    return out
+
+
 def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2) -> list[tuple[dict, dict]]:
     """When the card has fewer than MIN_TIPS: the best of the rest, one per player, by honest EV.
     Pool: spots and leans not on the card, conditional bets, and players with no lineup angle
@@ -1109,6 +1126,12 @@ def render(res: dict, cond: list[dict]) -> str:
             continue
         L.append(f"| **{'Lean' if b.get('lean') else b['grade']}** | {'0.25u' if b.get('lean') else STAKE[b['grade']]} | **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | {proj_line(a, b)}{_also_md(a, b)} | "
                  f"{_fmt_bet(sg) if sg else '—'} | {_why(a, b)}" + (f"; {a['opp_line']}" if a.get('opp_line') else "") + " |")
+    pp = price_plays(res, card)
+    if pp:
+        L += ["", "## Price plays (no lineup angle: projection vs price, 0.25u)", "",
+              "| Player | Bet | Projection | Why |", "|---|---|---|---|"]
+        for a, b in pp:
+            L.append(f"| **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | {proj_line(a, b)} | {_why(a, b)} |")
     if res.get("waiting"):
         L += ["", "## Spots waiting for prices (props not posted yet)", ""]
         for a in sorted(res["waiting"], key=lambda a: -a["conf"]):
@@ -1186,6 +1209,10 @@ def save(res: dict, cond: list[dict]) -> None:
                          "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
                          "ev": b["ev"], "grade": "IF", "conf": a["conf"], "card": False, "alt": False,
                          "situations": "if " + c["player"] + " sits", "if_sits": c["player"]})
+    for a, b in price_plays(res, card_bets(res, cond=cond)):
+        rows.append({"day": res["day"], "player": a["name"], "team": a["team"], "kind": b["kind"], "bet": b["bet"],
+                     "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
+                     "ev": b["ev"], "grade": "PP", "conf": a["conf"], "card": False, "alt": False, "situations": "price"})
     for a, b in next_best(res, card_bets(res, cond=cond), cond):  # graded too, so the trend category gets a live record
         if b.get("if_sits"):
             continue

@@ -263,6 +263,18 @@ def render_html(res: dict, cond: list[dict]) -> str:
                  f'<div class="betcol">{_bet_html(b)}{_proj(a, b)}' + (f'<div class="sgm">SGM version: {_bet_html(sg, big=False)}</div>' if sg else "")
                  + f'</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
     H.append("</div>")
+    from nba_ladders.spots import price_plays
+
+    pp = price_plays(res, card)
+    if pp:
+        H.append('<h2>Price plays: top 5</h2><p class="note">No lineup angle: our projection (minutes with tonight\'s blowout risk) '
+                 'against the price. A step below the card: <b>0.25u</b>, at the <span class="take">take at</span> price or better.</p>'
+                 '<div class="card-list">')
+        for i, (a, b) in enumerate(pp, 1):
+            H.append(f'<div class="row"><span class="badge C">{i}</span><div class="who"><b>{esc(a["name"])}</b>'
+                     f'<small>{esc(a["team"])} vs {esc(a["opp"])} · stake 0.25u</small><div class="chips"><span class="chip">No lineup angle</span></div></div>'
+                     f'<div class="betcol">{_bet_html(b)}{_proj(a, b)}</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
+        H.append("</div>")
     wait = res.get("waiting", [])
     if wait:
         H.append('<h2>Spots waiting for prices</h2><p class="note">Real lineup spots in games where the books haven\'t posted '
