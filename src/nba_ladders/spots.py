@@ -716,7 +716,15 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
     sgm = next((b for b in best if b["kind"] == "SGM"), None)
     if sgm is not None and sgm not in main:
         main.append(sgm)
-    return main
+    return lead_with_single(main)
+
+
+def lead_with_single(bets: list[dict]) -> list[dict]:
+    """The card bet is the best firm single on the spot's own stats; combos stay listed as the SGM version.
+    Live 4-9 Nov: combos 0/6 (exp 1.1, -6.0u) vs the same-stat single 1/6 (exp 2.0, -2.9u); the strong leg kept
+    landing and the weaker leg kept missing (Amen 9r/4a with 9 reb, Achiuwa 10p/7r with 14 reb). Stable: order kept otherwise."""
+    firm = lambda b: b["kind"] == "single" and not b.get("lean") and not b.get("outlier") and not b.get("alt")
+    return sorted(bets, key=lambda b: not firm(b))
 
 
 BETR_RUNGS = {"pts": (8, 10, 12, 15, 18, 20, 25), "reb": (3, 5, 7, 10, 12), "ast": (3, 5, 7, 10)}

@@ -273,3 +273,13 @@ def test_own_status_minutes_cut():
     assert own_status_cut("Probable") == 0.8
     assert own_status_cut("") == own_status_cut("Out") == 0.0
     assert own_status_cut("Questionable", "B2B rest (not on report): sat 3 of 4 second nights") == 0.0
+
+
+def test_lead_with_single_keeps_combos_listed():
+    from nba_ladders.spots import lead_with_single
+
+    sgm = {"kind": "SGM", "bet": "9r/4a"}
+    single = {"kind": "single", "bet": "9+ reb"}
+    lean = {"kind": "single", "bet": "6+ ast", "lean": True}
+    assert lead_with_single([sgm, lean, single]) == [single, sgm, lean]
+    assert lead_with_single([sgm, lean]) == [sgm, lean]  # no firm single: the combo still leads
