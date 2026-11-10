@@ -212,15 +212,20 @@ def _weights(n: int, half: float = 3.0) -> np.ndarray:
 
 
 LAST_HALF = 8.0  # recency half-life (games) inside last season's matching games: 3 made 15 games count like ~2
+# Per-minute volume (rebound chances, potentials, points) in matching games: almost flat recency and no lineup
+# discount. rate_eval on 21k new-role games 2024-26: half-life 10 with no lineup weights cut count error 1-3% on all
+# three stats at every sample size vs half-life 3 x lineup weights; a shorter half-life (1.5) was worse. Dosunmu's
+# 4-5 rebound chances after 16/16 (Nov 2026) is noise until it persists. Minutes keep half-life 3 and lineup weights.
+RATE_HALF = 10.0
 
 
-def _season_weights(season_ids: np.ndarray) -> np.ndarray:
-    """Recency weights for a matching sample (oldest first): this season half-life 3 games; last season counts half,
-    with a slower half-life so a long run of matching games (Achiuwa without Sabonis, 15) isn't reduced to two."""
+def _season_weights(season_ids: np.ndarray, half: float = 3.0) -> np.ndarray:
+    """Recency weights for a matching sample (oldest first): this season half-life `half` games; last season counts
+    half, with a slower half-life so a long run of matching games (Achiuwa without Sabonis, 15) isn't reduced to two."""
     this = season_ids == SEASON
     w = np.empty(len(season_ids))
-    w[this] = _weights(int(this.sum()))
-    w[~this] = 0.5 * _weights(int((~this).sum()), LAST_HALF)
+    w[this] = _weights(int(this.sum()), half)
+    w[~this] = 0.5 * _weights(int((~this).sum()), max(half, LAST_HALF))
     return w
 
 
@@ -345,7 +350,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
             d = sample.drop_nulls(col)
             if not d.height:
                 return prior
-            ww = _season_weights(d["season_id"].to_numpy()) * d["lw"].to_numpy()
+            ww = _season_weights(d["season_id"].to_numpy(), RATE_HALF)  # no lineup discount for rates (rate_eval)
             # remove each matching game's opponent effect, so tonight's opponent is applied to a neutral rate
             of = np.array([(opp_tab or {}).get(o, {}).get(stat_of[col], 1.0) for o in d["opponent"].to_list()])
             v = float(np.sum(d[col].to_numpy() / of * ww) / np.sum(d["minutes"].to_numpy() * ww) * 36)

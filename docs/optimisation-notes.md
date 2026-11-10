@@ -3,6 +3,19 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 10 Nov: per-minute volume in a new role (Dosunmu TODO) — answer: flatter, not more recent
+- Tested offline (`uv run python -m nba_ladders.rate_eval`): 21k games 2024-26 where a key teammate (24+ mpg) was out,
+  predicting rebound chances / potential assists / points (count given actual minutes) from his earlier games without
+  that teammate, shrunk to his normal-lineup rate.
+- **Shorter recency was worse** (half-life 1.5: +1-6% error). Best at every sample size (1-2, 3-6, 7+ matching games):
+  **half-life 10 with no lineup discount** (−1 to −3% error on all three stats vs half-life 3 × lineup weights).
+  De-inflating games by a measured per-absence lift was worse than either (lifts are noisy).
+- Change: rates in matching games use `RATE_HALF = 10` and no lineup weights; **minutes keep half-life 3 and the
+  position-overlap lineup weights** (not re-tested here).
+- Replay 4-8 Nov: identical card (23 tips, 8 hits), honest p moved ≤0.5pp. Dosunmu's rebound-chance projection goes
+  10.7 → 11.0: his 4/5-chance games are treated as noise until they persist. Keep watching; if he's under 7 chances for
+  another 3-4 games, the role really has changed and the matching sample will show it.
+
 ## 9 Nov night: lineup weights for tank-season samples
 - Extra absences now discount a matching game **by position overlap** (same position ×0.5, guard-wing ×0.65, wing-big ×0.75,
   guard-big ×0.9) with a **0.25 floor**, replacing the flat 0.5 per absence (Achiuwa's 15 games had been weighted 0.03-0.13).
@@ -126,6 +139,7 @@ from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 ## Open questions / next
 - Starter flags (box score START_POSITION) for starting-news pricing.
 - Blowout weight on fringe minutes, for favourites' benches as well as underdogs.
-- Dosunmu 7+ reb has lost twice with the minutes there (1 and 2 rebounds): check his rebound chances
-  once 6 Nov tracking posts, in case his rebounding role without Edwards isn't what the 12/9 games implied.
+- Dosunmu without Edwards: rebound chances 16, 16, 4, 5, 7 (8 Nov). Backtest says don't chase two games
+  (10 Nov); revisit if it stays under 7 for 3-4 more.
+- Minutes weighting in matching games (half-life 3, lineup weights) hasn't had the rate_eval treatment: test it the same way.
 - Recalibrate the model (raw model expected 7.2 vs 6 actual) once there are ~50 live bets.
