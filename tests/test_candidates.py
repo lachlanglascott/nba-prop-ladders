@@ -304,3 +304,12 @@ def test_price_plays_one_per_player_positive_ev():
             {"name": "C", "bets": [bet("C", 0.15)]}, {"name": "D", "bets": [bet("D", 0.30)]}]
     out = price_plays({"near": near}, card=[({"name": "D"}, {})])
     assert [a["name"] for a, _ in out] == ["A", "C"]  # D is on the card, B is under +4%
+
+
+def test_price_plays_prefer_single():
+    from nba_ladders.spots import price_plays
+
+    sgm = {"bet": "9r/3a", "kind": "SGM", "price": 4.8, "p": 0.27, "ev": 0.29}
+    single = {"bet": "9+ reb", "kind": "single", "price": 3.0, "p": 0.36, "ev": 0.08, "own_hr": 0.4}
+    out = price_plays({"near": [{"name": "Amen", "bets": [sgm, single]}]}, card=[])
+    assert out[0][1]["bet"] == "9+ reb"

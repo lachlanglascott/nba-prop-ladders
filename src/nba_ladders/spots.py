@@ -1014,16 +1014,14 @@ def price_plays(res: dict, card: list, n: int = PRICE_N) -> list[tuple[dict, dic
     """Top n projection-vs-price bets with no lineup angle (the 'near' pool): one per player, honest EV >= MIN_EV,
     not rare lines or price outliers, ranked by Kelly growth like the card. 0.25u each."""
     have = {a["name"] for a, _ in card}
-    pool = sorted(((a, b) for a in res.get("near", []) for b in a["bets"]
-                   if not b.get("outlier") and b["ev"] >= MIN_EV and not _rare(b)), key=lambda ab: -growth(ab[1]))
-    out = []
-    for a, b in pool:
-        if a["name"] not in have:
-            have.add(a["name"])
-            out.append((a, b))
-        if len(out) >= n:
-            break
-    return out
+    pool = []
+    for a in res.get("near", []):
+        if a["name"] in have:
+            continue
+        ok = sorted((b for b in a["bets"] if not b.get("outlier") and b["ev"] >= MIN_EV and not _rare(b)), key=lambda b: -growth(b))
+        if ok:  # his best firm single leads, as on the card; a combo only when no single clears
+            pool.append((a, lead_with_single([{**b, "lean": False} for b in ok])[0]))
+    return sorted(pool, key=lambda ab: -growth(ab[1]))[:n]
 
 
 def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2) -> list[tuple[dict, dict]]:
