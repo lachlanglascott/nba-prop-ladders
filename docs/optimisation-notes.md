@@ -3,6 +3,15 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 11 Nov (after 10 Nov): card 2/3 +3.7u, IF 0/2, price plays 0/5 (exp 1.3); live 14/44, +12.8u, honest expected 12.4
+- Stirtz 9+ / McCain 18+ (OKC without 4 starters) W; Bridges 4+ ast L in a 32-pt NYK win (17 min); da Silva void.
+- **Hand overrides lost to the engine:** Cain 20 min (engine 19, my scaling 28); Collier 24 min (my read from last season 32).
+  Rule: no hand-scaled minutes. The joint-absence fallback (Suggs + da Silva → 3 last-season games) gets a backtest before
+  any change.
+- Peterson 25 pts: market median 21-22 vs model 15.9 on a rookie's usage jump. Market right; passing was right.
+- Drummond 10+ reb at Betr $5.90 (others $3.30-4.00) W with 14 reb in 16 min: the outlier price was live.
+- Price plays 0/5 night one (all big rebound overs). Judge at ~30 bets; consider one per game / per stat.
+
 ## 10 Nov evening: price plays section; side-aware blowout minutes; singles lead
 - **Price plays (top 5)** on the slate: no-angle projection-vs-price bets, one per player, honest EV ≥ +4%, Kelly-ranked,
   0.25u, graded as `PP`. 12-15 mpg players (backup bigs) now enter this pool only (spots still need 15+).
