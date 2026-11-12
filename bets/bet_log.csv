@@ -11,3 +11,6 @@ date,player,team,opponent,bet_type,legs,odds,stake,scenario,thesis,result,actual
 2026-10-31,Kel'el Ware,MIL,CLE,SGM,REB 10+ & PTS 12+,10.00,50,matchup,"16.7 reb chances over last 3 in ~22 min; Turner converting poorly",W,"24 min 19p/10r/3a","Slate had 12+ reb marginal (+11%) and 30+ P+R negative; the 12p/10r combo shape won."
 2026-10-31,Jeremiah Fears,NOP,ATL,SGM,AST 5+ & REB 5+ & PTS 15+,15.00,50,role_change,"Murray ruled out: +minutes as lead guard",W,"31 min 20p/5r/7a","SGM reload promo (not paid)."
 2026-10-31,Onyeka Okongwu,ATL,NOP,single,10+ REB,4.10,79.68,foul_trouble_opp,"Slate: foul spot (Landale 4.8 fouls/36 vs NOP 26.8 FTA/g); 10+ reb $4.10 Betr, model fair $2.94",W,"28 min 6p/10r/1a","Lost separately on Okongwu P/R alts (6p/10r = 16 P+R)."
+2026-11-11,Jake LaRavia,LAL,MIL,SGM,"AST 6+ & REB 8+",,,matchup,user's own matchup read (Sportsbet),W,"0 pts / 9 reb / 6 ast / 21 min",legs read from "6/8r"; odds and stake to confirm
+2026-11-11,Anthony Black,ORL,UTA,SGM,"REB 7+ & AST 7+",10.0,,,user's own pick,W,"22 pts / 7 reb / 8 ast / 39 min",legs read from "7/7" (7p/7a also wins); stake and scenario to confirm
+2026-11-11,Day'Ron Sharpe,BKN,NOP,SGM,"6 / 8 ast",,,blowout_risk,user's own pick; lost to the blowout,L,"15 pts / 4 reb / 5 ast / 19 min",BKN won by 34 (145-111); first leg's stat and odds to confirm

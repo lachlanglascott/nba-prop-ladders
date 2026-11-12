@@ -222,6 +222,22 @@ def test_lineup_weights_extra_absences_count_less():
     assert out["also_out"].to_list() == ["", "Horford, Williams", ""]
 
 
+def test_lineup_weights_drop_games_the_starting_big_missed():
+    """Kalkbrenner 12 Nov: his one Miller/Schroder-out game (35 min, 15 reb) also had Diabate out, who plays
+    tonight. A backup big's games without the big ahead of him are a different role: they don't count (user)."""
+    import polars as pl
+
+    from nba_ladders.spots import _lineup_weights
+
+    ids = {("grp", 9): "B", ("grp", 1): "B", ("grp", 2): "W", ("mpg", 9): 19.0, ("mpg", 1): 30.0, ("mpg", 2): 30.0}
+    out = _lineup_weights(pl.DataFrame({"absent_wide": [[5, 1], [5], [5, 2]]}), pid=9, tonight_in={1, 2}, id_name=ids)
+    assert out["lw"].to_list()[0] == 0.0  # the starting centre was out then: not tonight's role
+    assert out["lw"].to_list()[1] == 1.0 and 0 < out["lw"].to_list()[2] < 1
+    listed_f = _lineup_weights(pl.DataFrame({"absent_wide": [[5, 2]]}), pid=9, tonight_in={2},
+                               id_name={**ids, ("r36", 2): 15.0})  # listed F, rebounds like a centre (Diabate)
+    assert listed_f["lw"][0] == 0.0
+
+
 def test_conditional_keeps_best_bet_per_stat():
     from nba_ladders.spots import _one_per_player
 
@@ -299,11 +315,25 @@ def test_side_blowout_curves():
 def test_price_plays_one_per_player_positive_ev():
     from nba_ladders.spots import price_plays
 
-    bet = lambda name, ev, price=3.0: {"bet": "10+ reb", "kind": "single", "price": price, "p": (1 + ev) / price, "ev": ev, "own_hr": 0.4}
-    near = [{"name": "A", "bets": [bet("A", 0.10), bet("A", 0.20)]}, {"name": "B", "bets": [bet("B", 0.02)]},
-            {"name": "C", "bets": [bet("C", 0.15)]}, {"name": "D", "bets": [bet("D", 0.30)]}]
+    bet = lambda stat, ev, price=3.0: {"bet": f"10+ {stat}", "kind": "single", "price": price, "p": (1 + ev) / price, "ev": ev, "own_hr": 0.4}
+    near = [{"name": "A", "bets": [bet("reb", 0.10), bet("reb", 0.20)]}, {"name": "B", "bets": [bet("pts", 0.02)]},
+            {"name": "C", "bets": [bet("pts", 0.15)]}, {"name": "D", "bets": [bet("ast", 0.30)]}]
     out = price_plays({"near": near}, card=[({"name": "D"}, {})])
     assert [a["name"] for a, _ in out] == ["A", "C"]  # D is on the card, B is under +4%
+
+
+def test_price_plays_one_per_game_and_stat():
+    """0/10 over 10-11 Nov, three rebound overs a night and two from one game (Amen, Eason): cap both (user, 10 Nov)."""
+    from nba_ladders.spots import price_plays
+
+    bet = lambda b, ev: {"bet": b, "kind": "SGM" if "/" in b else "single", "price": 3.0, "p": (1 + ev) / 3.0, "ev": ev, "own_hr": 0.4}
+    near = [{"name": "Amen", "team": "HOU", "opp": "GSW", "bets": [bet("9+ reb", 0.21)]},
+            {"name": "Eason", "team": "HOU", "opp": "GSW", "bets": [bet("10+ pts", 0.20)]},  # same game
+            {"name": "Ayton", "team": "WAS", "opp": "IND", "bets": [bet("7+ reb", 0.19)]},  # second rebound play
+            {"name": "Castle", "team": "SAS", "opp": "CHI", "bets": [bet("8+ ast", 0.17)]},
+            {"name": "Boozer", "team": "MEM", "opp": "DEN", "bets": [bet("9r/7a", 0.15)]}]
+    out = price_plays({"near": near}, card=[])
+    assert [a["name"] for a, _ in out] == ["Amen", "Castle", "Boozer"]
 
 
 def test_price_plays_prefer_single():

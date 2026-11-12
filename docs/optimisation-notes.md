@@ -3,6 +3,16 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 11 Nov
+- **Backup big's games without the starting big** (Kalkbrenner 12 Nov: his only Miller/Schröder-out game had
+  Diabaté out too, 35 min / 15 reb, and Diabaté plays tonight; user caught it). Relative lineup weights can't
+  discount a game when it's the only one → a big's matching game is dropped if a bigger-minute big was out then
+  and plays tonight. Listed forwards with 11+ reb/36 count as bigs (Diabaté F 11.4).
+- **Price plays 0/10** over 10-11 Nov (honest expected 2.9, market 2.5, raw model 4.2): one per game and one
+  per stat now. Seven of the ten were rebound overs. Review the pool's confidence at ~30.
+- User 3 bets 2/3: LaRavia 6a/8r (matchup), Black 7r/7a $10 (Suggs out: usage went to Black, not Carter),
+  Sharpe lost to a +34 blowout.
+
 ## 11 Nov (after 10 Nov): card 2/3 +3.7u, IF 0/2, price plays 0/5 (exp 1.3); live 14/44, +12.8u, honest expected 12.4
 - Stirtz 9+ / McCain 18+ (OKC without 4 starters) W; Bridges 4+ ast L in a 32-pt NYK win (17 min); da Silva void.
 - **Hand overrides lost to the engine:** Cain 20 min (engine 19, my scaling 28); Collier 24 min (my read from last season 32).

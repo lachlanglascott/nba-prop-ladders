@@ -272,13 +272,21 @@ def _streak(absent_sets: list, m: int) -> int:
 EXTRA_OUT_BY_POS = {frozenset("G"): 0.5, frozenset("W"): 0.5, frozenset("B"): 0.5, frozenset("GW"): 0.65,
                     frozenset("WB"): 0.75, frozenset("GB"): 0.9}
 LW_FLOOR = 0.25  # a matching game never counts for less than this
+BIG_R36 = 11.0  # reb per 36 that make a listed forward a big for "the big ahead of him" (Diabate F 11.4, Giannis, Beringer)
 
 
 def _lineup_weights(sample: pl.DataFrame, pid: int, tonight_in: set | None, id_name: dict) -> pl.DataFrame:
     """Each matching game's weight and who else was missing then but plays tonight (position-aware)."""
     extra = [sorted(set(a) & (tonight_in or set()) - {pid}) for a in sample["absent_wide"].to_list()]
     me = id_name.get(("grp", pid), "W")
-    lw = [max(LW_FLOOR, float(np.prod([EXTRA_OUT_BY_POS.get(frozenset(me + id_name.get(("grp", m), "W")), EXTRA_OUT_W) for m in e])))
+    my_mpg = id_name.get(("mpg", pid), 0.0)
+    # a big's games without the big ahead of him (more minutes, plays tonight) are a different role, not a
+    # discounted match: Kalkbrenner 12 Nov, his only matching game was 35 min / 15 reb with Diabate out
+    # (a "big" here includes forwards who rebound like centres: Diabate is listed F, 11.4 reb per 36)
+    big = lambda m: id_name.get(("grp", m), "W") == "B" or id_name.get(("r36", m), 0.0) >= BIG_R36
+    ahead = lambda m: me == "B" and big(m) and id_name.get(("mpg", m), 0.0) > my_mpg
+    lw = [0.0 if any(ahead(m) for m in e) else
+          max(LW_FLOOR, float(np.prod([EXTRA_OUT_BY_POS.get(frozenset(me + id_name.get(("grp", m), "W")), EXTRA_OUT_W) for m in e])))
           for e in extra]
     return sample.with_columns(pl.Series("lw", lw, dtype=pl.Float64),
                                pl.Series("also_out", [", ".join(id_name.get(m, str(m)) for m in e) for e in extra], dtype=pl.Utf8))
@@ -331,12 +339,14 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
         parts = [comp] + ([last_comp] if last_comp is not None else [])
         sample = pl.concat([x.select(comp.columns) for x in parts], how="vertical_relaxed").sort("game_date")
         sample = _lineup_weights(sample, pid, tonight_in, id_name)
+        sample = sample.filter(pl.col("lw") > 0) if sample["lw"].max() > 0 else None
         why = "games with " + ", ".join(sorted(id_name.get(m, str(m)) for m in key_new)) + " out" + (
             f" ({comp.height} this season, {last_comp.height} last season)" if last_comp is not None else "")
     elif key_new:
         sample, why = None, ""
     else:
         sample, why = _lineup_weights(comp.tail(6), pid, tonight_in, id_name), "recent games with tonight's lineup"
+        sample = sample.filter(pl.col("lw") > 0)
     # the role he's in now: teammates out 3+ straight games are the established lineup, so the projection
     # shrinks toward his games in that setup, not the old lineup (Kenrich Williams 7 Nov: 7/6/7 min in
     # October with Holmgren/J. Williams/Wallace playing vs 24-31 since; shrinking to 6.7 gave 11.5)
@@ -793,6 +803,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
     gt_last = _game_table(pg, trk, team_now, str(int(SEASON) - 1))
     cur = pg.filter(pl.col("season_id") == SEASON)
     mpg = dict(cur.group_by("player_id").agg(pl.col("minutes").mean()).iter_rows())
+    r36 = dict(cur.group_by("player_id").agg(pl.col("reb").sum() / pl.col("minutes").sum().clip(1) * 36).iter_rows())
     # stars: 20+ ppg in the most recent of the last two seasons where he played 20+ games (Tatum missed 2025-26)
     last_ppg = {}
     for sid in (str(int(SEASON) - 2), str(int(SEASON) - 1)):
@@ -831,7 +842,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
                 status[pid] = ("Out (news)", 1.0, "late lineup news")
             else:
                 shift[pid] = NEWS_MIN if kind == "start" else -NEWS_MIN
-    id_name = {**pid_name, **{("mpg", p): v for p, v in mpg.items()}, **{("grp", p): v for p, v in grp.items()}}
+    id_name = {**pid_name, **{("mpg", p): v for p, v in mpg.items()}, **{("grp", p): v for p, v in grp.items()}, **{("r36", p): v for p, v in r36.items()}}
     spots, leans, near, waiting, looked, evaluated = [], [], [], [], 0, []
     for team, m in teams.items():
         if team in started:
@@ -1012,7 +1023,8 @@ def card_bets(res: dict, n: int = CARD_N, cond: list | None = None) -> list[tupl
 
 def price_plays(res: dict, card: list, n: int = PRICE_N) -> list[tuple[dict, dict]]:
     """Top n projection-vs-price bets with no lineup angle (the 'near' pool): one per player, honest EV >= MIN_EV,
-    not rare lines or price outliers, ranked by Kelly growth like the card. 0.25u each."""
+    not rare lines or price outliers, ranked by Kelly growth like the card; at most one per game and one per
+    stat (0/10 on 10-11 Nov: three rebound overs a night, two from one game). 0.25u each."""
     have = {a["name"] for a, _ in card}
     pool = []
     for a in res.get("near", []):
@@ -1021,7 +1033,18 @@ def price_plays(res: dict, card: list, n: int = PRICE_N) -> list[tuple[dict, dic
         ok = sorted((b for b in a["bets"] if not b.get("outlier") and b["ev"] >= MIN_EV and not _rare(b)), key=lambda b: -growth(b))
         if ok:  # his best firm single leads, as on the card; a combo only when no single clears
             pool.append((a, lead_with_single([{**b, "lean": False} for b in ok])[0]))
-    return sorted(pool, key=lambda ab: -growth(ab[1]))[:n]
+    out, games, stats = [], set(), set()
+    for a, b in sorted(pool, key=lambda ab: -growth(ab[1])):
+        game = frozenset((a.get("team"), a.get("opp"))) if a.get("team") else None
+        stat = "combo" if b.get("kind") == "SGM" else b["bet"].split()[-1]
+        if (game is not None and game in games) or stat in stats:
+            continue
+        games.add(game)
+        stats.add(stat)
+        out.append((a, b))
+        if len(out) >= n:
+            break
+    return out
 
 
 def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2) -> list[tuple[dict, dict]]:
