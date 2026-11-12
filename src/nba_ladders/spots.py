@@ -295,7 +295,7 @@ def _lineup_weights(sample: pl.DataFrame, pid: int, tonight_in: set | None, id_n
 def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.DataFrame, tonight_out: set,
             tonight_unc: dict, id_name: dict, ca: float, cr: float, opp_f: dict, spread: float | None,
             g_last: pl.DataFrame | None = None, opp_tab: dict | None = None, grp_me: str = "W",
-            tonight_in: set | None = None) -> dict | None:
+            tonight_in: set | None = None, usage_fn=None) -> dict | None:
     """Situations, comparable games and the projection for one player. g = his games this season (current team).
     tonight_in = teammates (12+ min) expected to play tonight: a matching game where some of them were also
     missing is a bigger role than tonight's, so it counts less (EXTRA_OUT_W per extra absence)."""
@@ -358,6 +358,16 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
             p_min = float(cur_role["minutes"].mean())
             p_pot, p_rc, p_pts = (per36_blend(cur_role, "potential_ast", last_pot), per36_blend(cur_role, "reb_chances", last_rc),
                                   per36_blend(cur_role, "pts", last_pts))
+    # usage: what this player picks up per minute when tonight's new absentees sit (usage.py: league prior +
+    # his own past games without each of them, any season/lineup), scaling the prior the matching games blend
+    # with (so it matters most when they're few). Established absences are already in cur_role.
+    new_out, usage_note = key_new - est, ""
+    if new_out and usage_fn is not None:
+        um = usage_fn(pid, new_out)["mult"]
+        p_pts = p_pts * um["pts"] if p_pts is not None else None
+        p_pot = p_pot * um["ast"] if p_pot is not None else None
+        p_rc = p_rc * um["reb"] if p_rc is not None else None
+        usage_note = "usage without them: " + ", ".join(f"{s} {(um[s] - 1) * 100:+.0f}%" for s in ("pts", "ast", "reb"))
     proj_min, pot36, rc36, pts36, n_comp = p_min, p_pot, p_rc, p_pts, 0
     if sample is not None and sample.height:
         lw = sample["lw"].to_numpy()
@@ -435,7 +445,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
                      if last.height else [g.select("season_id", "pts", "reb", "ast")], how="vertical_relaxed")
     return {"pid": pid, "name": name, "team": team, "opp": opp, "sits": sits, "hist": hist, "opp_tab": opp_tab or {},
             "opp_w": OPP_W[grp_me], "key_new": key_new, "n_comp": n_comp,
-            "why_sample": why, "sample": sample, "base_min": base_min, "proj_min": proj_min, "min_sd": min_sd,
+            "why_sample": " · ".join(x for x in (why, usage_note) if x), "sample": sample, "base_min": base_min, "proj_min": proj_min, "min_sd": min_sd,
             "rate": rate, "pot36": pot36, "rc36": rc36, "ca": ca, "cr": cr, "spread": spread, "opp_f": opp_f,
             "games": g.height, "last_games": last.height, "last5": g.tail(5)}
 
@@ -844,6 +854,9 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
     from nba_ladders.matchup import multipliers
 
     opp_h = opp_tonight(day)  # angle H factors (opp_position.py, the version the market test used)
+    from nba_ladders.usage import tonight as usage_tonight
+
+    usage_fn = lambda p, out: usage_tonight(p, set(out), day)
     spreads = _spreads(day)
     odds = _odds(day)
     # games already tipped when the odds were taken: prices are in-play, so no bets (DEN@IND 7 Nov)
@@ -899,7 +912,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
             opp_f = opp_h.get((opp, gme), {})  # opponent x position, every stat (opp_position.py)
             opp_tab = {o: f for (o, gg), f in opp_h.items() if gg == gme}
             a = analyse(pid, pid_name.get(pid, str(pid)), team, opp, g, last, out_t, unc, id_name,
-                        ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl, opp_tab, gme, t_in)
+                        ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl, opp_tab, gme, t_in, usage_fn)
             forced = include is not None and a is not None and a["name"] in include
             if a is not None and pid in shift:
                 a["proj_min"] += shift[pid]

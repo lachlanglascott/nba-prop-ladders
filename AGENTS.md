@@ -51,6 +51,7 @@ not a normal distribution.
 - Game-day write-up / candidates (older model-vs-market slate): `uv run python -m nba_ladders.candidates [--date YYYY-MM-DD]` → `docs/slates/<date>.md` + `.html` (model vs market, $3-$10 bets table, game cards; no backtest adjustments; take an odds snapshot first)
 - Calibrated blend (book + model, fit on the market backtest): `uv run python -m nba_ladders.blend fit`
 - Grade a slate after the games (pull first): `uv run python -m nba_ladders.grade --date YYYY-MM-DD`
+- Usage redistribution (teammates out → per-minute pts/ast bump; league prior + player-specific pairs across seasons): `uv run python -m nba_ladders.usage [--player X --out "A,B" --date D]`; in spots rate priors (docs/usage.md)
 - Availability (carry-forward of missed games, uncertain teammates weighted by P(sits)): `src/nba_ladders/availability.py`
 - B2B rest (who sits second nights; tonight's risks): `uv run python -m nba_ladders.rest [--date YYYY-MM-DD]` (candidates adds unlisted resters as Out/Questionable)
 - Price a ladder: `uv run python -m nba_ladders.price "Player Name" [--starter-out] [--opponent MEM] [--combos 10p/10r,12r]` (see `docs/simulator.md`)
