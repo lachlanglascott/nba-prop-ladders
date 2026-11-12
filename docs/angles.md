@@ -13,6 +13,7 @@ them: a player can be a good fit for one and a terrible fit for another.
 | F | **All-round P/R/A** | Big-minutes forward who fills every column (old Larry Nance bets, Lendeborg); three legs that all move with minutes | 3-leg joint vs independent | P/R/A SGM | **confirmed in backtest**: independent legs predict ~half the hits ([simulator](simulator.md#three-leg-pra-combos)) |
 
 | G | **Luck reversion** | Recent assists (rebounds) lag potential assists (rebound chances); lines set off the low actuals | luck over last 10 vs next game | AST (REB) props, P/R/A | **confirmed for assists** (~halfway reversion, stable across seasons); rebounds weaker ([findings](luck.md)) |
+| H | **Opposition spot** | Book ignores most of what an opponent allows to a position group (G/W/B), most of all bigs' P/R and assists | as-at opp x group factor for the bet's stat | **in the model** (all stats/groups) **and** an overlay: bigs' P/R pass < 1.02 / boost ≥ 1.02, G/W ast and wing pts down < 0.97 | bigs' P/R < 1.02 −12 to −14% vs ≥ 1.02 −0.6% (P+R), both seasons; luck × good ast spot +22% (83 games) ([findings](opp_position.md)) |
 
 ## Market check (2025-26 Sportsbet backtest, docs/market_backtest_findings.md)
 Single legs are efficiently priced: no single-leg strategy profits on held-out games. The model

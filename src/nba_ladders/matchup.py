@@ -94,70 +94,39 @@ if __name__ == "__main__":
 
 
 # ---- by position group (G / W / B) -------------------------------------------------------------
-# Half-season persistence (2024-26): opp x group factors correlate 0.44-0.52 between halves (bigs'
-# points 0.65, guards' assists 0.64); the residual after the team effect only 0.10-0.24. So the
-# group factor is shrunk toward the team's own factor, which is shrunk toward the league.
-K_GROUP = 25.0  # pseudo-games of "same as the team overall" in each group factor
+# Since 2026-11-13 these come from opp_position.py: per-minute vs each player's own rate, as at the date, shrunk
+# group -> team -> league, last season as the prior. Tested predictive and under-priced (docs/opp_position.md);
+# the previous estimator here (K_GROUP 25, pts x1.5 in spots) is in git history.
 GROUP_STATS = ("pts", "reb", "ast")
-
-
-def _group_table(pg: pl.DataFrame, pos: pl.DataFrame, season_id: str, as_of: date) -> pl.DataFrame:
-    from nba_ladders.absences import position_groups
-
-    d = pg.filter(pl.col("season_id") == season_id, pl.col("game_date") < as_of, pl.col("minutes") >= 10)
-    if d.is_empty():
-        return pl.DataFrame()
-    d = d.join(position_groups(pos), on="player_id", how="left").with_columns(pl.col("grp").fill_null("W"))
-    rate = d.group_by("player_id").agg(*[(pl.col(s).sum() / pl.col("minutes").sum()).alias(f"r_{s}") for s in GROUP_STATS])
-    d = d.join(rate, on="player_id").with_columns(*[(pl.col(f"r_{s}") * pl.col("minutes")).alias(f"e_{s}") for s in GROUP_STATS])
-    team = d.group_by("opponent").agg(pl.col("game_id").n_unique().alias("n"),
-                                      *[(pl.col(s).sum() / pl.col(f"e_{s}").sum()).alias(f"t_{s}") for s in GROUP_STATS])
-    grp = d.group_by("opponent", "grp").agg(*[(pl.col(s).sum() / pl.col(f"e_{s}").sum()).alias(f"g_{s}") for s in GROUP_STATS])
-    return grp.join(team, on="opponent")
 
 
 @lru_cache(maxsize=16)
 def group_factors(as_of: date, season_id: str = "22026") -> pl.DataFrame:
     """Per opponent and position group: pts / reb / ast allowed per minute vs each player's own rate."""
-    from nba_ladders.scenarios import positions
+    from nba_ladders.opp_position import tonight
 
-    pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
-    pos = positions()
-    out = None
-    for sid in (str(int(season_id) - 1), season_id):
-        t = _group_table(pg, pos, sid, as_of)
-        if t.is_empty():
-            continue
-        # shrink group toward team, team toward league (1.0)
-        f = t.with_columns(*[((pl.col(f"g_{s}") * pl.col("n") + pl.col(f"t_{s}") * K_GROUP) / (pl.col("n") + K_GROUP)).alias(f"g_{s}")
-                             for s in GROUP_STATS])
-        if out is None:  # last season: regressed halfway to league
-            out = f.select("opponent", "grp", *[(1 + (1 - REGRESS) * (pl.col(f"g_{s}") - 1)).alias(s) for s in GROUP_STATS])
-        else:
-            m = f.join(out, on=["opponent", "grp"], how="left", suffix="_prior").fill_null(1.0)
-            out = m.select("opponent", "grp", *[((pl.col(f"g_{s}") * pl.col("n") + pl.col(s) * K_DEF) / (pl.col("n") + K_DEF)).alias(s)
-                                                for s in GROUP_STATS])
-    return out if out is not None else pl.DataFrame({"opponent": [], "grp": [], "pts": [], "reb": [], "ast": []})
+    rows = [{"opponent": o, "grp": g, **f} for (o, g), f in tonight(as_of).items()]
+    return pl.DataFrame(rows) if rows else pl.DataFrame({"opponent": [], "grp": [], "pts": [], "reb": [], "ast": []})
 
 
 def player_multipliers(opponent: str, grp: str, as_of: date, season_id: str = "22026") -> dict[str, float]:
-    """Pace x what this opponent allows to the player's position group (pts, ast); reb factor for display."""
+    """Pace x what this opponent allows to the player's position group (pts, ast, weighted by OPP_W); reb for display."""
+    from nba_ladders.opp_position import OPP_W
+
     pace = multipliers(opponent, as_of, season_id)["pace"]
     r = group_factors(as_of, season_id).filter(pl.col("opponent") == opponent, pl.col("grp") == grp)
     if r.is_empty():
         team = multipliers(opponent, as_of, season_id)
         return {"pace": pace, "pts": team["pts"], "ast": team["ast"], "reb_grp": 1.0}
-    row = r.row(0, named=True)  # per-minute vs each player's own rate: pace is already inside
-    return {"pace": pace, "pts": row["pts"], "ast": row["ast"], "reb_grp": row["reb"]}
+    row, w = r.row(0, named=True), OPP_W.get(grp, OPP_W["W"])  # per-minute vs own rate: pace is already inside
+    return {"pace": pace, "pts": row["pts"] ** w["pts"], "ast": row["ast"] ** w["ast"], "reb_grp": row["reb"]}
 
 
 def weakness_line(opponent: str, grp: str, as_of: date) -> str:
     """Plain words: what this opponent allows to this position group, vs league."""
+    from nba_ladders.opp_position import line
+
     r = group_factors(as_of).filter(pl.col("opponent") == opponent, pl.col("grp") == grp)
     if r.is_empty():
         return ""
-    row = r.row(0, named=True)
-    pace = multipliers(opponent, as_of)["pace"]
-    name = {"G": "guards", "W": "wings", "B": "bigs"}[grp]
-    bits = [f"{lab} {(row[s] - 1) * 100:+.0f}%" for s, lab in (("pts", "pts"), ("reb", "reb"), ("ast", "ast"))]
-    return f"{opponent} vs {name}: " + ", ".join(bits) + f"; pace {(pace - 1) * 100:+.0f}%"
+    return line(r.row(0, named=True), opponent, grp, multipliers(opponent, as_of)["pace"])

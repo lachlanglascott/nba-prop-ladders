@@ -42,7 +42,8 @@ not a normal distribution.
 - Tracking (potential assists, rebound chances): `uv run python -m nba_ladders.sources.tracking --seasons 2024-25 2025-26`; luck test `uv run python -m nba_ladders.luck ["Player"]`
 - Combo explorer: `uv run python -m nba_ladders.combos "Player" --opponent XXX [--as-of YYYY-MM-DD]` (best P/R/A combos by correlation lift)
 - Potentials scan: `uv run python -m nba_ladders.luck --scan [YYYY-MM-DD]`
-- Opposition by position (G/W/B pts/reb/ast allowed, shrunk to team then league): `matchup.group_factors` / `weakness_line`; in projections and tip ranking
+- Opposition by position (G/W/B pts/reb/ast allowed, shrunk to team then league): `opp_position.tonight` (all stats, weights `opp_position.OPP_W`), also behind `matchup.group_factors` / `player_multipliers` / `weakness_line` for candidates/price; spots adds the angle H overlay
+- Opposition-spot test (angle H; predictive + priced, by team / G-W-B / archetype): `uv run python -m nba_ladders.opp_position [--player X]`; `opp_position.table(as_of)` for tonight (docs/opp_position.md)
 - Spreads (blowout minutes, ~1 credit): `uv run python -m nba_ladders.sources.odds_api spreads` (take with each snapshot)
 - Odds (The Odds API, key in `.env` as ODDS_API_KEY): `uv run python -m nba_ladders.sources.odds_api coverage|snapshot|historical` (hard credit budget per run; never print the key)
 - Market vs model: `uv run python -m nba_ladders.market [--player X] [--all]` (needs a snapshot; flags are leads, not bets, until backtested)

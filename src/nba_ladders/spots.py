@@ -36,6 +36,9 @@ from nba_ladders.absences import position_groups
 from nba_ladders.luck import K_CONV, league_conversion
 from nba_ladders.luck import load as load_tracking
 from nba_ladders.market import TEAM_ABBR, latest
+from nba_ladders.opp_position import BOOST_C, OPP_W, angle_h
+from nba_ladders.opp_position import line as opp_h_line
+from nba_ladders.opp_position import tonight as opp_tonight
 from nba_ladders.scenarios import positions
 from nba_ladders.screens import parse_player_index
 from nba_ladders.sources.injury_report import ET, player_key, report_for_date
@@ -131,10 +134,7 @@ SINGLE_RANGE = (2.5, 10.0)
 SINGLE_MIN_LINE = 4  # reb/ast singles start at 4+
 SGM_RANGE = (3.5, 15.0)
 FREED_CAP = 6.0  # minutes: the rough share-of-freed-minutes estimate when there's no game without them
-OPP_W_PTS = 1.5  # 2025-26 test: Poisson deviance best with the points factor at 1.5x weight (reb, ast: 1x)
-# 2025-26 decile test: extreme opponents play out bigger than predicted for guards' rebounds (slope 1.28;
-# HOU vs guards 2026-27 raw -12% vs -7% modelled), about right for assists and other rebounds (1.04-1.06)
-OPP_W_REB_G = 1.3
+# Opponent x position in the projection: opp_position.OPP_W (every stat, every group), replacing pts x1.5 / guards' reb x1.3
 KEY_SHARE = 0.3  # (was 0.5: dropped Edwards after 5 missed of 9) an absence is 'new' if he played this share of this season's games (else his teammates' roles already reflect it)
 PRIMARY = {"role", "bounce"}  # spot types that stand on their own
 EST_CONF = 0.15  # confidence cap when the role is estimated, not measured
@@ -375,7 +375,7 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
                 return prior
             ww = _season_weights(d["season_id"].to_numpy(), RATE_HALF)  # no lineup discount for rates (rate_eval)
             # remove each matching game's opponent effect, so tonight's opponent is applied to a neutral rate
-            of = np.array([(opp_tab or {}).get(o, {}).get(stat_of[col], 1.0) for o in d["opponent"].to_list()])
+            of = np.array([(opp_tab or {}).get(o, {}).get(stat_of[col], 1.0) for o in d["opponent"].to_list()]) ** OPP_W[grp_me][stat_of[col]]
             v = float(np.sum(d[col].to_numpy() / of * ww) / np.sum(d["minutes"].to_numpy() * ww) * 36)
             return v if prior is None else (v * ww.sum() + prior * k) / (ww.sum() + k)
         pot36, rc36, pts36 = blend36("potential_ast", p_pot), blend36("reb_chances", p_rc), blend36("pts", p_pts)
@@ -426,15 +426,15 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
     pot36 = pot36 if pot36 is not None else (float(g["ast"].sum() / g["minutes"].sum() * 36) / max(ca, 0.3))
     rc36 = rc36 if rc36 is not None else (float(g["reb"].sum() / g["minutes"].sum() * 36) / max(cr, 0.3))
     pts36 = pts36 if pts36 is not None else float(g["pts"].sum() / g["minutes"].sum() * 36)
-    w_reb = OPP_W_REB_G if grp_me == "G" else 1.0
-    rate = {"ast": pot36 * ca / 36 * opp_f.get("ast", 1.0), "reb": rc36 * cr / 36 * opp_f.get("reb", 1.0) ** w_reb,
-            "pts": pts36 / 36 * opp_f.get("pts", 1.0) ** OPP_W_PTS}
+    ow = OPP_W[grp_me]
+    rate = {"ast": pot36 * ca / 36 * opp_f.get("ast", 1.0) ** ow["ast"], "reb": rc36 * cr / 36 * opp_f.get("reb", 1.0) ** ow["reb"],
+            "pts": pts36 / 36 * opp_f.get("pts", 1.0) ** ow["pts"]}
     src = sample if sample is not None and sample.height >= 3 else g.tail(8)
     min_sd = max(4.0, float(src["minutes"].std() or 0.0))
     hist = pl.concat([g.select("season_id", "pts", "reb", "ast"), last.select("season_id", "pts", "reb", "ast")]
                      if last.height else [g.select("season_id", "pts", "reb", "ast")], how="vertical_relaxed")
     return {"pid": pid, "name": name, "team": team, "opp": opp, "sits": sits, "hist": hist, "opp_tab": opp_tab or {},
-            "w_reb": OPP_W_REB_G if grp_me == "G" else 1.0, "key_new": key_new, "n_comp": n_comp,
+            "opp_w": OPP_W[grp_me], "key_new": key_new, "n_comp": n_comp,
             "why_sample": why, "sample": sample, "base_min": base_min, "proj_min": proj_min, "min_sd": min_sd,
             "rate": rate, "pot36": pot36, "rc36": rc36, "ca": ca, "cr": cr, "spread": spread, "opp_f": opp_f,
             "games": g.height, "last_games": last.height, "last5": g.tail(5)}
@@ -552,7 +552,7 @@ def anchored(a: dict, sim: dict, legs) -> tuple[float, str]:
         if s is not None and s.height >= 3:
             # each matching game rescaled to tonight's opponent: value x (tonight's factor / that game's factor)
             tab, tonight = a.get("opp_tab", {}), a.get("opp_f", {})
-            w = {"pts": OPP_W_PTS, "reb": a.get("w_reb", 1.0), "ast": 1.0}
+            w = a.get("opp_w", OPP_W["W"])
             hits = np.ones(s.height, dtype=bool)
             for st, k in legs:
                 tot = np.zeros(s.height)
@@ -730,6 +730,35 @@ def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float =
     return lead_with_single(main)
 
 
+def apply_angle_h(a: dict, bets: list[dict], c: float, fac: dict, grp: str) -> list[str]:
+    """Angle H (docs/opp_position.md): a role spot in a bad opposition spot for the bet's stat is graded down,
+    a big's is passed (starter-out bigs -14% at Sportsbet, both seasons); a role spot or assist bounce in a good
+    one gets +BOOST_C confidence. Opponent alone is below the margin, so price plays are untouched."""
+    kinds = {x["kind"] for x in a["sits"]}
+    bounce = {x.get("stat") for x in a["sits"] if x["kind"] == "bounce"}
+    notes = []
+    for b in bets:
+        act, note = angle_h(fac, b, kinds, grp, bounce)
+        if not act:
+            continue
+        b["h"] = act
+        b["hist"] = (f"{b['hist']} · " if b.get("hist") else "") + note
+        if note not in notes:
+            notes.append(note)
+        if act == "gate":
+            b["lean" if b["kind"] == "single" else "alt"] = True
+        elif act == "boost":
+            b["c"] = min(c + BOOST_C, CONF_MAX)
+            b["p"] = b["p_mkt"] + b["c"] * (b["p_model"] - b["p_mkt"])
+            b["ev"] = b["price"] * b["p"] - 1
+            b["take_at"] = 1.10 / b["p"]
+            if b["kind"] == "single":
+                b["lean"] = b["ev"] < MIN_EV or (b.get("own_hr") is not None and b["own_hr"] < RARE_HR)
+            else:
+                b["alt"] = b["ev"] < SGM_MIN_EV
+    return notes
+
+
 def lead_with_single(bets: list[dict]) -> list[dict]:
     """The card bet is the best firm single on the spot's own stats; combos stay listed as the SGM version.
     Live 4-9 Nov: combos 0/6 (exp 1.1, -6.0u) vs the same-stat single 1/6 (exp 2.0, -2.9u); the strong leg kept
@@ -812,9 +841,9 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
     trk_last = trk.filter(pl.col("season_id") == str(int(SEASON) - 1))
     ca, cr = _conversions(trk)
     grp = dict(position_groups(positions()).iter_rows())
-    from nba_ladders.matchup import group_factors, weakness_line
+    from nba_ladders.matchup import multipliers
 
-    gf = group_factors(day)
+    opp_h = opp_tonight(day)  # angle H factors (opp_position.py, the version the market test used)
     spreads = _spreads(day)
     odds = _odds(day)
     # games already tipped when the odds were taken: prices are in-play, so no bets (DEN@IND 7 Nov)
@@ -865,11 +894,10 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
             looked += 1
             g = gt.filter(pl.col("player_id") == pid, pl.col("team") == team)
             last = trk_last.filter(pl.col("player_id") == pid)
-            row = gf.filter(pl.col("opponent") == opp, pl.col("grp") == grp.get(pid, "W"))
-            opp_f = {s: row[s][0] for s in ("pts", "reb", "ast")} if row.height else {}
             gl = gt_last.filter(pl.col("player_id") == pid, pl.col("team") == team)
             gme = grp.get(pid, "W")
-            opp_tab = {r["opponent"]: {s: r[s] for s in ("pts", "reb", "ast")} for r in gf.filter(pl.col("grp") == gme).iter_rows(named=True)}
+            opp_f = opp_h.get((opp, gme), {})  # opponent x position, every stat (opp_position.py)
+            opp_tab = {o: f for (o, gg), f in opp_h.items() if gg == gme}
             a = analyse(pid, pid_name.get(pid, str(pid)), team, opp, g, last, out_t, unc, id_name,
                         ca.get(pid, 0.55), cr.get(pid, 0.55), opp_f, spreads.get(team), gl, opp_tab, gme, t_in)
             forced = include is not None and a is not None and a["name"] in include
@@ -887,7 +915,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
             if (m5 < CAND_MPG or not {x["kind"] for x in a["sits"]} & PRIMARY) and not forced:
                 # a 3-game volume spike alone regressed (replay: -40%); it only supports a real spot.
                 # These players go to the next-best pool only (projection vs price, no lineup angle).
-                a["opp_line"] = weakness_line(opp, gme, day)
+                a["opp_line"] = opp_h_line(opp_h.get((opp, gme), {}), opp, gme, multipliers(opp, day)["pace"])
                 a["opp_comps"] = opp_comps(cur, grp, opp, gme)
                 a["unc"] = {pid_name.get(p, str(p)): v for p, v in unc.items()}
                 em = {x.get("stat") for x in a["sits"] if x["kind"] == "emerging"}
@@ -906,7 +934,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
                         b["grade"] = "C"
                     near.append(a)
                 continue
-            a["opp_line"] = weakness_line(opp, grp.get(pid, "W"), day)
+            a["opp_line"] = opp_h_line(opp_h.get((opp, gme), {}), opp, gme, multipliers(opp, day)["pace"])
             a["opp_comps"] = opp_comps(cur, grp, opp, grp.get(pid, "W"))
             a["unc"] = {pid_name.get(p, str(p)): v for p, v in unc.items()}
             c = max(CONF_MIN, confidence(a, sum(unc.values()), team in filed) - 0.10 * own_p)
@@ -920,6 +948,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
                 evaluated.append(a)
             mk, books = market_probs(odds, a["name"])
             bs = bets_for(a, sim, mk, books, c)
+            notes_h = apply_angle_h(a, bs, c, opp_h.get((opp, grp.get(pid, "W")), {}), grp.get(pid, "W"))
             a.update(conf=c, sim_means={k: float(v.mean()) for k, v in sim.items()},
                      min_p10_90=(float(np.percentile(sim["minutes"], 10)), float(np.percentile(sim["minutes"], 90))), bets=bs)
             if a["combo_ra"]:
@@ -929,9 +958,13 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
             kinds = {x["kind"] + ("-vol" if x["kind"] == "emerging" and x.get("stat") in ("ast", "reb") else "") for x in a["sits"]}
             est = (bool(a["key_new"]) and a["n_comp"] == 0 and "role" in kinds) or (any(x["kind"] == "role" for x in a["sits"]) and all(x.get("news") for x in a["sits"] if x["kind"] == "role"))
             for b in bs:
-                b["grade"] = grade(b["ev"], c, kinds, b.get("outlier", False))
+                b["grade"] = grade(b["ev"], b.get("c", c), kinds, b.get("outlier", False))
                 if est and b["grade"] in "AB":
                     b["grade"] = "C"  # estimated role (no game without them yet): live 2/11, model expected 4.5
+                if b.get("h") == "down":
+                    b["grade"] = {"A": "B", "B": "C"}.get(b["grade"], "C")
+            if notes_h:
+                a["opp_line"] = (a.get("opp_line", "") + " · " + "; ".join(notes_h)).strip(" ·")
             if any(not b.get("alt") and not b.get("lean") for b in bs):
                 spots.append(a)
             elif any(b.get("lean") for b in bs):
@@ -996,7 +1029,7 @@ def card_bets(res: dict, n: int = CARD_N, cond: list | None = None) -> list[tupl
     ranked = [(a, next(b for b in a["bets"] if ok(b))) for a in res["spots"] if any(ok(b) for b in a["bets"])]
     ranked = sorted(ranked, key=lambda ab: ("ABC".index(ab[1]["grade"]), -rank(ab[1])))
     for a in res.get("leans", []):
-        b = next((x for x in a["bets"] if x.get("lean") and not x.get("outlier") and not _rare(x)), None)
+        b = next((x for x in a["bets"] if x.get("lean") and not x.get("outlier") and not _rare(x) and x.get("h") != "gate"), None)
         if b is not None:
             ranked.append((a, b))
     card, per_game, per_dog = [], {}, {}
@@ -1153,6 +1186,11 @@ def render(res: dict, cond: list[dict]) -> str:
               "| Player | Bet | Projection | Why |", "|---|---|---|---|"]
         for a, b in pp:
             L.append(f"| **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | {proj_line(a, b)} | {_why(a, b)} |")
+    passed = [(a, b) for a in res["spots"] + res.get("leans", []) for b in a["bets"][:1] if b.get("h") == "gate"]
+    if passed:
+        L += ["", "## Passed: bad opposition spot (angle H, docs/opp_position.md)", ""]
+        for a, b in passed:
+            L.append(f"- **{a['name']}** ({a['team']} vs {a['opp']}): {_fmt_bet(b)}. {b['hist'].split(' · ')[-1]}")
     if res.get("waiting"):
         L += ["", "## Spots waiting for prices (props not posted yet)", ""]
         for a in sorted(res["waiting"], key=lambda a: -a["conf"]):

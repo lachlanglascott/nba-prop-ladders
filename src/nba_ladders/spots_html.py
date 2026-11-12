@@ -275,6 +275,15 @@ def render_html(res: dict, cond: list[dict]) -> str:
                      f'<small>{esc(a["team"])} vs {esc(a["opp"])} · stake 0.25u</small><div class="chips"><span class="chip">No lineup angle</span></div></div>'
                      f'<div class="betcol">{_bet_html(b)}{_proj(a, b)}</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
         H.append("</div>")
+    passed = [(a, b) for a in res["spots"] + res.get("leans", []) for b in a["bets"][:1] if b.get("h") == "gate"]
+    if passed:
+        H.append('<h2>Passed: bad opposition spot</h2><p class="note">Angle H (docs/opp_position.md): a big\'s points / rebounds '
+                 'bet where the opponent allows less than 1.02 of normal to bigs lost 12-14% at Sportsbet in both seasons. Not bets.</p>'
+                 '<div class="panel warn"><ul>')
+        for a, b in passed:
+            H.append(f'<li><b>{esc(a["name"])}</b> ({esc(a["team"])} vs {esc(a["opp"])}): {_bet_html(b, big=False)} · '
+                     f'{esc(b["hist"].split(" · ")[-1])}</li>')
+        H.append("</ul></div>")
     wait = res.get("waiting", [])
     if wait:
         H.append('<h2>Spots waiting for prices</h2><p class="note">Real lineup spots in games where the books haven\'t posted '
