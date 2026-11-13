@@ -906,6 +906,13 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
                 status[pid] = ("Out (news)", 1.0, "late lineup news")
             else:
                 shift[pid] = NEWS_MIN if kind == "start" else -NEWS_MIN
+    def opp_mates(o: str, g: str) -> str:
+        """The opponent's likely players at his position tonight (not Out), by minutes: who he's up against."""
+        lab = {"G": "guards", "W": "wings", "B": "bigs"}[g]
+        ps = sorted((p for p, t in team_now.items() if t == o and grp.get(p, "W") == g and mpg.get(p, 0) >= 15
+                     and status.get(p, ("", 0, ""))[1] < OUT_P), key=lambda p: -mpg.get(p, 0))[:3 if g != "B" else 2]
+        return f"{o} {lab} tonight: " + ", ".join(f"{pid_name.get(p, p)} {mpg.get(p, 0):.0f} mpg" for p in ps) if ps else ""
+
     id_name = {**pid_name, **{("mpg", p): v for p, v in mpg.items()}, **{("grp", p): v for p, v in grp.items()}, **{("r36", p): v for p, v in r36.items()}}
     spots, leans, near, waiting, looked, evaluated = [], [], [], [], 0, []
     for team, m in teams.items():
@@ -950,7 +957,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
             if (m5 < CAND_MPG or not {x["kind"] for x in a["sits"]} & PRIMARY) and not forced:
                 # a 3-game volume spike alone regressed (replay: -40%); it only supports a real spot.
                 # These players go to the next-best pool only (projection vs price, no lineup angle).
-                a["opp_line"] = opp_h_line(opp_h.get((opp, gme), {}), opp, gme, multipliers(opp, day)["pace"])
+                a["opp_line"] = " · ".join(x for x in (opp_h_line(opp_h.get((opp, gme), {}), opp, gme, multipliers(opp, day)["pace"]), opp_mates(opp, gme)) if x)
                 a["opp_comps"] = opp_comps(cur, grp, opp, gme)
                 a["unc"] = {pid_name.get(p, str(p)): v for p, v in unc.items()}
                 em = {x.get("stat") for x in a["sits"] if x["kind"] == "emerging"}
@@ -969,7 +976,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
                         b["grade"] = "C"
                     near.append(a)
                 continue
-            a["opp_line"] = opp_h_line(opp_h.get((opp, gme), {}), opp, gme, multipliers(opp, day)["pace"])
+            a["opp_line"] = " · ".join(x for x in (opp_h_line(opp_h.get((opp, gme), {}), opp, gme, multipliers(opp, day)["pace"]), opp_mates(opp, gme)) if x)
             a["opp_comps"] = opp_comps(cur, grp, opp, grp.get(pid, "W"))
             a["unc"] = {pid_name.get(p, str(p)): v for p, v in unc.items()}
             c = max(CONF_MIN, confidence(a, sum(unc.values()), team in filed) - 0.10 * own_p)
@@ -1233,7 +1240,8 @@ def render(res: dict, cond: list[dict]) -> str:
     if passed:
         L += ["", "## Passed: bad opposition spot (angle H, docs/opp_position.md)", ""]
         for a, b in passed:
-            L.append(f"- **{a['name']}** ({a['team']} vs {a['opp']}): {_fmt_bet(b)}. {b['hist'].split(' · ')[-1]}")
+            vs = next((x for x in a.get("opp_line", "").split(" · ") if " tonight: " in x), "")
+            L.append(f"- **{a['name']}** ({a['team']} vs {a['opp']}): {_fmt_bet(b)}. {b['hist'].split(' · ')[-1]}" + (f". Up against {vs}" if vs else ""))
     if res.get("waiting"):
         L += ["", "## Spots waiting for prices (props not posted yet)", ""]
         for a in sorted(res["waiting"], key=lambda a: -a["conf"]):
@@ -1327,6 +1335,11 @@ def save(res: dict, cond: list[dict]) -> None:
                      "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
                      "ev": b["ev"], "grade": "FT" if b["bet_ok"] else "FW", "conf": 0.0, "card": False, "alt": False,
                      "situations": "friend trend" + (" (minutes flat)" if b["flat"] else "")})
+    for b in (res.get("friend") or {}).get("ideas", []):  # their rebound / threes trends: FI = idea, graded for the record
+        rows.append({"day": res["day"], "player": b["name"], "team": b["team"], "kind": "single", "bet": b["bet"],
+                     "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
+                     "ev": b["ev"], "grade": "FI", "conf": 0.0, "card": False, "alt": False,
+                     "situations": "friend " + {"R": "rebound", "M": "threes"}[b["stat"]] + " trend"})
     out = config.DATA_PROCESSED / "spots" / f"{res['day']}.parquet"
     out.parent.mkdir(parents=True, exist_ok=True)
     pl.DataFrame(rows, infer_schema_length=None).write_parquet(out)
@@ -1352,7 +1365,8 @@ def grade_day(day: date) -> pl.DataFrame:
         else:
             k, st = r["bet"].split("+ ")
             legs = [(st, int(k))]
-        hits.append(all(sum(b[s] for s in st.split("+")) >= k for st, k in legs))
+        col = {"3pm": "fg3m"}
+        hits.append(all(sum(b[col.get(s, s)] for s in st.split("+")) >= k for st, k in legs))
     return df.with_columns(pl.Series("hit", hits, dtype=pl.Boolean))
 
 

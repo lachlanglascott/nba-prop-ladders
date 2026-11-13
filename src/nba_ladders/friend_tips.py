@@ -41,7 +41,7 @@ def _fm():
 
 
 def tips(day: date) -> dict:
-    """{"bets": [...], "untested": [...], "dropped": [...]} for the slate's Friend's tips section."""
+    """{"bets": [...assist trends], "ideas": [...rebound and threes trends, not bets]} for the slate's Friend's tips."""
     from nba_ladders.opp_position import tonight as opp_tonight
     from nba_ladders.sources.injury_report import player_key
     from nba_ladders.spots import market_ratio
@@ -51,13 +51,10 @@ def tips(day: date) -> dict:
     lad = fm.ladders(day)
     opp_h = opp_tonight(day)
     grp_of = {"G": "G", "F": "W", "C": "B"}
-    out = {"bets": [], "untested": [], "dropped": []}
+    out = {"bets": [], "ideas": []}
     for stt, n, why in cand:
         r = res.get(n)
         if r is None:
-            continue
-        if stt == "R":
-            out["dropped"].append(n)
             continue
         rungs = [(k, pr) for k, pr in lad.get(player_key(n), {}).get(stt, {}).items() if pr >= 3]
         if r[stt] is None or not rungs:
@@ -68,19 +65,39 @@ def tips(day: date) -> dict:
         w = r["w"]
         m3, ms = (w.get(3) or {}).get("minutes"), (w.get(0) or {}).get("minutes")
         flat = bool(m3 and ms and m3 / ms < FLAT_MIN)
-        p = min(real * LIFT[flat], 0.95)
-        f_ast = opp_h.get((r["o"], grp_of.get(r["ps"], "W")), {}).get("ast", 1.0)
+        # assists: the backtested lift; rebounds / threes: no tested lift, so the honest chance is the market's own
+        p = min(real * LIFT[flat], 0.95) if stt == "A" else real
+        opp_f = opp_h.get((r["o"], grp_of.get(r["ps"], "W")), {})
+        f_ast = opp_f.get("ast", 1.0)
         b = {"name": n, "team": r["t"], "opp": r["o"], "kind": "single", "bet": f"{k}+ {LAB[stt]}", "book": "sportsbet",
              "price": pr, "p_model": q, "p_mkt": real, "p": p, "ev": pr * p - 1, "take_at": 1.10 / p, "mu": r[stt],
-             "flat": flat, "opp_ast": f_ast, "spread": spr.get(r["t"], 0.0), "q_flag": r["q"], "why": why}
-        if stt == "M":
-            out["untested"].append(b)
+             "flat": flat, "opp_ast": f_ast, "opp_reb": opp_f.get("reb", 1.0), "spread": spr.get(r["t"], 0.0), "q_flag": r["q"],
+             "why": why, "stat": stt, "gap": q / real if real else None}
+        if stt != "A":
+            b["bet_ok"] = False
+            out["ideas"].append(b)
             continue
         b["bet_ok"] = flat and abs(b["spread"]) < 15 and not b["q_flag"] and b["ev"] >= MIN_EV
         out["bets"].append(b)
     # minutes-flat (the backtested best subset) first, then angle H, then their edge
     out["bets"].sort(key=lambda b: (not b["bet_ok"], -(b["opp_ast"] >= 1.02), -b["ev"]))
+    out["ideas"].sort(key=lambda b: (b["stat"], -(b["gap"] or 0)))
     return out
+
+
+IDEA_TAG = {"R": "rebound trend (backtest −21%: idea only)", "M": "threes trend (untested: idea only)"}
+
+
+def idea_note(b: dict) -> str:
+    bits = [IDEA_TAG[b["stat"]], f"their model {b['gap']:.1f}× the market" if b.get("gap") else ""]
+    if b["stat"] == "R":
+        bits.append(f"angle H opp reb {b['opp_reb']:.2f}" + (" (good)" if b["opp_reb"] >= 1.02 else " (bad)" if b["opp_reb"] < 0.98 else ""))
+    bits.append("minutes flat" if b["flat"] else "minutes up")
+    if abs(b["spread"]) >= 9.5:
+        bits.append(f"blowout risk (spread {b['spread']:+.1f})")
+    if b["q_flag"]:
+        bits.append("questionable")
+    return " · ".join(x for x in bits if x)
 
 
 def note(b: dict) -> str:
@@ -97,7 +114,7 @@ def note(b: dict) -> str:
 
 
 def render_md(ft: dict) -> list[str]:
-    if not (ft["bets"] or ft["untested"] or ft["dropped"]):
+    if not (ft["bets"] or ft.get("ideas")):
         return []
     L = ["", "## Friend's tips (recency: assist trends, 0.25u)", "",
          ("Their trend-first model, kept where it backtests: assist trends with minutes flat (+8% at Sportsbet 2024-26, CI "
@@ -107,13 +124,13 @@ def render_md(ft: dict) -> list[str]:
     for b in ft["bets"]:
         L.append(f"| {'**Bet**' if b['bet_ok'] else 'Watch'} | **{b['name']}** ({b['team']} vs {b['opp']}) | **{b['bet']}** (sportsbet) ${b['price']:.2f} · "
                  f"take at **${b['take_at']:.2f}** | {b['p_model']:.0%} (exp {b['mu']:.1f}) | ${1 / b['p']:.2f} | {b['ev']:+.0%} | {b['why']} | {note(b)} |")
-    if ft["untested"]:
-        L.append("")
-        L.append("Untested (threes aren't in the market backtest): " + "; ".join(
-            f"{b['name']} {b['bet']} ${b['price']:.2f} (their {b['p_model']:.0%})" for b in ft["untested"]))
-    if ft["dropped"]:
-        L.append("")
-        L.append("Rebound trends dropped (backtest −21%): " + ", ".join(sorted(set(ft["dropped"]))))
+    if ft.get("ideas"):
+        L += ["", ("**Ideas: their rebound and threes trends** (not bets: rebound trends lost 21% in the backtest, threes untested; "
+              "shown for leads and graded so we learn). Fair = the market's own chance."), "",
+              "| Player | Bet | Their model | Market fair | Trend | Notes |", "|---|---|---|---|---|---|"]
+        for b in ft["ideas"]:
+            L.append(f"| **{b['name']}** ({b['team']} vs {b['opp']}) | {b['bet']} (sportsbet) ${b['price']:.2f} | {b['p_model']:.0%} (exp {b['mu']:.1f}) | "
+                     f"${1 / b['p_mkt']:.2f} | {b['why']} | {idea_note(b)} |")
     return L
 
 
