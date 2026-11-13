@@ -293,7 +293,7 @@ def render_html(res: dict, cond: list[dict]) -> str:
                      f'<div class="why">{esc(b["why"])}<div class="note">{esc(ft_note(b))}</div></div></div>')
         H.append("</div>")
         if ft.get("ideas"):
-            H.append('<h3>Ideas: their rebound and threes trends</h3><p class="note">Not bets: rebound trends lost 21% in the backtest, '
+            H.append('<h3>Ideas: their rebound trends and threes</h3><p class="note">Trends plus a threes price screen (their model 1.15-2× the market). Not bets: rebound trends lost 21% in the backtest, '
                      'threes are untested. Shown as leads and graded so we learn. Fair = the market\'s own chance.</p><div class="card-list">')
             for b in ft["ideas"]:
                 H.append(f'<div class="row"><span class="badge">Idea</span><div class="who"><b>{esc(b["name"])}</b>'

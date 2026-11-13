@@ -27,6 +27,8 @@ from nba_ladders import config
 # -14.4%): minutes flat (1 + 8.1%) / (1 - 14.4%) = 1.26; minutes up too (1 - 5.5%) / (1 - 14.4%) = 1.10.
 LIFT = {True: 1.26, False: 1.10}
 MIN_EV = 0.04
+# threes price screen: their model 1.15-2x the market's real chance (their handoff: > 2x = likely model error), $2.50-10, top 6
+THREE_GAP, THREE_GAP_MAX, THREE_PRICE, THREE_N = 1.15, 2.0, (2.5, 10.0), 6
 FLAT_MIN = 1.05  # L3 minutes / season below this = minutes flat (the +8% subset)
 STAKE = "0.25u"
 LAB = {"A": "ast", "R": "reb", "M": "3pm"}
@@ -80,12 +82,40 @@ def tips(day: date) -> dict:
         b["bet_ok"] = flat and abs(b["spread"]) < 15 and not b["q_flag"] and b["ev"] >= MIN_EV
         out["bets"].append(b)
     # minutes-flat (the backtested best subset) first, then angle H, then their edge
+    # threes price screen: every Sportsbet threes rung where their model beats the market's real chance by THREE_GAP+
+    # (not only trend-flagged players), so threes ideas show up on quiet trend nights too
+    have = {(b["name"], b["bet"]) for b in out["ideas"]}
+    keyed = {player_key(n): r for n, r in res.items()}
+    screen = []
+    for pk, L in lad.items():
+        r = keyed.get(pk)
+        if r is None or r.get("M") is None:
+            continue
+        for k, pr in L.get("M", {}).items():
+            if not (THREE_PRICE[0] <= pr <= THREE_PRICE[1]):
+                continue
+            q = fm.nb_tail(r["M"], k, fm.RR["M"])
+            real = market_ratio(pr) / pr
+            if not (THREE_GAP <= q / real <= THREE_GAP_MAX) or (r["name"], f"{k}+ 3pm") in have:
+                continue
+            w = r["w"]
+            m3, ms = (w.get(3) or {}).get("minutes"), (w.get(0) or {}).get("minutes")
+            tri = lambda c, w=w: "/".join(f"{(w.get(i) or {}).get(c) or 0:.1f}" for i in (1, 2, 3, 0))
+            screen.append({"name": r["name"], "team": r["t"], "opp": r["o"], "kind": "single", "bet": f"{k}+ 3pm", "book": "sportsbet",
+                           "price": pr, "p_model": q, "p_mkt": real, "p": real, "ev": pr * real - 1, "take_at": 1.10 / real, "mu": r["M"],
+                           "flat": bool(m3 and ms and m3 / ms < FLAT_MIN), "opp_ast": 1.0, "opp_reb": 1.0, "spread": spr.get(r["t"], 0.0),
+                           "q_flag": r["q"], "why": f"price screen · 3PA {tri('fg3a')} · 3PM {tri('fg3m')} (L1/L2/L3/S)", "stat": "M",
+                           "gap": q / real, "bet_ok": False, "screen": True})
+    best = {}
+    for b in sorted(screen, key=lambda b: -b["gap"]):
+        best.setdefault(b["name"], b)  # one rung per player: the biggest gap
+    out["ideas"] += sorted(best.values(), key=lambda b: -b["gap"])[:THREE_N]
     out["bets"].sort(key=lambda b: (not b["bet_ok"], -(b["opp_ast"] >= 1.02), -b["ev"]))
     out["ideas"].sort(key=lambda b: (b["stat"], -(b["gap"] or 0)))
     return out
 
 
-IDEA_TAG = {"R": "rebound trend (backtest −21%: idea only)", "M": "threes trend (untested: idea only)"}
+IDEA_TAG = {"R": "rebound trend (backtest −21%: idea only)", "M": "threes (untested: idea only)"}
 
 
 def idea_note(b: dict) -> str:
@@ -125,8 +155,8 @@ def render_md(ft: dict) -> list[str]:
         L.append(f"| {'**Bet**' if b['bet_ok'] else 'Watch'} | **{b['name']}** ({b['team']} vs {b['opp']}) | **{b['bet']}** (sportsbet) ${b['price']:.2f} · "
                  f"take at **${b['take_at']:.2f}** | {b['p_model']:.0%} (exp {b['mu']:.1f}) | ${1 / b['p']:.2f} | {b['ev']:+.0%} | {b['why']} | {note(b)} |")
     if ft.get("ideas"):
-        L += ["", ("**Ideas: their rebound and threes trends** (not bets: rebound trends lost 21% in the backtest, threes untested; "
-              "shown for leads and graded so we learn). Fair = the market's own chance."), "",
+        L += ["", ("**Ideas: their rebound trends and threes** (trends plus a threes price screen; not bets: rebound trends lost 21% "
+              "in the backtest, threes untested; shown for leads and graded so we learn). Fair = the market's own chance."), "",
               "| Player | Bet | Their model | Market fair | Trend | Notes |", "|---|---|---|---|---|---|"]
         for b in ft["ideas"]:
             L.append(f"| **{b['name']}** ({b['team']} vs {b['opp']}) | {b['bet']} (sportsbet) ${b['price']:.2f} | {b['p_model']:.0%} (exp {b['mu']:.1f}) | "
