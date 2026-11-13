@@ -3,6 +3,16 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 13 Nov: open items closed
+- **Touches spot** (`touches`): flat minutes but a player-specific usage bump of +2% with 3+ own games, or +4% prior-only.
+  Sub-margin alone at Sportsbet (−5 to −7%; −4% with angle H), so it's graded C, or B with an angle H boost.
+- **Rebound share** in usage.py: only a big rebounder's absence (rebounds above 5 a game) frees boards, +2-6% per minute.
+  Rebound deviance now improves (−24 / −27 / −6 by season).
+- **Price plays off**: 0/12 live, and the rule loses at every confidence on 2024-26 no-angle rungs (c 0.25: −13%,
+  CI −19 to −7%). The model's weight given the book there is 0.04 ± 0.03. Next-best no longer uses no-angle players.
+- **Friend's tips** section (`friend_tips.py`): their trend-first model filtered to what backtests. Assist trends
+  +0.9% (base −14%), minutes flat +8%; rebound trends −21% (dropped); threes untested. Graded as FT (bet) / FW (watch).
+
 ## 12 Nov: card 2/4 +3.6u, price plays 0/2 (now 0/12, exp 3.3); live 17/54, +15.8u, honest expected 15.4
 - **Angle H** (opposition by position, docs/opp_position.md): in the projection for every stat and group (weights
   `opp_position.OPP_W`), plus an overlay. Bigs' P/R are passed below 1.02 (−12 to −14% at Sportsbet, starting bigs too),

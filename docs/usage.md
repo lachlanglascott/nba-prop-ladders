@@ -18,7 +18,9 @@ Multiplier on player i's per-minute stat = 1 + the sum, over tonight's absent te
 - **Prior**, fitted on 2019-24 only: beta × T's usual volume / 100 × (i's own rate / league rate).
   - Points: beta 0.20 (same position) / 0.17 (different position), per 100 of T's usage (FGA + 0.44 FTA + TOV).
   - Assists: 0.65 / 0.50, per 100 of T's assists.
-  - Rebounds: about 0. Rebound gains come through minutes, not rate.
+  - Rebounds: **rebound share**, 0.59 (same) / 0.78 (diff) per 100 of T's rebounds *above 5 a game*, with no tilt.
+    Only a big rebounder's absence frees boards: per-minute rebounds +2-6% at 8+ rpg, ~0 below (2023-27 tracking check).
+    Rebound chances barely move, so the gain is in conversion (fewer contested boards). Embiid out ≈ +3-4% for each teammate.
 - **Player-specific**: i's residuals in past games T missed, across any season and any lineup, shrunk toward the prior
   with K pseudo-games (pts and ast 80, reb 160).
   - Residuals are measured against i's absence-neutral trailing rate: each history game is divided by its own prior multiplier.
@@ -30,11 +32,11 @@ Multiplier on player i's per-minute stat = 1 + the sum, over tonight's absent te
 
 Poisson deviance vs his plain trailing 40-game rate, with actual minutes, using earlier games only:
 
-| season | pts: prior | pts: player-specific | ast: prior | ast: player-specific | reb |
+| season | pts: prior | pts: player-specific | ast: prior | ast: player-specific | reb: prior (rebound share) |
 |---|---|---|---|---|---|
-| 2024-25 (K tuned here) | −408 | **−493** | −61 | **−116** | ≈0 |
-| 2025-26 (held out) | −433 | **−534** | −68 | **−115** | ≈0 |
-| 2026-27 so far | −102 | −97 | −13 | −12 | ≈0 |
+| 2024-25 (K tuned here) | −408 | **−493** | −61 | **−116** | −24 |
+| 2025-26 (held out) | −433 | **−534** | −68 | **−115** | −27 |
+| 2026-27 so far | −102 | −97 | −13 | −12 | −6 |
 
 ## In spots
 
@@ -47,3 +49,12 @@ Examples on 12 Nov:
   - Caveat: the raw split says +20% pts/min, but Embiid missed half of 2025-26, so his rising rookie baseline is
     already mostly Embiid-out games.
 - **Poeltl, Barnes out:** pts +2%, ast −2% (20 games without Barnes).
+
+## Touches spot (spots `touches`)
+
+A new absence where his minutes stay flat (under +2) but the usage model says his per-minute pts, ast or reb go up.
+- It needs **+2% backed by 3+ of his own games without them**, or **+4% on the prior alone**. On the league prior
+  alone, +2-3% fires on almost any absence.
+- Sportsbet 2024-26: rungs with a +2-7% bump returned −5 to −7%, against −12 to −15% with no bump, and −4% with a good
+  angle H spot. Star-sized bumps (+7%+) are priced as news (−11%). Not a standalone edge, so it's graded **C**, or
+  **B** when angle H boosts the bet.

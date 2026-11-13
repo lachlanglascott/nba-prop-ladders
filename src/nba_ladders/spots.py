@@ -52,7 +52,10 @@ EXTRA_OUT_W = 0.5  # a matching game counts this much less per extra teammate mi
 KEY_MPG = 24.0  # a "key" absence for role spots
 CAND_MPG = 15.0  # players considered (recent minutes)
 PRICE_MPG = 12.0  # 12-15 min players (backup bigs: Drummond 13) are priced too, for the price-play section only
-PRICE_N = 5  # price plays listed on the slate
+# Price plays (no lineup angle, projection vs price) are off: 0/12 live (10-12 Nov, 3.2 expected), and on 2024-26
+# Sportsbet no-angle rungs the rule loses at every confidence (c 0.25: -13%, 90% CI -19 to -7%; 0.18: -13%;
+# 0.12: -8%); the model's weight given the book there is 0.04 +- 0.03. Set >0 to list them again.
+PRICE_N = 0
 STAR_PPG = 20.0  # last season: stars are left out (sharply priced; tried back in 7 Nov, user preferred them out 8 Nov)
 OUT_P = 0.70  # P(sits) at which a teammate counts as out tonight
 # Minutes lost when he is on the report himself and plays, beyond normal drift (2025-26, 20+ mpg, vs his previous 10:
@@ -136,7 +139,13 @@ SGM_RANGE = (3.5, 15.0)
 FREED_CAP = 6.0  # minutes: the rough share-of-freed-minutes estimate when there's no game without them
 # Opponent x position in the projection: opp_position.OPP_W (every stat, every group), replacing pts x1.5 / guards' reb x1.3
 KEY_SHARE = 0.3  # (was 0.5: dropped Edwards after 5 missed of 9) an absence is 'new' if he played this share of this season's games (else his teammates' roles already reflect it)
-PRIMARY = {"role", "bounce"}  # spot types that stand on their own
+PRIMARY = {"role", "bounce", "touches"}  # spot types that stand on their own
+# Touches: a new absence with flat minutes but a usage bump (usage.py) of this much in pts or ast per minute.
+# Sportsbet 2024-26: +2-7% bumps -5 to -7% ROI (no bump -12 to -15%), with a good opp spot (angle H >= 1.02)
+# -4%; star-sized bumps (+7%+) are priced as news (-11%). Not a standalone edge: graded C, or B with angle H.
+TOUCH_MIN = 1.02  # in pts, ast or reb (reb: a big rebounder out, usage.REB_FLOOR), with his own past games behind it:
+TOUCH_GAMES = 3  # past games without them (else the bump is the league prior, which fires on any absence: Murray,
+TOUCH_PRIOR_MIN = 1.04  # Giddey 13 Nov at +2-3% from 0 games), or a prior-only bump this big (Edgecombe ast +4%)
 EST_CONF = 0.15  # confidence cap when the role is estimated, not measured
 ROLE_MIN, ROLE_VOL = 2.0, 1.15
 ROLE_VOL_GAMES = 5  # a volume-only role spot (no extra minutes) needs this many matching games (Clingan, Gobert)  # a role spot needs +2 min or +15% volume vs his normal-lineup games
@@ -361,9 +370,10 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
     # usage: what this player picks up per minute when tonight's new absentees sit (usage.py: league prior +
     # his own past games without each of them, any season/lineup), scaling the prior the matching games blend
     # with (so it matters most when they're few). Established absences are already in cur_role.
-    new_out, usage_note = key_new - est, ""
+    new_out, usage_note, um, ures = key_new - est, "", None, None
     if new_out and usage_fn is not None:
-        um = usage_fn(pid, new_out)["mult"]
+        ures = usage_fn(pid, new_out)
+        um = ures["mult"]
         p_pts = p_pts * um["pts"] if p_pts is not None else None
         p_pot = p_pot * um["ast"] if p_pot is not None else None
         p_rc = p_rc * um["reb"] if p_rc is not None else None
@@ -401,6 +411,18 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
         d_min = proj_min - base_min
         sits.append({"kind": "role", "text": f"{names} out (usually plays): {d_min:+.1f} min vs his normal-lineup games"
                      + (f" ({n_comp} games without them)" if n_comp else " (no game without them yet)"), "strength": max(d_min, 0) / 3 + max(vol_up - 1, 0) * 2})
+    elif um is not None and max(um.values()) >= (TOUCH_MIN if sum(x["games_without"] for x in ures["mates"]) >= TOUCH_GAMES
+                                                   else TOUCH_PRIOR_MIN):
+        # minutes flat, touches up: the Edgecombe case (12 Nov, LeBron out: 36 min as usual, 8 reb / 8 ast)
+        names = ", ".join(sorted(id_name.get(m, str(m)) for m in new_out))
+        past = ", ".join(f"{x['games_without']} without {x['mate'].split()[-1]}" for x in ures["mates"])
+        up = [x for x in ("pts", "ast", "reb") if um[x] >= TOUCH_MIN]
+        st = up[0] if len(up) == 1 and up[0] != "pts" else None  # one of ast/reb up: bet that stat; else every stat
+        sits.append({"kind": "touches", "stat": st,
+                     "text": f"{names} out: minutes flat ({proj_min - base_min:+.1f}), touches up per minute: "
+                             + ", ".join(f"{x} {(um[x] - 1) * 100:+.0f}%" for x in ("pts", "ast", "reb"))
+                             + f" (usage model; {past} past games)",
+                     "strength": (max(um.values()) - 1) * 5})
     # same-lineup games only: nobody missing then who plays tonight (an absence boost isn't a new role)
     same = g.filter(pl.Series([a <= set(tonight_out) for a in absent_sets]))
     recent = same.tail(3)
@@ -976,6 +998,8 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
                     b["grade"] = "C"  # estimated role (no game without them yet): live 2/11, model expected 4.5
                 if b.get("h") == "down":
                     b["grade"] = {"A": "B", "B": "C"}.get(b["grade"], "C")
+                if "touches" in kinds and not kinds & {"role", "bounce"} and b["grade"] in "AB":
+                    b["grade"] = "B" if b.get("h") == "boost" else "C"  # touches alone is sub-margin (see TOUCH_MIN)
             if notes_h:
                 a["opp_line"] = (a.get("opp_line", "") + " · " + "; ".join(notes_h)).strip(" ·")
             if any(not b.get("alt") and not b.get("lean") for b in bs):
@@ -1071,6 +1095,8 @@ def price_plays(res: dict, card: list, n: int = PRICE_N) -> list[tuple[dict, dic
     """Top n projection-vs-price bets with no lineup angle (the 'near' pool): one per player, honest EV >= MIN_EV,
     not rare lines or price outliers, ranked by Kelly growth like the card; at most one per game and one per
     stat (0/10 on 10-11 Nov: three rebound overs a night, two from one game). 0.25u each."""
+    if n <= 0:
+        return []
     have = {a["name"] for a, _ in card}
     pool = []
     for a in res.get("near", []):
@@ -1102,7 +1128,7 @@ def next_best(res: dict, card: list, cond: list | None = None, reserves: int = 2
         return []
     have = {a["name"] for a, _ in card}
     pool = []
-    for a in res["spots"] + res.get("leans", []) + res.get("near", []):
+    for a in res["spots"] + res.get("leans", []):  # no-angle ('near') players lose at any confidence (see PRICE_N)
         for b in a["bets"]:
             if not b.get("outlier") and b["ev"] >= NEXT_FLOOR and not _rare(b):
                 pool.append((a, b))
@@ -1199,6 +1225,10 @@ def render(res: dict, cond: list[dict]) -> str:
               "| Player | Bet | Projection | Why |", "|---|---|---|---|"]
         for a, b in pp:
             L.append(f"| **{a['name']}** ({a['team']} vs {a['opp']}) | {_fmt_bet(b)} | {proj_line(a, b)} | {_why(a, b)} |")
+    if res.get("friend"):
+        from nba_ladders.friend_tips import render_md as friend_md
+
+        L += friend_md(res["friend"])
     passed = [(a, b) for a in res["spots"] + res.get("leans", []) for b in a["bets"][:1] if b.get("h") == "gate"]
     if passed:
         L += ["", "## Passed: bad opposition spot (angle H, docs/opp_position.md)", ""]
@@ -1292,6 +1322,11 @@ def save(res: dict, cond: list[dict]) -> None:
                      "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
                      "ev": b["ev"], "grade": "NB", "conf": a["conf"], "card": False, "alt": False,
                      "situations": "trend" if a.get("trend") else "; ".join(x["kind"] for x in a["sits"])})
+    for b in (res.get("friend") or {}).get("bets", []):  # friend's assist trends: FT = bet, FW = watch (graded either way)
+        rows.append({"day": res["day"], "player": b["name"], "team": b["team"], "kind": "single", "bet": b["bet"],
+                     "book": b["book"], "price": b["price"], "p": b["p"], "p_model": b["p_model"], "p_mkt": b["p_mkt"],
+                     "ev": b["ev"], "grade": "FT" if b["bet_ok"] else "FW", "conf": 0.0, "card": False, "alt": False,
+                     "situations": "friend trend" + (" (minutes flat)" if b["flat"] else "")})
     out = config.DATA_PROCESSED / "spots" / f"{res['day']}.parquet"
     out.parent.mkdir(parents=True, exist_ok=True)
     pl.DataFrame(rows, infer_schema_length=None).write_parquet(out)
@@ -1371,6 +1406,12 @@ def main() -> None:
     news = {k: v for k, v in (("out", args.out), ("start", args.start), ("bench", args.bench)) if v}
     res = build(args.date, news=news or None)
     res["record"], res["replay"] = record(args.date), record(args.date, live=False)
+    try:  # friend's trend-first model (friend_model/), filtered to what backtests (friend_tips.py)
+        from nba_ladders.friend_tips import tips as friend_tips
+
+        res["friend"] = friend_tips(args.date)
+    except Exception as e:  # noqa: BLE001  their model is separate code: never let it break the slate
+        print(f"friend tips skipped: {e!r}")
     cond = [] if args.no_conditional else conditional(args.date, res)
     md = render(res, cond)
     out = config.ROOT / "docs" / "slates" / f"{args.date.isoformat()}-spots.md"

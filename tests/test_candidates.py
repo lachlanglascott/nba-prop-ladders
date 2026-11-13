@@ -318,7 +318,7 @@ def test_price_plays_one_per_player_positive_ev():
     bet = lambda stat, ev, price=3.0: {"bet": f"10+ {stat}", "kind": "single", "price": price, "p": (1 + ev) / price, "ev": ev, "own_hr": 0.4}
     near = [{"name": "A", "bets": [bet("reb", 0.10), bet("reb", 0.20)]}, {"name": "B", "bets": [bet("pts", 0.02)]},
             {"name": "C", "bets": [bet("pts", 0.15)]}, {"name": "D", "bets": [bet("ast", 0.30)]}]
-    out = price_plays({"near": near}, card=[({"name": "D"}, {})])
+    out = price_plays({"near": near}, card=[({"name": "D"}, {})], n=5)
     assert [a["name"] for a, _ in out] == ["A", "C"]  # D is on the card, B is under +4%
 
 
@@ -332,7 +332,7 @@ def test_price_plays_one_per_game_and_stat():
             {"name": "Ayton", "team": "WAS", "opp": "IND", "bets": [bet("7+ reb", 0.19)]},  # second rebound play
             {"name": "Castle", "team": "SAS", "opp": "CHI", "bets": [bet("8+ ast", 0.17)]},
             {"name": "Boozer", "team": "MEM", "opp": "DEN", "bets": [bet("9r/7a", 0.15)]}]
-    out = price_plays({"near": near}, card=[])
+    out = price_plays({"near": near}, card=[], n=5)
     assert [a["name"] for a, _ in out] == ["Amen", "Castle", "Boozer"]
 
 
@@ -341,5 +341,12 @@ def test_price_plays_prefer_single():
 
     sgm = {"bet": "9r/3a", "kind": "SGM", "price": 4.8, "p": 0.27, "ev": 0.29}
     single = {"bet": "9+ reb", "kind": "single", "price": 3.0, "p": 0.36, "ev": 0.08, "own_hr": 0.4}
-    out = price_plays({"near": [{"name": "Amen", "bets": [sgm, single]}]}, card=[])
+    out = price_plays({"near": [{"name": "Amen", "bets": [sgm, single]}]}, card=[], n=5)
     assert out[0][1]["bet"] == "9+ reb"
+
+
+def test_price_plays_off_by_default():
+    from nba_ladders.spots import price_plays
+
+    b = {"kind": "single", "bet": "8+ reb", "ev": 0.2, "p": 0.3, "price": 4.0}
+    assert price_plays({"near": [{"name": "X", "bets": [b]}]}, card=[]) == []

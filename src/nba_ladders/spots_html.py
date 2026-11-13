@@ -275,6 +275,27 @@ def render_html(res: dict, cond: list[dict]) -> str:
                      f'<small>{esc(a["team"])} vs {esc(a["opp"])} · stake 0.25u</small><div class="chips"><span class="chip">No lineup angle</span></div></div>'
                      f'<div class="betcol">{_bet_html(b)}{_proj(a, b)}</div><div class="why">{esc(_why(a, b))}<div class="chips">{_opp_chips(a)}</div></div></div>')
         H.append("</div>")
+    ft = res.get("friend") or {}
+    if ft.get("bets") or ft.get("untested") or ft.get("dropped"):
+        from nba_ladders.friend_tips import note as ft_note
+
+        H.append('<h2>Friend\'s tips: assist trends</h2><p class="note">Their trend-first model, kept where it backtests: assist '
+                 'trends with <b>minutes flat</b> (+8% at Sportsbet 2024-26, CI −3 to +19%). Rebound trends dropped (−21%). Honest fair = '
+                 'market\'s real chance × the trigger\'s backtested lift. <b>0.25u</b>, at the <span class="take">take at</span> price or better.</p>'
+                 '<div class="card-list">')
+        for b in ft.get("bets", []):
+            tag = "Bet" if b["bet_ok"] else "Watch"
+            H.append(f'<div class="row"><span class="badge {"C" if b["bet_ok"] else ""}">{tag}</span><div class="who"><b>{esc(b["name"])}</b>'
+                     f'<small>{esc(b["team"])} vs {esc(b["opp"])}</small></div><div class="betcol"><b>{esc(b["bet"])}</b> (sportsbet) ${b["price"]:.2f} · '
+                     f'fair ${1 / b["p"]:.2f} · EV {b["ev"]:+.0%} · take at <span class="take">${b["take_at"]:.2f}</span>'
+                     f'<div class="note">their model {b["p_model"]:.0%} (exp {b["mu"]:.1f})</div></div>'
+                     f'<div class="why">{esc(b["why"])}<div class="note">{esc(ft_note(b))}</div></div></div>')
+        H.append("</div>")
+        if ft.get("untested"):
+            H.append('<p class="note">Untested (threes aren\'t in the market backtest): ' + esc("; ".join(
+                f"{b['name']} {b['bet']} ${b['price']:.2f}" for b in ft["untested"])) + "</p>")
+        if ft.get("dropped"):
+            H.append('<p class="note">Rebound trends dropped (backtest −21%): ' + esc(", ".join(sorted(set(ft["dropped"])))) + "</p>")
     passed = [(a, b) for a in res["spots"] + res.get("leans", []) for b in a["bets"][:1] if b.get("h") == "gate"]
     if passed:
         H.append('<h2>Passed: bad opposition spot</h2><p class="note">Angle H (docs/opp_position.md): a big\'s points / rebounds '

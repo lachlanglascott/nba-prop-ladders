@@ -14,6 +14,8 @@ them: a player can be a good fit for one and a terrible fit for another.
 
 | G | **Luck reversion** | Recent assists (rebounds) lag potential assists (rebound chances); lines set off the low actuals | luck over last 10 vs next game | AST (REB) props, P/R/A | **confirmed for assists** (~halfway reversion, stable across seasons); rebounds weaker ([findings](luck.md)) |
 | H | **Opposition spot** | Book ignores most of what an opponent allows to a position group (G/W/B), most of all bigs' P/R and assists | as-at opp x group factor for the bet's stat | **in the model** (all stats/groups) **and** an overlay: bigs' P/R pass < 1.02 / boost ≥ 1.02, G/W ast and wing pts down < 0.97 | bigs' P/R < 1.02 −12 to −14% vs ≥ 1.02 −0.6% (P+R), both seasons; luck × good ast spot +22% (83 games) ([findings](opp_position.md)) |
+| I | **Touches** | A teammate out leaves his minutes flat but his usage up (player-specific, usage.py) | usage multiplier ≥ 1.02 with 3+ own games, or ≥ 1.04 prior-only | pts / ast / reb | sub-margin alone (−5 to −7% at SB; −4% with angle H); C, or B with angle H ([usage](usage.md)) |
+| J | **Friend's assist trends** | Potential assists L2/L3 +12% / +10% over season (their trend-first model) | trigger + minutes flat | AST $3+ rungs | +0.9% at SB (−14% base); **minutes flat +8%** (CI −3 to +19%); rebound trends −21%, dropped (`friend_tips.py`) |
 
 ## Market check (2025-26 Sportsbet backtest, docs/market_backtest_findings.md)
 Single legs are efficiently priced: no single-leg strategy profits on held-out games. The model

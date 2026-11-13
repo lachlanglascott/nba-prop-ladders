@@ -296,7 +296,7 @@ def angle_h(fac: dict, b: dict, kinds: set, grp: str, bounce_stats: set) -> tupl
             return "boost", f"assist luck x good opp ast spot ({f:.2f}) (angle H)"
         if f < AST_LOW:
             return "down", f"opp spot: bad for {grp} assists ({f:.2f}), graded down (angle H)"
-        if f >= AST_HIGH and kinds & {"role", "bounce"}:
+        if f >= AST_HIGH and kinds & {"role", "bounce", "touches"}:
             return "boost", f"opp spot: good for {grp} assists ({f:.2f}), +confidence (angle H)"
     if grp == "W" and "pts" in st and (f := fac.get("pts", 1.0)) < WING_PTS_LOW:
         return "down", f"opp spot: bad for wings' pts ({f:.2f}), graded down (angle H)"

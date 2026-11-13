@@ -39,6 +39,7 @@ FIT_BEFORE = "22024"  # prior fitted on seasons before this; backtest on this an
 # (pts +-45%) next to true pair effects (+-5%), hence the heavy shrinkage.
 K_PAIR = {"pts": 80.0, "ast": 80.0, "reb": 160.0}
 CLIP = (0.75, 1.5)
+REB_FLOOR = 5.0  # rebounds per game a typical absentee "uses"; only the excess is freed for teammates (2023-27 tracking check)
 
 
 def _frame() -> pl.DataFrame:
@@ -94,6 +95,8 @@ def prior_x(rows: pl.DataFrame, ab: pl.DataFrame, lg: dict) -> pl.DataFrame:
     for s in STATS:
         tilt = (pl.col(f"r_{s}") / lg[s]).fill_null(1.0).clip(0.2, 3.0)
         x = pl.col(f"vol_{VOL[s]}") / 100 * tilt
+        if s == "reb":  # rebound share: only a big rebounder's absence frees boards (rates +2-6% at 8+ rpg, ~0 below), no tilt
+            x = (pl.col("vol_reb") - REB_FLOOR).clip(0, None) / 100
         same = pl.col("grp") == pl.col("mate_grp")
         cols += [pl.when(same).then(x).otherwise(0.0).alias(f"xs_{s}"), pl.when(same).then(0.0).otherwise(x).alias(f"xd_{s}")]
     return j.with_columns(cols)
@@ -206,7 +209,8 @@ def tonight(pid: int, out_ids: set, as_of: date, k_pair: dict = K_PAIR) -> dict:
         det = {"mate": th["player_name"][-1], "games_without": 0}
         for s in STATS:
             tilt = min(max(rate[s] / lg[s], 0.2), 3.0)
-            p = beta[s]["same" if same else "diff"] * vol[VOL[s]] / 100 * tilt
+            x = max(vol["reb"] - REB_FLOOR, 0) / 100 if s == "reb" else vol[VOL[s]] / 100 * tilt
+            p = beta[s]["same" if same else "diff"] * x
             ph = pairs.filter(pl.col("mate_id") == t)
             W = float(ph[f"w_{s}"].sum()) if ph.height else 0.0
             S = float((ph[f"w_{s}"] * ph[f"res_{s}"].fill_nan(0)).sum()) if ph.height else 0.0
