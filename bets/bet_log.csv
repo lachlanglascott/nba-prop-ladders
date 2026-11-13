@@ -14,3 +14,5 @@ date,player,team,opponent,bet_type,legs,odds,stake,scenario,thesis,result,actual
 2026-11-11,Jake LaRavia,LAL,MIL,SGM,"AST 6+ & REB 8+",5.0,10,matchup,user's own matchup read (Sportsbet),W,"0 pts / 9 reb / 6 ast / 21 min",odds approx ($5); legs read from "6/8r"
 2026-11-11,Anthony Black,ORL,UTA,SGM,"REB 7+ & AST 7+",10.0,,,user's own pick,W,"22 pts / 7 reb / 8 ast / 39 min",legs read from "7/7" (7p/7a also wins); stake and scenario to confirm
 2026-11-11,Day'Ron Sharpe,BKN,NOP,single,AST 6+,4.0,,blowout_risk,user's own pick; lost to the blowout,L,"15 pts / 4 reb / 5 ast / 19 min",BKN won by 34 (145-111); 1 ast short in 19 min; stake to confirm
+2026-11-12,VJ Edgecombe,PHI,TOR,SGM,"REB 7+ & AST 5+",8.50,,role_change,"user's own pick: LeBron out (Embiid Q, played); model had LeBron-out reb lean (6+ reb 74% vs mkt 58%), usage ast +4%",W,"15 pts / 8 reb / 8 ast / 36 min",Embiid played 28 min; stake to confirm
+2026-11-12,Moussa Diabaté,CHA,PHX,single,REB 12+,,,role_change,"Slate C: Miller, Schröder out (+6.0 min, estimated); 12+ reb picklebet $3.90 fair $3.48",W,"7 pts / 13 reb / 2 ast / 32 min",odds and stake to confirm (slate price was $3.90 picklebet)

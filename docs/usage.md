@@ -32,9 +32,9 @@ Poisson deviance vs his plain trailing 40-game rate, with actual minutes, using 
 
 | season | pts: prior | pts: player-specific | ast: prior | ast: player-specific | reb |
 |---|---|---|---|---|---|
-| 2024-25 (K tuned here) | −408 | **−490** | −61 | **−119** | ≈0 |
-| 2025-26 (held out) | −433 | **−537** | −68 | **−118** | ≈0 |
-| 2026-27 so far | −99 | −93 | −11 | −10 | ≈0 |
+| 2024-25 (K tuned here) | −408 | **−493** | −61 | **−116** | ≈0 |
+| 2025-26 (held out) | −433 | **−534** | −68 | **−115** | ≈0 |
+| 2026-27 so far | −102 | −97 | −13 | −12 | ≈0 |
 
 ## In spots
 

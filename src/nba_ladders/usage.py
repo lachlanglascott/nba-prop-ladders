@@ -132,10 +132,10 @@ def with_multipliers(rows: pl.DataFrame, px: pl.DataFrame, beta: dict, k_pair: d
     g = r.select("player_id", "game_id", "game_date", "minutes", *STATS, *[f"e_neutral_{s}" for s in STATS],
                  *[f"m_prior_{s}" for s in STATS])
     pj = px.select("player_id", "game_id", "mate_id", *[f"p_{s}" for s in STATS]).join(g, on=["player_id", "game_id"])
-    pj = pj.with_columns(*[(pl.col(s) / pl.col(f"e_neutral_{s}") - 1 - (pl.col(f"m_prior_{s}") - 1 - pl.col(f"p_{s}"))).alias(f"res_{s}")
+    pj = pj.with_columns(*[pl.when(pl.col(f"e_neutral_{s}") > 0.05).then(pl.col(s) / pl.col(f"e_neutral_{s}") - 1 - (pl.col(f"m_prior_{s}") - 1 - pl.col(f"p_{s}"))).otherwise(0.0).alias(f"res_{s}")
                            for s in STATS]).filter(pl.col("e_neutral_pts").is_not_null())
     # as-at per pair: sums over strictly earlier dates (weight = expected volume so tiny-minute games count less)
-    pj = pj.sort("game_date").with_columns(*[pl.col(f"e_neutral_{s}").clip(0, None).fill_nan(0).alias(f"w_{s}") for s in STATS])
+    pj = pj.sort("game_date").with_columns(*[pl.when(pl.col(f"e_neutral_{s}") > 0.05).then(pl.col(f"e_neutral_{s}")).otherwise(0.0).fill_nan(0).alias(f"w_{s}") for s in STATS])
     over = ["player_id", "mate_id"]
     cum = []
     for s in STATS:
@@ -212,6 +212,7 @@ def tonight(pid: int, out_ids: set, as_of: date, k_pair: dict = K_PAIR) -> dict:
             S = float((ph[f"w_{s}"] * ph[f"res_{s}"].fill_nan(0)).sum()) if ph.height else 0.0
             wbar = rate[s] * float(hist["minutes"].tail(10).mean())
             e = (S + k_pair[s] * wbar * p) / (W + k_pair[s] * wbar) if (W + k_pair[s] * wbar) > 0 else p
+            e = e if np.isfinite(e) else p
             tot[s] += e
             det[s] = {"prior": p, "own": (S / W) if W else None, "effect": e}
             det["games_without"] = ph.height
@@ -233,8 +234,8 @@ def _pair_history(r: pl.DataFrame, pid: int, as_of: date) -> pl.DataFrame:
     g = r.filter(pl.col("player_id") == pid, pl.col("game_date") < as_of).select(
         "game_id", "game_date", *STATS, *[f"e_neutral_{s}" for s in STATS], *[f"m_prior_{s}" for s in STATS])
     pj = px.select("game_id", "mate_id", *[f"p_{s}" for s in STATS]).join(g, on="game_id")
-    return pj.with_columns(*[(pl.col(s) / pl.col(f"e_neutral_{s}") - 1 - (pl.col(f"m_prior_{s}") - 1 - pl.col(f"p_{s}"))).alias(f"res_{s}")
-                             for s in STATS], *[pl.col(f"e_neutral_{s}").clip(0, None).fill_nan(0).alias(f"w_{s}") for s in STATS]) \
+    return pj.with_columns(*[pl.when(pl.col(f"e_neutral_{s}") > 0.05).then(pl.col(s) / pl.col(f"e_neutral_{s}") - 1 - (pl.col(f"m_prior_{s}") - 1 - pl.col(f"p_{s}"))).otherwise(0.0).alias(f"res_{s}")
+                             for s in STATS], *[pl.when(pl.col(f"e_neutral_{s}") > 0.05).then(pl.col(f"e_neutral_{s}")).otherwise(0.0).fill_nan(0).alias(f"w_{s}") for s in STATS]) \
         .filter(pl.col("e_neutral_pts").is_not_null())
 
 

@@ -3,6 +3,15 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 12 Nov: card 2/4 +3.6u, price plays 0/2 (now 0/12, exp 3.3); live 17/54, +15.8u, honest expected 15.4
+- **Angle H** (opposition by position, docs/opp_position.md): in the projection for every stat and group (weights
+  `opp_position.OPP_W`), plus an overlay. Bigs' P/R are passed below 1.02 (−12 to −14% at Sportsbet, starting bigs too),
+  and G/W assists and wing points are graded down below 0.97. First live pass: Poeltl 16+ pts → 9 pts (user called it).
+- **Usage redistribution** (docs/usage.md): player-specific pts/ast per-minute bump when teammates sit, shrunk to a
+  league prior; held-out 2025-26 deviance pts −537 (prior −433). It scales the rate prior in spots.
+- User 2/2: Edgecombe 7r/5a $8.50 (LeBron out; model leaned but no spot: touches up, minutes flat), Diabaté 12+ reb.
+- Open: a "touches" spot for flat minutes with usage/potentials up; a rebound-share prior; price-play confidence.
+
 ## 11 Nov
 - **Backup big's games without the starting big** (Kalkbrenner 12 Nov: his only Miller/Schröder-out game had
   Diabaté out too, 35 min / 15 reb, and Diabaté plays tonight; user caught it). Relative lineup weights can't
