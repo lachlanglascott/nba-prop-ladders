@@ -3,6 +3,14 @@
 Running log of what the live slates taught us and what changed. Newest first. Live record
 from 4 Nov 2026 (card + triggered "if they sit" bets, 1u flat).
 
+## 14 Nov (after 13 Nov): card 3/5 +7.7u (exp 1.7); live 20/59, +23.5u, honest expected 17.1
+- User: Proctor 8p/3r/3a Betr $7.50 W (22/4/3, 27 min). I'd cautioned on his 1/8 record at 18-23 min, but the bet was the
+  extra minutes, and the model's 32% was closer than my read.
+- Passes right: Coward 20p/4a, Sheppard threes, Cardwell (13 min), Portis (15 min vs 24 projected).
+- Misses: Stirtz 12 min (OKC 10-deep in a 1-pt game); Clingan 13 pts (16+). Davion Mitchell (C, estimated role) 17 ast.
+- Friend's tips night 1: assist trend Giddey 11+ W (1/1); threes ideas 1/12 (market exp 2.2); rebound ideas 3/7 (mkt 1.7).
+- Open: treat rebounding forwards (~11+ reb/36) as bigs everywhere (Portis), with opposition and usage backtests re-run.
+
 ## 13 Nov: open items closed
 - **Touches spot** (`touches`): flat minutes but a player-specific usage bump of +2% with 3+ own games, or +4% prior-only.
   Sub-margin alone at Sportsbet (−5 to −7%; −4% with angle H), so it's graded C, or B with an angle H boost.
