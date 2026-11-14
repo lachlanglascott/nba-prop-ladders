@@ -138,6 +138,9 @@ SGM_RANGE = (3.5, 15.0)
 FREED_CAP = 6.0  # minutes: the rough share-of-freed-minutes estimate when there's no game without them
 # Opponent x position in the projection: opp_position.OPP_W (every stat, every group), replacing pts x1.5 / guards' reb x1.3
 KEY_SHARE = 0.3  # (was 0.5: dropped Edwards after 5 missed of 9) an absence is 'new' if he played this share of this season's games (else his teammates' roles already reflect it)
+# Threes: 3PA per minute from the same games as his other rates (scaled with his usage bump), makes ~ Binomial at his
+# 3P% shrunk toward the league over THREE_K attempts. Singles only: the sim doesn't link threes to points yet, so no SGMs.
+THREE_K, THREE_LG = 150.0, 0.355
 PRIMARY = {"role", "bounce", "touches"}  # spot types that stand on their own
 # Touches: a new absence with flat minutes but a usage bump (usage.py) of this much in pts or ast per minute.
 # Sportsbet 2024-26: +2-7% bumps -5 to -7% ROI (no bump -12 to -15%), with a good opp spot (angle H >= 1.02)
@@ -214,7 +217,7 @@ def _game_table(pg: pl.DataFrame, trk: pl.DataFrame, team_now: dict, season: str
     return (cur.join(t, on=["player_id", "game_id"], how="left")
             .join(missing(ROT_MPG, "absent"), on=["team", "game_id"], how="left")
             .join(missing(LINEUP_MPG, "absent_wide"), on=["team", "game_id"], how="left")
-            .with_columns(pl.col("absent").fill_null([]), pl.col("absent_wide").fill_null([]))
+            .with_columns(pl.col("absent").fill_null([]), pl.col("absent_wide").fill_null([]), pl.col("fg3m").alias("3pm"))
             .sort("player_id", "game_date"))
 
 
@@ -460,14 +463,27 @@ def analyse(pid: int, name: str, team: str, opp: str, g: pl.DataFrame, last: pl.
     ow = OPP_W[grp_me]
     rate = {"ast": pot36 * ca / 36 * opp_f.get("ast", 1.0) ** ow["ast"], "reb": rc36 * cr / 36 * opp_f.get("reb", 1.0) ** ow["reb"],
             "pts": pts36 / 36 * opp_f.get("pts", 1.0) ** ow["pts"]}
+    # threes: attempts follow the same sample as his points (matching games, else his current/normal role), usage-scaled
+    t_src = sample if sample is not None and sample.height >= 3 else (cur_role if est and cur_role.height >= 2 else base)
+    t_src = t_src if t_src.height else g
+    t36 = float(t_src["fg3a"].sum() / max(t_src["minutes"].sum(), 1) * 36)
+    if last.height >= 10:  # 3 pseudo-games of last season, like the other rates
+        n_t = t_src.height
+        t36 = (t36 * n_t + float(last["fg3a"].sum() / max(last["minutes"].sum(), 1) * 36) * 3) / (n_t + 3)
+    if um is not None:
+        t36 *= um["pts"]
+    att = float(g["fg3a"].sum() + (last["fg3a"].sum() if last.height else 0))
+    made = float(g["fg3m"].sum() + (last["fg3m"].sum() if last.height else 0))
+    p3 = (made + THREE_LG * THREE_K) / (att + THREE_K)
+    rate["fg3a"] = t36 / 36 * opp_f.get("pts", 1.0) ** ow["pts"]
     src = sample if sample is not None and sample.height >= 3 else g.tail(8)
     min_sd = max(4.0, float(src["minutes"].std() or 0.0))
-    hist = pl.concat([g.select("season_id", "pts", "reb", "ast"), last.select("season_id", "pts", "reb", "ast")]
-                     if last.height else [g.select("season_id", "pts", "reb", "ast")], how="vertical_relaxed")
+    hcols = ["season_id", "pts", "reb", "ast", pl.col("fg3m").alias("3pm")]
+    hist = pl.concat([g.select(hcols), last.select(hcols)] if last.height else [g.select(hcols)], how="vertical_relaxed")
     return {"pid": pid, "name": name, "team": team, "opp": opp, "sits": sits, "hist": hist, "opp_tab": opp_tab or {},
             "opp_w": OPP_W[grp_me], "key_new": key_new, "n_comp": n_comp,
             "why_sample": " · ".join(x for x in (why, usage_note) if x), "sample": sample, "base_min": base_min, "proj_min": proj_min, "min_sd": min_sd,
-            "rate": rate, "pot36": pot36, "rc36": rc36, "ca": ca, "cr": cr, "spread": spread, "opp_f": opp_f,
+            "rate": rate, "p3": p3, "pot36": pot36, "rc36": rc36, "ca": ca, "cr": cr, "spread": spread, "opp_f": opp_f,
             "games": g.height, "last_games": last.height, "last5": g.tail(5)}
 
 
@@ -499,8 +515,11 @@ def simulate(a: dict, n: int = N_SIM) -> dict:
         m = m + side_shift(margin, a["proj_min"]) - side_base(a["proj_min"])
     m = np.clip(m, 0, 48)
     r = a["rate"]
-    return {"minutes": m, "ast": RNG.poisson(r["ast"] * m), "reb": RNG.poisson(r["reb"] * m),
-            "pts": draw_points(RNG, r["pts"] * m)}
+    out = {"minutes": m, "ast": RNG.poisson(r["ast"] * m), "reb": RNG.poisson(r["reb"] * m),
+           "pts": draw_points(RNG, r["pts"] * m)}
+    if "fg3a" in r:  # threes: attempts ~ Poisson(rate x minutes), makes ~ Binomial(attempts, 3P%)
+        out["3pm"] = RNG.binomial(RNG.poisson(r["fg3a"] * m), a.get("p3", THREE_LG))
+    return out
 
 
 def confidence(a: dict, unc_team: float, filed: bool) -> float:
@@ -532,7 +551,7 @@ def market_probs(odds: pl.DataFrame, name: str) -> tuple[dict, dict]:
     """(stat, k) -> de-vigged median implied probability; and {book: {(stat, k): price}} incl. 'au_median'."""
     k = player_key(name)
     o = odds.filter(pl.col("player").map_elements(player_key, return_dtype=pl.String) == k,
-                    pl.col("stat").is_in(["pts", "reb", "ast", "pts+reb", "pts+ast", "reb+ast"]))
+                    pl.col("stat").is_in(["pts", "reb", "ast", "pts+reb", "pts+ast", "reb+ast", "3pm"]))
     med = o.group_by("stat", "threshold").agg(pl.col("price").median().alias("px"))
     mk = {(r[0], r[1]): min(market_ratio(r[2]) / r[2], 0.99) for r in med.iter_rows()}
     books = {}
@@ -589,7 +608,7 @@ def anchored(a: dict, sim: dict, legs) -> tuple[float, str]:
                 tot = np.zeros(s.height)
                 for x in st.split("+"):
                     game_f = np.array([tab.get(o, {}).get(x, 1.0) for o in s["opponent"].to_list()])
-                    tot += s[x].to_numpy() * (tonight.get(x, 1.0) / game_f) ** w[x]
+                    tot += s[x].to_numpy() * (tonight.get(x, 1.0) / game_f) ** w.get(x, 1.0)
                 hits &= tot >= k - 0.5  # counts are whole numbers: within half a rebound/assist counts as reaching k
             n_hit = int(hits.sum())
             lw = s["lw"].to_numpy() if "lw" in s.columns else np.ones(s.height)
@@ -688,7 +707,7 @@ def ra_ladder(a: dict, sim: dict, mk: dict, books: dict, c: float, pr: bool = Fa
 
 def bets_for(a: dict, sim: dict, mk: dict, books: dict, c: float, floor: float = 0.0) -> list[dict]:
     stats = {s.get("stat") for s in a["sits"] if s.get("stat") in ("ast", "reb")}
-    focus = stats or {"pts", "reb", "ast"}
+    focus = stats or {"pts", "reb", "ast", "3pm"}
     out = []
     # singles (single-stat and combined rungs) at the user's books
     for bk in SGM_BOOKS:
@@ -1188,7 +1207,7 @@ def proj_line(a: dict, b: dict) -> str:
         return ""
     lo, hi = a.get("min_p10_90", (None, None))
     rng = f" ({lo:.0f}–{hi:.0f})" if lo is not None else ""
-    return (f"Exp {s['minutes']:.0f} min{rng} · {s['pts']:.1f}p / {s['reb']:.1f}r / {s['ast']:.1f}a · "
+    return (f"Exp {s['minutes']:.0f} min{rng} · {s['pts']:.1f}p / {s['reb']:.1f}r / {s['ast']:.1f}a / {s.get('3pm', 0):.1f} 3pm · "
             f"{b['bet']}: {b['p']:.0%} chance (fair ${1 / b['p']:.2f})")
 
 
@@ -1272,7 +1291,7 @@ def render(res: dict, cond: list[dict]) -> str:
         if a["unc"]:
             L.append("- **uncertain teammates**: " + ", ".join(f"{n} P(sits) {p:.0%}" for n, p in a["unc"].items()))
         L.append(f"- **projection** ({a['why_sample'] or 'baseline'}): {s['minutes']:.0f} min ({a['min_p10_90'][0]:.0f}–"
-                 f"{a['min_p10_90'][1]:.0f}), {s['pts']:.1f} pts / {s['reb']:.1f} reb / {s['ast']:.1f} ast · "
+                 f"{a['min_p10_90'][1]:.0f}), {s['pts']:.1f} pts / {s['reb']:.1f} reb / {s['ast']:.1f} ast / {s.get('3pm', 0):.1f} threes · "
                  f"{a['pot36']:.1f} potential ast and {a['rc36']:.1f} reb chances per 36 at {a['ca']:.0%} / {a['cr']:.0%} career conversion"
                  + (f" · spread {a['spread']:+.1f}" if a["spread"] is not None else ""))
         def games_line(df, title, L=L):
