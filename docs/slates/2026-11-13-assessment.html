@@ -45,10 +45,10 @@ table{border-collapse:collapse;width:100%;font-size:13.5px}th,td{padding:7px 9px
 <h2>Your bets and questions</h2><div class="panel"><table>
 <tr><th>Bet / question</th><th>Price</th><th>Result</th><th></th></tr>
 <tr><td>Tyrese Proctor 8p/3r/3a</td><td><b>Betr $7.50</b></td><td><b>22 pts, 4 reb, 3 ast</b>, 27 min</td><td><span class="chip good">W</span> You got $7.50 vs our $7.03 estimate. 27 minutes, as I'd guessed (24–28) against the model's 20. The model was right on the bet; my "1/8 this season" caution was wrong once the minutes came</td></tr>
-<tr><td>Coward 20p/4a: we said pass at ~$11.70</td><td>fair ~$13.50</td><td>14 pts, 7 reb, <b>6 ast</b>, 30 min</td><td><span class="chip good">pass ✓</span> assists came, points didn't</td></tr>
-<tr><td>Sheppard threes: no edge</td><td>3+ $2.10</td><td><b>0 threes</b>, 19 min</td><td><span class="chip good">pass ✓</span></td></tr>
-<tr><td>Cardwell without Achiuwa: little overlap, pass</td><td>8+ reb $2.41</td><td>6 pts, 3 reb, <b>13 min</b></td><td><span class="chip good">pass ✓</span> Sabonis 35 min, as the overlap check said</td></tr>
-<tr><td>Portis: projection too high (treated as a wing)</td><td>7+ reb $3.50</td><td>5 pts, 3 reb, <b>15 min</b></td><td><span class="chip good">pass ✓</span> engine said 24 min, I said 17–20</td></tr>
+<tr><td>Coward 20p/4a: we said pass at ~$11.70</td><td>fair ~$13.50</td><td>14 pts, 7 reb, <b>6 ast</b>, 30 min</td><td><span class="chip">passed on price</span> 14 pts. Assists came, points didn't. A pass is about the price (about $11.70 vs fair about $13.50), not the result: he could easily have hit 20</td></tr>
+<tr><td>Sheppard threes: no edge</td><td>3+ $2.10</td><td><b>0 threes</b>, 19 min</td><td><span class="chip">passed on price</span></td></tr>
+<tr><td>Cardwell without Achiuwa: little overlap, pass</td><td>8+ reb $2.41</td><td>6 pts, 3 reb, <b>13 min</b></td><td><span class="chip">passed on price</span> Sabonis 35 min, as the overlap check said</td></tr>
+<tr><td>Portis: projection too high (treated as a wing)</td><td>7+ reb $3.50</td><td>5 pts, 3 reb, <b>15 min</b></td><td><span class="chip">passed on price</span> engine said 24 min, I said 17–20</td></tr>
 <tr><td>Davion Mitchell (Klay, Larsson out)</td><td>10+ ast Betr $3.10 · C</td><td>22 pts, 5 reb, <b>17 ast</b>, 39 min</td><td><span class="chip good">W</span> the best Miami angle, and it hit all three: 10+ ast, 4+ reb, 4r/8a</td></tr>
 <tr><td>Champagnie if Fox and Vassell sit</td><td>—</td><td>both played (17 / 23 min)</td><td><span class="chip">void</span> 7 pts, 8 reb in 23 min</td></tr>
 </table></div>
@@ -61,6 +61,8 @@ table{border-collapse:collapse;width:100%;font-size:13.5px}th,td{padding:7px 9px
 <tr><td>Quenton Jackson 4+ reb</td><td>SB $2.81 · A</td><td><b>5 reb</b>, 20 min</td><td><span class="chip good">W</span></td></tr>
 <tr><td>Tyrese Proctor 8p/3r/3a</td><td>Betr est $7.03 · B</td><td><b>22/4/3</b>, 27 min</td><td><span class="chip good">W</span></td></tr>
 </table></div>
+
+<p class="sub">Also: <b>Tari Eason 8+ reb</b> (B, $3.45) was on the 5:45pm card and <b>won</b> (11 reb). He fell off the 6:15pm card when the four A spots took the places. Grading uses the final card, so he isn't counted above.</p>
 
 <h2>Friend's tips (first night)</h2><div class="panel"><table>
 <tr><th>Part</th><th>Result</th><th></th></tr>
@@ -80,7 +82,7 @@ table{border-collapse:collapse;width:100%;font-size:13.5px}th,td{padding:7px 9px
 
 <h2>Adjustments</h2>
 <div class="panel"><ul>
-<li><b>Big forwards treated as wings</b> (Portis). Listed forwards who rebound like bigs (~11+ reb/36) count as bigs only in the backup-big matching check. Treating them as bigs everywhere (minutes sharing, angle H, usage) is a model-wide change and needs the opposition and usage backtests re-run. Proposed, not done yet.</li>
+<li><b>Done (14 Nov): rebounding forwards are bigs everywhere</b> (Portis). A listed forward counts as a big at 11+ reb/36, or 9.5+ with under 5 ast/36, so point forwards stay wings. That flips Portis, Achiuwa, Jaylin Williams, Diabaté, Giannis and others. It applies in minutes sharing, angle H, usage, price and candidates. Re-checked: opposition slopes and the market coefficient are unchanged or slightly better (0.82 → 0.85), usage deviance is the same, and the bigs gate still holds.</li>
 <li><b>Deep rotations</b> (Stirtz): the minutes projection doesn't see a coach going 10-deep in a close game. Not something we can call before tip-off yet; noted.</li>
 <li>No other changes tonight. Today's changes were the touches spot, rebound share, price plays off and friend's tips.</li>
 </ul></div>

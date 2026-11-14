@@ -32,14 +32,13 @@ import numpy as np
 import polars as pl
 
 from nba_ladders import config
-from nba_ladders.absences import position_groups
+from nba_ladders.absences import player_groups
 from nba_ladders.luck import K_CONV, league_conversion
 from nba_ladders.luck import load as load_tracking
 from nba_ladders.market import TEAM_ABBR, latest
 from nba_ladders.opp_position import BOOST_C, OPP_W, angle_h
 from nba_ladders.opp_position import line as opp_h_line
 from nba_ladders.opp_position import tonight as opp_tonight
-from nba_ladders.scenarios import positions
 from nba_ladders.screens import parse_player_index
 from nba_ladders.sources.injury_report import ET, player_key, report_for_date
 from nba_ladders.sources.nba_stats import get_player_index
@@ -872,7 +871,7 @@ def build(day: date, extra_out: dict | None = None, include: set | None = None, 
         last_ppg.update(dict(s.filter(pl.col("len") >= 20).select("player_id", "pts").iter_rows()))
     trk_last = trk.filter(pl.col("season_id") == str(int(SEASON) - 1))
     ca, cr = _conversions(trk)
-    grp = dict(position_groups(positions()).iter_rows())
+    grp = dict(player_groups().iter_rows())
     from nba_ladders.matchup import multipliers
 
     opp_h = opp_tonight(day)  # angle H factors (opp_position.py, the version the market test used)

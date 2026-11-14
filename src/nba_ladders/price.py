@@ -108,10 +108,10 @@ def simulate_player(name: str, *, starter_out: bool = False, opponent: str | Non
                                                   _reb_table(as_of))
         fit.reb_rate = fit.reb_rate * info["opp_reb"]
         # pace and defence: points and assists per minute vs this opponent
-        from nba_ladders.absences import position_groups
+        from nba_ladders.absences import player_groups
         from nba_ladders.matchup import multipliers, player_multipliers
 
-        grp = position_groups(positions()).filter(pl.col("player_id") == pid)["grp"]
+        grp = player_groups().filter(pl.col("player_id") == pid)["grp"]
         mm = (player_multipliers(opponent, grp[0], as_of or _today_et()) if grp.len()
               else multipliers(opponent, as_of or _today_et()))
         info.update(opp_pace=mm["pace"], opp_pts=mm["pts"], opp_ast=mm["ast"])

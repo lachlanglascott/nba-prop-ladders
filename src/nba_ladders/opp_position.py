@@ -46,11 +46,10 @@ def archetype(grp: str, ast36: float, reb36: float, fg3a36: float) -> str:
 
 def player_games() -> pl.DataFrame:
     """Player-games with as-at expected stats and archetype."""
-    from nba_ladders.absences import position_groups
-    from nba_ladders.scenarios import positions
+    from nba_ladders.absences import player_groups
 
     pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet").filter(pl.col("minutes") > 0)
-    pg = pg.join(position_groups(positions()), on="player_id", how="left").with_columns(pl.col("grp").fill_null("W"))
+    pg = pg.join(player_groups(), on="player_id", how="left").with_columns(pl.col("grp").fill_null("W"))
     pg = pg.sort("player_id", "game_date")
     roll = lambda c: pl.col(c).rolling_sum(WIN, min_samples=1).shift(1).over("player_id")
     pg = pg.with_columns(

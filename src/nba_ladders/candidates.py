@@ -824,11 +824,11 @@ def tips(cands: dict, report: pl.DataFrame, n_sgm: int = TIP_N_SGM, n_single: in
 
 
 def _weakness(player_id: int, opp: str) -> str:
-    from nba_ladders.absences import position_groups
+    from nba_ladders.absences import player_groups
     from nba_ladders.matchup import weakness_line
 
     if "grp" not in CONTEXT:
-        CONTEXT["grp"] = dict(position_groups(positions()).iter_rows())
+        CONTEXT["grp"] = dict(player_groups().iter_rows())
     g = CONTEXT["grp"].get(player_id)
     return weakness_line(opp, g, CONTEXT.get("day")) if g and CONTEXT.get("day") else ""
 

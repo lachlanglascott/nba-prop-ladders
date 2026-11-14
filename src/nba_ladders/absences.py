@@ -27,10 +27,43 @@ EFFECT_SCALE = 0.4
 RATE_MULT_CLIP = (0.7, 1.4)
 
 
-def position_groups(pos: pl.DataFrame) -> pl.DataFrame:
-    return pos.select(
-        "player_id", pl.col("position").replace_strict(GROUPS, default="W").alias("grp")
-    )
+# A listed forward who rebounds like a big plays as one (Portis, backup 4/5 beside Adebayo / Giannis, 9.6 reb/36;
+# Diabate 12.0): reb/36 >= BIG_R36, or >= BIG_R36_LOW without point-forward passing (Jalen Johnson 8 ast/36 stays a wing).
+BIG_R36, BIG_R36_LOW, BIG_A36_MAX = 11.0, 9.5, 5.0
+RATE_SEASONS, RATE_MIN_MINUTES = 2, 300  # the most recent seasons in the data, minutes needed to judge
+
+
+def position_groups(pos: pl.DataFrame, rates: pl.DataFrame | None = None) -> pl.DataFrame:
+    """player_id -> G / W / B from the listed position; with `rates` (player_id, r36, a36), rebounding forwards -> B."""
+    g = pos.select("player_id", pl.col("position").replace_strict(GROUPS, default="W").alias("grp"))
+    if rates is None:
+        return g
+    big = (pl.col("r36") >= BIG_R36) | ((pl.col("r36") >= BIG_R36_LOW) & (pl.col("a36") < BIG_A36_MAX))
+    return g.join(rates, on="player_id", how="left").select(
+        "player_id", pl.when((pl.col("grp") == "W") & big.fill_null(False)).then(pl.lit("B")).otherwise(pl.col("grp")).alias("grp"))
+
+
+def per36_rates(pg: pl.DataFrame) -> pl.DataFrame:
+    """Rebounds and assists per 36 over the most recent RATE_SEASONS seasons (players with RATE_MIN_MINUTES+)."""
+    recent = sorted(pg["season_id"].unique().to_list())[-RATE_SEASONS:]
+    d = pg.filter(pl.col("season_id").is_in(recent))
+    return d.group_by("player_id").agg((pl.col("reb").sum() / pl.col("minutes").sum() * 36).alias("r36"),
+                                       (pl.col("ast").sum() / pl.col("minutes").sum() * 36).alias("a36"),
+                                       pl.col("minutes").sum().alias("_m")).filter(pl.col("_m") >= RATE_MIN_MINUTES).drop("_m")
+
+
+_GROUPS_CACHE: dict = {}
+
+
+def player_groups() -> pl.DataFrame:
+    """Position groups for production use: listed position + rebounding forwards as bigs (cached)."""
+    if "g" not in _GROUPS_CACHE:
+        from nba_ladders import config
+        from nba_ladders.scenarios import positions
+
+        pg = pl.read_parquet(config.DATA_PROCESSED / "player_games.parquet")
+        _GROUPS_CACHE["g"] = position_groups(positions(), per36_rates(pg))
+    return _GROUPS_CACHE["g"]
 
 
 def mate_minutes(pg: pl.DataFrame) -> pl.DataFrame:
